@@ -8,12 +8,8 @@
 #include <atomic>
 
 #include <ovni.h>
-#include "instr.h"
+#include "base_instr.h"
 
-/**
- * This script includes all the taskr instrumetations
- * which are only active when compiled.
- */
 
 /**
  * Marker colors values of the default Paraver color palette
@@ -65,15 +61,15 @@ enum mark_type : int32_t {
     // this boolean is needed if something other than ovni is called.
     #define INSTRUMENTATION_ACTIVE true    
 
-    #define INSTRUMENTATION_INIT_PROC() instr_init_proc()
+    #define INSTRUMENTATION_INIT_PROC() instrumentation_init_proc()
 
-    #define INSTRUMENTATION_START() instr_init_proc(); instr_init_thread(rank_counter.fetch_add(1))
+    #define INSTRUMENTATION_START() instrumentation_init_proc(); instrumentation_init_thread(rank_counter.fetch_add(1))
 
-    #define INSTRUMENTATION_END() instr_end()
+    #define INSTRUMENTATION_END() instrumentation_end()
 
-    #define INSTRUMENTATION_INIT_THREAD() instr_init_thread(rank_counter.fetch_add(1))
+    #define INSTRUMENTATION_INIT_THREAD() instrumentation_init_thread(rank_counter.fetch_add(1))
 
-    #define INSTRUMENTATION_THREAD_END() instr_thread_end(); ovni_thread_free()
+    #define INSTRUMENTATION_THREAD_END() instrumentation_thread_end(); ovni_thread_free()
 
     #define INSTRUMENTATION_THREAD_ISREADY() ovni_thread_isready()
 

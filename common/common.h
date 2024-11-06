@@ -4,6 +4,10 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <inttypes.h>
@@ -38,16 +42,14 @@ void vdie(const char *prefix, const char *func, const char *errstr, ...) __attri
 #define unlikely(x) __builtin_expect(!!(x), 0)
 #define UNUSED(x) (void)(x)
 
-/* Poison assert */
-//#pragma GCC poison assert
-//#pragma GCC poison usleep
-
 #define USE_RET __attribute__((warn_unused_result))
 
 #define ARRAYLEN(x) (sizeof(x)/sizeof((x)[0]))
 
 /* clang-format on */
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* COMMON_H */
