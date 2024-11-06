@@ -1,3 +1,8 @@
+build
+*.patch
+~*
+.vscode
+atlas_*.sh
 python_scripts/*/
 python_scripts/*.png
 !python_scripts/*.py

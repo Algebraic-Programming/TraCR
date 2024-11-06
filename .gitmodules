@@ -1,0 +1,3 @@
+[submodule "extern/ovni"]
+	path = extern/ovni
+	url = https://github.com/bsc-pm/ovni.git
