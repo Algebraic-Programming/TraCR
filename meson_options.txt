@@ -1,3 +1,7 @@
+option('buildTests', type : 'boolean', value : false,
+       description: 'Indicates whether to build test apps'
+)
+
 option('buildExamples', type : 'boolean', value : false,
        description: 'Indicates whether to build example apps'
 )

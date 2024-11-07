@@ -1,12 +1,12 @@
 #include <ovni.h>
-#include "instrumentation.hpp"
+#include <instrumentation.hpp>
 
 /*
 Basic test to see if ovni is linked correctly
 */
 int main( int argc, char **argv)
 {
-    printf(OVNI_TRACEDIR, "\n");
+    printf("%s\n", OVNI_TRACEDIR);
 
     printf("%d\n", INSTRUMENTATION_ACTIVE);
 

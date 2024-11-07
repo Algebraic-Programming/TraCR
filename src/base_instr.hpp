@@ -5,9 +5,7 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <stdio.h>
-#include <cstdlib>
+#include <unistd.h>
 #include <iostream>
 #include <sys/syscall.h> // For syscall(SYS_gettid)
 #include <unistd.h>		 // For getpid()
@@ -45,12 +43,14 @@ instrumentation_init_proc()
 {
     char hostname[OVNI_MAX_HOSTNAME];
 
-	if (gethostname(hostname, OVNI_MAX_HOSTNAME) != 0)
+	if (gethostname(hostname, OVNI_MAX_HOSTNAME) != 0){
 		std::cerr << "hostname to long: " << hostname << std::endl;
         std::exit(EXIT_FAILURE);  // Exits with a failure status
+	}
+
 
 	ovni_version_check();
-	ovni_proc_init(1, hostname, getpid());
+	ovni_proc_init(1, "test", getpid());
 }
 
 /**

@@ -1,7 +1,8 @@
 project('ovni_extension', [ 'cpp', 'c'],
   subproject_dir : 'extern',
   default_options : [
-  'cpp_std=c++11'
+  'cpp_std=c++11',
+  'buildtype=release',
   ]
 )
 
@@ -17,26 +18,26 @@ endif
 
 InstrumentationBuildCppArgs = [
  '-Wfatal-errors',
-  warningAsErrorFlags
+  warningAsErrorFlags,
  ]
 
-InstrumentationBuildIncludes = include_directories([
-   'include'
+ InstrumentationBuildIncludes = include_directories([
+   'src'
   ])
   
 
 ####### Build ovni part
 
 ovniDependencies = [ ]
-subdir('include/ovni')
+subdir('src')
 
 InstrumentationDependencies += [ovniDependencies]
 
 ####### Collect the dependencies
 
-TaskRBuildDep = declare_dependency(
-    compile_args: TaskRBuildCppArgs,
-    include_directories: TaskRBuildIncludes,
+InstrumentationBuildDep = declare_dependency(
+    compile_args: InstrumentationBuildCppArgs,
+    include_directories: InstrumentationBuildIncludes,
     dependencies: InstrumentationDependencies
     )
 

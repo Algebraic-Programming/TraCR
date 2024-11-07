@@ -4,7 +4,7 @@
 #include <unistd.h>      // For getpid()
 #include <vector>
 
-#include "instrumentation.hpp"
+#include <instrumentation.hpp>
 
 // Define a mutex
 pthread_mutex_t printMutex;
@@ -14,7 +14,7 @@ void* threadFunction(void* arg) {
 
     int id = *(int*)arg;
     
-    // ovni init thread (id counting starts at zero!)
+    // ovni init thread
     INSTRUMENTATION_INIT_THREAD();
 
     // Get the process ID (PID) and thread ID (TID)

@@ -61,8 +61,7 @@ enum mark_type : int32_t {
     // this boolean is needed if something other than ovni is called.
     #define INSTRUMENTATION_ACTIVE true    
 
-    #define INSTRUMENTATION_START() instrumentation_init_proc(); instrumentation_init_thread(rank_counter.fetch_add(1))
-
+    #define INSTRUMENTATION_START() instrumentation_init_proc();  instrumentation_init_thread(rank_counter.fetch_add(1)); 
     #define INSTRUMENTATION_END() instrumentation_end()
 
     #define INSTRUMENTATION_INIT_PROC() instrumentation_init_proc()
@@ -87,7 +86,7 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_MARK_SET(type, value) ovni_mark_set(type, value)
 
 
-#else   /* No instrumentation else */
+#else   /* No instrumentation (void) */
 
     #define INSTRUMENTATION_ACTIVE false
 
