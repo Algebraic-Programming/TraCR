@@ -1,3 +1,7 @@
 # ovni_extensions
 
-This repo consists of files to simplify the use of ovni methods as well python post-processing scripts for visualizations.
+This repo is an extension (or wrapper) of ovni. It only accesses the files of onvi under the MIT licenses.
+
+It also simplifies the use case of ovni (see `examples/`)
+
+We also included some python post-processing scripts for visualizations purposes.
