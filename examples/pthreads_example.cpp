@@ -4,8 +4,7 @@
 #include <unistd.h>      // For getpid()
 #include <vector>
 
-#include <ovni.h>
-#include "common/instr.h"
+#include "instrumentation.hpp"
 
 // Define a mutex
 pthread_mutex_t printMutex;
@@ -16,7 +15,7 @@ void* threadFunction(void* arg) {
     int id = *(int*)arg;
     
     // ovni init thread (id counting starts at zero!)
-    instr_init_thread(id-1);
+    INSTRUMENTATION_INIT_THREAD();
 
     // Get the process ID (PID) and thread ID (TID)
     pid_t pid = getpid();              // Process ID
@@ -30,15 +29,14 @@ void* threadFunction(void* arg) {
     pthread_mutex_unlock(&printMutex);
 
     // ovni free thread
-    instr_thread_end();
-	ovni_thread_free();
+    INSTRUMENTATION_THREAD_END();
 
     return nullptr;
 }
 
 int main() {
     // ovni proc init
-    instr_init_proc();
+    INSTRUMENTATION_INIT_PROC();
 
     int nranks = 4;  // You can change this to create any number of threads
     std::vector<pthread_t> threads(nranks);  // Vector to hold pthreads
@@ -64,7 +62,7 @@ int main() {
     pthread_mutex_destroy(&printMutex);
 
     // ovni free proc
-    ovni_proc_fini();
+    INSTRUMENTATION_PROC_END();
 
     return 0;
 }

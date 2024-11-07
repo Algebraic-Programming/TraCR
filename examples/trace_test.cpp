@@ -1,4 +1,4 @@
-#include "common/taskr_instr.hpp"
+#include "instrumentation.hpp"
 
 #define mytype float
 

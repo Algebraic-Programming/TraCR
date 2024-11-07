@@ -46,7 +46,7 @@ instrumentation_init_proc()
     char hostname[OVNI_MAX_HOSTNAME];
 
 	if (gethostname(hostname, OVNI_MAX_HOSTNAME) != 0)
-		std::cerr << "gethostname failed" << std::endl;
+		std::cerr << "hostname to long: " << hostname << std::endl;
         std::exit(EXIT_FAILURE);  // Exits with a failure status
 
 	ovni_version_check();

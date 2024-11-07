@@ -8,7 +8,7 @@
 #include <atomic>
 
 #include <ovni.h>
-#include "base_instr.h"
+#include "base_instr.hpp"
 
 
 /**
@@ -61,11 +61,13 @@ enum mark_type : int32_t {
     // this boolean is needed if something other than ovni is called.
     #define INSTRUMENTATION_ACTIVE true    
 
-    #define INSTRUMENTATION_INIT_PROC() instrumentation_init_proc()
-
     #define INSTRUMENTATION_START() instrumentation_init_proc(); instrumentation_init_thread(rank_counter.fetch_add(1))
 
     #define INSTRUMENTATION_END() instrumentation_end()
+
+    #define INSTRUMENTATION_INIT_PROC() instrumentation_init_proc()
+
+    #define INSTRUMENTATION_PROC_END() ovni_proc_fini()
 
     #define INSTRUMENTATION_INIT_THREAD() instrumentation_init_thread(rank_counter.fetch_add(1))
 
@@ -73,6 +75,7 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_THREAD_ISREADY() ovni_thread_isready()
 
+    // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title) ovni_mark_type(type, flag, title)
 
     #define INSTRUMENTATION_MARK_LABEL(type, value, label) ovni_mark_label(type, value, label)
@@ -88,11 +91,13 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_ACTIVE false
 
-    #define INSTRUMENTATION_INIT_PROC()
-
     #define INSTRUMENTATION_START()
 
     #define INSTRUMENTATION_END()
+
+    #define INSTRUMENTATION_INIT_PROC()
+
+    #define INSTRUMENTATION_PROC_END()
 
     #define INSTRUMENTATION_INIT_THREAD()
 
