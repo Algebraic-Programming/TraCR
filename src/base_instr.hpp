@@ -7,10 +7,12 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <cstdlib>
+#include <iostream>
+#include <sys/syscall.h> // For syscall(SYS_gettid)
 #include <unistd.h>		 // For getpid()
+
 #include <ovni.h>
-#include "compat.h"
-#include "common.h"
 
 /**
  * Function taken from here:
@@ -28,6 +30,12 @@ thread_execute(int32_t cpu, int32_t ctid, uint64_t tag)
     ovni_ev_emit(&ev);
 }
 
+static inline pid_t
+get_tid(void)
+{
+	return (pid_t) syscall(SYS_gettid);
+}
+
 
 /**
  * 
@@ -38,7 +46,8 @@ instrumentation_init_proc()
     char hostname[OVNI_MAX_HOSTNAME];
 
 	if (gethostname(hostname, OVNI_MAX_HOSTNAME) != 0)
-		die("gethostname failed");
+		std::cerr << "gethostname failed" << std::endl;
+        std::exit(EXIT_FAILURE);  // Exits with a failure status
 
 	ovni_version_check();
 	ovni_proc_init(1, hostname, getpid());
@@ -54,8 +63,8 @@ instrumentation_init_thread(int rank)
 
     ovni_add_cpu(rank, rank);
 
-	dbg("thread %d has pid %d and cpu %d\n",
-			get_tid(), getpid(), rank);
+	// printf("thread %d has pid %d and cpu %d\n",
+	// 		get_tid(), getpid(), rank);
 
 	ovni_thread_require("ovni", "1.1.0");
 	thread_execute(rank, -1, 0);
