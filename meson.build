@@ -8,7 +8,7 @@ project('ovni_extension', [ 'cpp', 'c'],
 
 ####### Storage for Instrumentation dependencies
 
-InstrumentationDependencies = [ ]
+
 
 # Warning handling option
 warningAsErrorFlags=[]
@@ -28,21 +28,18 @@ InstrumentationBuildCppArgs = [
 
 ####### Build ovni and ovni_extension part
 
+subdir('src')
+
 if get_option('enableInstrumentations')
   add_project_arguments('-DUSE_INSTRUMENTATION', language: 'cpp')
 endif
-
-ovniDependencies = [ ]
-subdir('src')
-
-InstrumentationDependencies += [ovniDependencies]
 
 ####### Collect the dependencies
 
 InstrumentationBuildDep = declare_dependency(
     compile_args: InstrumentationBuildCppArgs,
     include_directories: InstrumentationBuildIncludes,
-    dependencies: InstrumentationDependencies
+    dependencies: ovniDep
     )
 
 ####### Build test / example targets only if this repo is being loaded not as a subproject
