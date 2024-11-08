@@ -49,10 +49,9 @@ enum mark_type : int32_t {
     MARK_TYPE_WORKER = 1
 };
 
- // Uncomment to enable instrumentation
-#define USE_INSTRUMENTATION
-
-
+/**
+ * 
+ */
 #ifdef USE_INSTRUMENTATION
 
     // atomic counter of the rank called

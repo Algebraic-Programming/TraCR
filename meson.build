@@ -26,7 +26,11 @@ InstrumentationBuildCppArgs = [
   ])
   
 
-####### Build ovni part
+####### Build ovni and ovni_extension part
+
+if get_option('enableInstrumentations')
+  add_project_arguments('-DUSE_INSTRUMENTATION', language: 'cpp')
+endif
 
 ovniDependencies = [ ]
 subdir('src')

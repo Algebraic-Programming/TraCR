@@ -6,8 +6,8 @@ option('buildExamples', type : 'boolean', value : false,
        description: 'Indicates whether to build example apps'
 )
 
-option('enableInstrumentations', type: 'boolean', value : true,
-       description: 'Indicates whether to use instrumentations'
+option('enableInstrumentations', type: 'boolean', value : false,
+       description: 'Indicates whether to use instrumentations. One can add it as a flag for specific profects'
 )   
 
 
