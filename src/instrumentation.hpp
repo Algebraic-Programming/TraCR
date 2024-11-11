@@ -77,7 +77,7 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_THREAD_INIT() if(!ovni_thread_isready()) instrumentation_init_thread(rank_counter.fetch_add(1))
 
-    #define INSTRUMENTATION_THREAD_END() if(ovni_thread_isready()) instrumentation_thread_end(); ovni_thread_free()
+    #define INSTRUMENTATION_THREAD_END() if(ovni_thread_isready()) {instrumentation_thread_end(); ovni_thread_free();}
 
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title) ovni_mark_type(type, flag, title)
