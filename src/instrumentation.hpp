@@ -79,8 +79,6 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_THREAD_END() if(ovni_thread_isready()) instrumentation_thread_end(); ovni_thread_free()
 
-    #define INSTRUMENTATION_THREAD_ISREADY() ovni_thread_isready()
-
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title) ovni_mark_type(type, flag, title)
 
@@ -108,8 +106,6 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_THREAD_INIT()
 
     #define INSTRUMENTATION_THREAD_END()
-
-    #define INSTRUMENTATION_THREAD_ISREADY() false
 
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title) (void)(type); (void)(flag); (void)(title)
