@@ -15,7 +15,7 @@ void* threadFunction(void* arg) {
     int id = *(int*)arg;
     
     // ovni init thread
-    INSTRUMENTATION_INIT_THREAD();
+    INSTRUMENTATION_THREAD_INIT();
 
     // Get the process ID (PID) and thread ID (TID)
     pid_t pid = getpid();              // Process ID
@@ -36,7 +36,7 @@ void* threadFunction(void* arg) {
 
 int main() {
     // ovni proc init
-    INSTRUMENTATION_INIT_PROC();
+    INSTRUMENTATION_PROC_INIT();
 
     int nranks = 4;  // You can change this to create any number of threads
     std::vector<pthread_t> threads(nranks);  // Vector to hold pthreads

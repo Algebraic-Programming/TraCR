@@ -13,6 +13,7 @@
 #pragma once
 
 #include <atomic>
+#include <cassert>
 
 #include <ovni.h>
 #include "base_instr.hpp"
@@ -67,16 +68,16 @@ enum mark_type : int32_t {
     // this boolean is needed if something other than ovni has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
-    #define INSTRUMENTATION_START() if(rank_counter.load() == 0) instrumentation_init_proc();  instrumentation_init_thread(rank_counter.fetch_add(1))
+    #define INSTRUMENTATION_START() assert(rank_counter.load() == 0); instrumentation_init_proc();  instrumentation_init_thread(rank_counter.fetch_add(1))
     #define INSTRUMENTATION_END() instrumentation_end()
 
-    #define INSTRUMENTATION_INIT_PROC() if(rank_counter.load() == 0) instrumentation_init_proc()
+    #define INSTRUMENTATION_PROC_INIT() assert(rank_counter.load() == 0); instrumentation_init_proc()
 
     #define INSTRUMENTATION_PROC_END() ovni_proc_fini()
 
-    #define INSTRUMENTATION_INIT_THREAD() if(!ovni_thread_isready()) instrumentation_init_thread(rank_counter.fetch_add(1))
+    #define INSTRUMENTATION_THREAD_INIT() if(!ovni_thread_isready()) instrumentation_init_thread(rank_counter.fetch_add(1))
 
-    #define INSTRUMENTATION_THREAD_END() instrumentation_thread_end(); ovni_thread_free()
+    #define INSTRUMENTATION_THREAD_END() if(ovni_thread_isready()) instrumentation_thread_end(); ovni_thread_free()
 
     #define INSTRUMENTATION_THREAD_ISREADY() ovni_thread_isready()
 
@@ -100,11 +101,11 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_END()
 
-    #define INSTRUMENTATION_INIT_PROC()
+    #define INSTRUMENTATION_PROC_INIT()
 
     #define INSTRUMENTATION_PROC_END()
 
-    #define INSTRUMENTATION_INIT_THREAD()
+    #define INSTRUMENTATION_THREAD_INIT()
 
     #define INSTRUMENTATION_THREAD_END()
 
