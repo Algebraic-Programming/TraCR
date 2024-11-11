@@ -3,6 +3,13 @@
  * All rights reserved.
  */
 
+/**
+ * @file base_instr.hpp
+ * @brief Common ovni base functions
+ * @author Noah Baumann
+ * @date 11/11/2024
+ */
+
 #pragma once
 
 #include <unistd.h>
@@ -28,6 +35,9 @@ thread_execute(int32_t cpu, int32_t ctid, uint64_t tag)
     ovni_ev_emit(&ev);
 }
 
+/**
+ * 
+ */
 static inline pid_t
 get_tid(void)
 {

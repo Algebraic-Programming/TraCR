@@ -3,6 +3,13 @@
  * All rights reserved.
  */
 
+/**
+ * @file instrumentation.hpp
+ * @brief instrumentation calls inside #define functionalities
+ * @author Noah Baumann
+ * @date 11/11/2024
+ */
+
 #pragma once
 
 #include <atomic>
@@ -57,17 +64,17 @@ enum mark_type : int32_t {
     // atomic counter of the rank called
     std::atomic<int> rank_counter(0);
 
-    // this boolean is needed if something other than ovni is called.
+    // this boolean is needed if something other than ovni has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
-    #define INSTRUMENTATION_START() instrumentation_init_proc();  instrumentation_init_thread(rank_counter.fetch_add(1)); 
+    #define INSTRUMENTATION_START() int current_rank = rank_counter.load(); if(current_rank == 0) instrumentation_init_proc();  instrumentation_init_thread(rank_counter.fetch_add(1))
     #define INSTRUMENTATION_END() instrumentation_end()
 
-    #define INSTRUMENTATION_INIT_PROC() instrumentation_init_proc()
+    #define INSTRUMENTATION_INIT_PROC() if(rank_counter == 0) instrumentation_init_proc()
 
     #define INSTRUMENTATION_PROC_END() ovni_proc_fini()
 
-    #define INSTRUMENTATION_INIT_THREAD() instrumentation_init_thread(rank_counter.fetch_add(1))
+    #define INSTRUMENTATION_INIT_THREAD() if(!ovni_thread_isready()) instrumentation_init_thread(rank_counter.fetch_add(1))
 
     #define INSTRUMENTATION_THREAD_END() instrumentation_thread_end(); ovni_thread_free()
 
