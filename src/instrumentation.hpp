@@ -69,6 +69,7 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_ACTIVE true    
 
     #define INSTRUMENTATION_START() assert(rank_counter.load() == 0); instrumentation_init_proc();  instrumentation_init_thread(rank_counter.fetch_add(1))
+    
     #define INSTRUMENTATION_END() instrumentation_end()
 
     #define INSTRUMENTATION_PROC_INIT() assert(rank_counter.load() == 0); instrumentation_init_proc()
