@@ -35,6 +35,26 @@ thread_execute(int32_t cpu, int32_t ctid, uint64_t tag)
     ovni_ev_emit(&ev);
 }
 
+static inline void
+instr_taskr_task_execute(uint32_t taskid)
+{
+	struct ovni_ev ev = {0};
+    ovni_ev_set_clock(&ev, ovni_clock_now());
+    ovni_ev_set_mcv(&ev, "tTx");
+    ovni_payload_add(&ev, (uint8_t *) &taskid, sizeof(taskid));
+    ovni_ev_emit(&ev);
+}
+
+static inline void
+instr_taskr_task_end(uint32_t taskid)
+{
+	struct ovni_ev ev = {0};
+    ovni_ev_set_clock(&ev, ovni_clock_now());
+    ovni_ev_set_mcv(&ev, "tTe");
+    ovni_payload_add(&ev, (uint8_t *) &taskid, sizeof(taskid));
+    ovni_ev_emit(&ev);
+}
+
 /**
  * 
  */
@@ -49,18 +69,24 @@ get_tid(void)
  * 
  */
 static inline void
-instrumentation_init_proc()
+instrumentation_init_proc(int rank, int nprocs)
 {
     char hostname[OVNI_MAX_HOSTNAME];
+	char rankname[OVNI_MAX_HOSTNAME + 64];
 
 	if (gethostname(hostname, OVNI_MAX_HOSTNAME) != 0){
 		std::cerr << "hostname to long: " << hostname << std::endl;
         std::exit(EXIT_FAILURE);  // Exits with a failure status
 	}
 
+	sprintf(rankname, "%s.%d", hostname, rank);
+
+	ovni_proc_set_rank(rank, nprocs);
 
 	ovni_version_check();
-	ovni_proc_init(1, "test", getpid());
+	ovni_proc_init(1, rankname, getpid());
+
+	ovni_thread_require("ovni", "1.1.0");
 }
 
 /**
@@ -69,15 +95,16 @@ instrumentation_init_proc()
 static inline void
 instrumentation_init_thread(int rank)
 {
+	(void) rank;
 	ovni_thread_init(get_tid());
 
-    ovni_add_cpu(rank, rank);
+    // ovni_add_cpu(rank, rank);
 
 	// printf("thread %d has pid %d and cpu %d\n",
 	// 		get_tid(), getpid(), rank);
 
-	ovni_thread_require("ovni", "1.1.0");
-	thread_execute(rank, -1, 0);
+	// ovni_thread_require("ovni", "1.1.0");
+	thread_execute(-1, -1, 0);
 }
 
 /**

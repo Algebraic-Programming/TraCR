@@ -17,3 +17,9 @@ pthreads_example_exe = executable('pthreads_example', ['pthreads_example.cpp'], 
 if get_option('buildTests')
     test('pthreads_example', pthreads_example_exe, args : [ ], suite: testSuite )
 endif
+
+tasking_example_exe = executable('tasking_example', ['tasking_example.cpp'], dependencies:  InstrumentationBuildDep, cpp_args : ['-DUSE_INSTRUMENTATION'])
+
+if get_option('buildTests')
+    test('tasking_example', tasking_example_exe, args : [ ], suite: testSuite )
+endif
