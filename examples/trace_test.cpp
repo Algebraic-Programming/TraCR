@@ -31,7 +31,7 @@ int main(void)
     int32_t type = 0;
     long flag = OVNI_MARK_STACK;      // use flag == 1 for push/pop and flag != 1 for set
 
-    INSTRUMENTATION_MARK_TYPE(type, flag, "hello world");
+    INSTRUMENTATION_MARK_TYPE(type, flag, "Hello World");
     
     // allocate memory
     INSTRUMENTATION_MARK_LABEL(type, value, "Allocate Memory");    //fyi it is costly (~3us) could be done at the beginning or ending

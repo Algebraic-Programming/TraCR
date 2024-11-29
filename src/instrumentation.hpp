@@ -12,9 +12,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <cassert>
-
 #include <ovni.h>
 #include "base_instr.hpp"
 
@@ -62,23 +59,24 @@ enum mark_type : int32_t {
  */
 #ifdef USE_INSTRUMENTATION
 
-    // atomic counter of the rank called
-    std::atomic<int> rank_counter(0);
-
     // this boolean is needed if something other than ovni has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
-    #define INSTRUMENTATION_START() assert(rank_counter.load() == 0); instrumentation_init_proc();  instrumentation_init_thread(rank_counter.fetch_add(1))
+    #define INSTRUMENTATION_START() instrumentation_init_proc(0, 1)
     
     #define INSTRUMENTATION_END() instrumentation_end()
 
-    #define INSTRUMENTATION_PROC_INIT() assert(rank_counter.load() == 0); instrumentation_init_proc()
-
-    #define INSTRUMENTATION_PROC_END() ovni_proc_fini()
-
-    #define INSTRUMENTATION_THREAD_INIT() if(!ovni_thread_isready()) instrumentation_init_thread(rank_counter.fetch_add(1))
+    #define INSTRUMENTATION_THREAD_INIT() if(!ovni_thread_isready()) instrumentation_init_thread()
 
     #define INSTRUMENTATION_THREAD_END() if(ovni_thread_isready()) {instrumentation_thread_end(); ovni_thread_free();}
+
+    #define INSTRUMENTATION_REQUIRE_TASKR() ovni_thread_require("taskr", "1.0.0")
+
+    #define INSTRUMENTATION_TASK_EXEC(taskid) instr_taskr_task_execute(taskid)
+
+    #define INSTRUMENTATION_TASK_END(taskid) instr_taskr_task_end(taskid)
+
+    #define INSTRUMENTATION_SET_NTASKS(ntasks) ovni_attr_set_double("taskr.ntasks", (double) ntasks);
 
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title) ovni_mark_type(type, flag, title)
@@ -100,13 +98,17 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_END()
 
-    #define INSTRUMENTATION_PROC_INIT()
-
-    #define INSTRUMENTATION_PROC_END()
-
     #define INSTRUMENTATION_THREAD_INIT()
 
     #define INSTRUMENTATION_THREAD_END()
+
+    #define INSTRUMENTATION_REQUIRE_TASKR()
+
+    #define INSTRUMENTATION_TASK_EXEC(taskid) (void)(taskid)
+
+    #define INSTRUMENTATION_TASK_END(taskid) (void)(taskid)
+
+    #define INSTRUMENTATION_SET_NTASKS(ntasks) (void)(ntasks)
 
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title) (void)(type); (void)(flag); (void)(title)
