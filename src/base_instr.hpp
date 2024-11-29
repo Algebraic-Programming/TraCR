@@ -69,7 +69,7 @@ get_tid(void)
  * 
  */
 static inline void
-instrumentation_init_proc(int rank, int nprocs)
+instrumentation_init_proc(int rank, int nranks)
 {
     char hostname[OVNI_MAX_HOSTNAME];
 	char rankname[OVNI_MAX_HOSTNAME + 64];
@@ -81,29 +81,28 @@ instrumentation_init_proc(int rank, int nprocs)
 
 	sprintf(rankname, "%s.%d", hostname, rank);
 
-	ovni_proc_set_rank(rank, nprocs);
-
 	ovni_version_check();
 	ovni_proc_init(1, rankname, getpid());
+	ovni_thread_init(get_tid());
 
-	ovni_thread_require("ovni", "1.1.0");
+	if (nranks > 0)
+		ovni_proc_set_rank(rank, nranks);
+
+	/* All ranks inform CPUs */
+	for (int i = 0; i < nranks; i++)
+		ovni_add_cpu(i, i);
+
+	thread_execute(rank, -1, 0);
 }
 
 /**
  * 
  */
 static inline void
-instrumentation_init_thread(int rank)
+instrumentation_init_thread()
 {
-	(void) rank;
 	ovni_thread_init(get_tid());
 
-    // ovni_add_cpu(rank, rank);
-
-	// printf("thread %d has pid %d and cpu %d\n",
-	// 		get_tid(), getpid(), rank);
-
-	// ovni_thread_require("ovni", "1.1.0");
 	thread_execute(-1, -1, 0);
 }
 

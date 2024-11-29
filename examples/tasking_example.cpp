@@ -57,7 +57,7 @@ int main() {
     // ovni proc init
     INSTRUMENTATION_START();
 
-    INSTRUMENTATION_REQUIRE("taskr", "1.0.0");
+    INSTRUMENTATION_REQUIRE_TASKR();
 
     int nranks = 4;  // You can change this to create any number of threads
     std::vector<pthread_t> threads(nranks);  // Vector to hold pthreads
@@ -83,7 +83,7 @@ int main() {
     pthread_mutex_destroy(&printMutex);
 
     /* Write ntasks in metadata */
-	ovni_attr_set_double("taskr.ntasks", (double) task_counter.load());
+	INSTRUMENTATION_SET_NTASKS(task_counter.load());
 
     // ovni free proc
     INSTRUMENTATION_END();
