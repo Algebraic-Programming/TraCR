@@ -96,15 +96,15 @@ enum mark_type : int32_t {
         ovni_thread_require("taskr", "1.0.0")
 
     #define INSTRUMENTATION_TASK_EXEC(taskid)           \
-        debug_print("instr_task_exec: %d", taskid);   \
+        debug_print("instr_task_exec: %d", (int) taskid);   \
         instr_taskr_task_execute(taskid)
 
     #define INSTRUMENTATION_TASK_END(taskid)            \
-        debug_print("instr_task_exec: %d", taskid);   \
+        debug_print("instr_task_end: %d", (int) taskid);   \
         instr_taskr_task_end(taskid)
 
     #define INSTRUMENTATION_SET_NTASKS(ntasks)                  \
-        debug_print("instr_set_ntasks: %d", ntasks);          \
+        debug_print("instr_set_ntasks: %d", (int) ntasks);          \
         ovni_attr_set_double("taskr.ntasks", (double) ntasks);
 
     // markers
