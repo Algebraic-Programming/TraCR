@@ -4,7 +4,7 @@ option('buildExamples', type : 'boolean', value : false,
 
 option('enableInstrumentations', type: 'boolean', value : false,
        description: 'Always enables the instrumentations. Otherwise, use the flag "USE_INSTRUMENTATION" manually.'
-)   
+)
 
 option('compileWarningsAsErrors', type : 'boolean', value : false,
        description: 'Indicates whether a compilation warning should result in a fatal error. This is useful for CI testing but may result in inconveniences for normal users, hence it should be false by default'

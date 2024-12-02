@@ -6,13 +6,13 @@ if get_option('enableInstrumentations')
     ]
 else
     cpp_args_list = [
-    ['-DUSE_INSTRUMENTATION'],  # With instrumentation
+    ['-DUSE_INSTRUMENTATION', '-DENABLE_DEBUG'],  # With instrumentation
     []                          # Without instrumentation
     ]
 endif
 
 foreach args : cpp_args_list
-    test_name = get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION'] ? 'with_instrumentation' : 'no_instrumentation'
+    test_name = get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION', '-DENABLE_DEBUG'] ? 'with_instrumentation' : 'no_instrumentation'
 
 
     # TEST 1: Basic ovni test

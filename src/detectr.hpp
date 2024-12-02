@@ -59,35 +59,69 @@ enum mark_type : int32_t {
  */
 #ifdef USE_INSTRUMENTATION
 
+
+    #ifdef ENABLE_DEBUG
+        #define debug_print(fmt, ...) \
+            printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
+    #else
+        #define debug_print(fmt, ...)
+    #endif
+
     // this boolean is needed if something other than ovni has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
-    #define INSTRUMENTATION_START() instrumentation_init_proc(0, 1)
+    #define INSTRUMENTATION_START()         \
+        debug_print("instr_start");       \
+        instrumentation_init_proc(0, 1)
     
-    #define INSTRUMENTATION_END() instrumentation_end()
+    #define INSTRUMENTATION_END()   \
+        debug_print("instr_end"); \
+        instrumentation_end()
 
-    #define INSTRUMENTATION_THREAD_INIT() if(!ovni_thread_isready()) instrumentation_init_thread()
+    #define INSTRUMENTATION_THREAD_INIT()                                           \
+        debug_print("instr_thread_init with isready: %d", ovni_thread_isready()); \
+        if(!ovni_thread_isready()) {                                                \
+            instrumentation_init_thread();                                          \
+        }
 
-    #define INSTRUMENTATION_THREAD_END() if(ovni_thread_isready()) {instrumentation_thread_end(); ovni_thread_free();}
+    #define INSTRUMENTATION_THREAD_END()                                            \
+        debug_print("instr_thread_end with isready: %d", ovni_thread_isready());  \
+        if(ovni_thread_isready()) {                                                 \
+            instrumentation_thread_end();                                           \
+            ovni_thread_free();                                                     \
+        }
 
-    #define INSTRUMENTATION_REQUIRE_TASKR() ovni_thread_require("taskr", "1.0.0")
+    #define INSTRUMENTATION_REQUIRE_TASKR()     \
+        debug_print("instr_enable_taskr");    \
+        ovni_thread_require("taskr", "1.0.0")
 
-    #define INSTRUMENTATION_TASK_EXEC(taskid) instr_taskr_task_execute(taskid)
+    #define INSTRUMENTATION_TASK_EXEC(taskid)           \
+        debug_print("instr_task_exec: %d", taskid);   \
+        instr_taskr_task_execute(taskid)
 
-    #define INSTRUMENTATION_TASK_END(taskid) instr_taskr_task_end(taskid)
+    #define INSTRUMENTATION_TASK_END(taskid)            \
+        debug_print("instr_task_exec: %d", taskid);   \
+        instr_taskr_task_end(taskid)
 
-    #define INSTRUMENTATION_SET_NTASKS(ntasks) ovni_attr_set_double("taskr.ntasks", (double) ntasks);
+    #define INSTRUMENTATION_SET_NTASKS(ntasks)                  \
+        debug_print("instr_set_ntasks: %d", ntasks);          \
+        ovni_attr_set_double("taskr.ntasks", (double) ntasks);
 
     // markers
-    #define INSTRUMENTATION_MARK_TYPE(type, flag, title) ovni_mark_type(type, flag, title)
+    #define INSTRUMENTATION_MARK_TYPE(type, flag, title)    \
+        ovni_mark_type(type, flag, title)
 
-    #define INSTRUMENTATION_MARK_LABEL(type, value, label) ovni_mark_label(type, value, label)
+    #define INSTRUMENTATION_MARK_LABEL(type, value, label)  \
+        ovni_mark_label(type, value, label)
 
-    #define INSTRUMENTATION_MARK_PUSH(type, value) ovni_mark_push(type, value)
+    #define INSTRUMENTATION_MARK_PUSH(type, value)  \
+        ovni_mark_push(type, value)
 
-    #define INSTRUMENTATION_MARK_POP(type, value) ovni_mark_pop(type, value)
+    #define INSTRUMENTATION_MARK_POP(type, value)   \
+        ovni_mark_pop(type, value)
 
-    #define INSTRUMENTATION_MARK_SET(type, value) ovni_mark_set(type, value)
+    #define INSTRUMENTATION_MARK_SET(type, value)   \
+        ovni_mark_set(type, value)
 
 
 #else   /* No instrumentation (void) */
