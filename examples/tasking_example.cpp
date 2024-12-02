@@ -5,7 +5,7 @@
 #include <vector>
 #include <atomic>       // atomic counter to keep track how many tasks go executed
 
-#include <instrumentation.hpp>
+#include <detectr.hpp>
 
 #define NRANKS 4  // number of threads
 #define NTASKS 4  // number of tasks per thread

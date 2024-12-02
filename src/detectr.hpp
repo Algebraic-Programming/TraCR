@@ -4,7 +4,7 @@
  */
 
 /**
- * @file instrumentation.hpp
+ * @file detectr.hpp
  * @brief instrumentation calls inside #define functionalities
  * @author Noah Baumann
  * @date 11/11/2024
