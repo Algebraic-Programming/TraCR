@@ -1,4 +1,4 @@
-project('ovni_extension', [ 'cpp', 'c'],
+project('DetectR', [ 'cpp', 'c'],
   subproject_dir : 'extern',
   default_options : [
   'cpp_std=c++11',
@@ -26,7 +26,7 @@ InstrumentationBuildCppArgs = [
   ])
   
 
-####### Build ovni and ovni_extension part
+####### Build ovni and DetectR part
 
 subdir('src')
 

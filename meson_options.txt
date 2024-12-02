@@ -3,7 +3,7 @@ option('buildExamples', type : 'boolean', value : false,
 )
 
 option('enableInstrumentations', type: 'boolean', value : false,
-       description: 'Always enables the instrumentations. Avoid this and add the flag "USE_INSTRUMENTATION" manually.'
+       description: 'Always enables the instrumentations. Otherwise, use the flag "USE_INSTRUMENTATION" manually.'
 )   
 
 option('compileWarningsAsErrors', type : 'boolean', value : false,
