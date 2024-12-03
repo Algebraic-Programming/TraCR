@@ -59,7 +59,6 @@ enum mark_type : int32_t {
  */
 #ifdef USE_INSTRUMENTATION
 
-
     #ifdef ENABLE_DEBUG
         #define debug_print(fmt, ...) \
             printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
@@ -71,40 +70,52 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_ACTIVE true    
 
     #define INSTRUMENTATION_START()         \
-        debug_print("instr_start (PID: %d)", get_tid());       \
+        debug_print("instr_start (TID: %d)", get_tid());       \
         instrumentation_init_proc(0, 1)
     
     #define INSTRUMENTATION_END()   \
-        debug_print("instr_end (PID: %d)", get_tid()); \
+        debug_print("instr_end (TID: %d)", get_tid()); \
         instrumentation_end()
 
     #define INSTRUMENTATION_THREAD_INIT()                                           \
-        debug_print("instr_thread_init with isready: %d (PID: %d)", ovni_thread_isready(), get_tid()); \
+        debug_print("instr_thread_init with isready: %d (TID: %d)", ovni_thread_isready(), get_tid()); \
         if(!ovni_thread_isready()) {                                                \
             instrumentation_init_thread();                                          \
         }
 
     #define INSTRUMENTATION_THREAD_END()                                            \
-        debug_print("instr_thread_end with isready: %d (PID: %d)", ovni_thread_isready(), get_tid());  \
+        debug_print("instr_thread_end with isready: %d (TID: %d)", ovni_thread_isready(), get_tid());  \
         if(ovni_thread_isready()) {                                                 \
             instrumentation_thread_end();                                           \
             ovni_thread_free();                                                     \
         }
 
     #define INSTRUMENTATION_REQUIRE_TASKR()     \
-        debug_print("instr_enable_taskr (PID: %d)", get_tid());    \
+        debug_print("instr_enable_taskr (TID: %d)", get_tid());    \
         ovni_thread_require("taskr", "1.0.0")
 
     #define INSTRUMENTATION_TASK_EXEC(taskid)           \
-        debug_print("instr_task_exec: %d (PID: %d)", (int) taskid, get_tid());   \
+        debug_print("instr_task_exec: %d (TID: %d)", (int) taskid, get_tid());   \
         instr_taskr_task_execute(taskid)
 
     #define INSTRUMENTATION_TASK_END(taskid)            \
-        debug_print("instr_task_end: %d (PID: %d)", (int) taskid, get_tid());   \
+        debug_print("instr_task_end: %d (TID: %d)", (int) taskid, get_tid());   \
         instr_taskr_task_end(taskid)
 
+    #define INSTRUMENTATION_TASK_PAUSE(taskid)            \
+        debug_print("instr_task_pause: %d (TID: %d)", (int) taskid, get_tid());   \
+        instr_taskr_task_pause(taskid)
+
+    #define INSTRUMENTATION_TASK_FINISH(taskid)            \
+        debug_print("instr_task_finish: %d (TID: %d)", (int) taskid, get_tid());   \
+        instr_taskr_task_finish(taskid)
+
+    #define INSTRUMENTATION_TASK_SYNC(taskid)            \
+        debug_print("instr_task_sync: %d (TID: %d)", (int) taskid, get_tid());   \
+        instr_taskr_task_sync(taskid)
+
     #define INSTRUMENTATION_SET_NTASKS(ntasks)                  \
-        debug_print("instr_set_ntasks: %d (PID: %d)", (int) ntasks, get_tid());          \
+        debug_print("instr_set_ntasks: %d (TID: %d)", (int) ntasks, get_tid());          \
         ovni_attr_set_double("taskr.ntasks", (double) ntasks);
 
     // markers
@@ -141,6 +152,12 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_TASK_EXEC(taskid) (void)(taskid)
 
     #define INSTRUMENTATION_TASK_END(taskid) (void)(taskid)
+
+    #define INSTRUMENTATION_TASK_PAUSE(taskid) (void)(taskid)
+
+    #define INSTRUMENTATION_TASK_FINISH(taskid) (void)(taskid)
+
+    #define INSTRUMENTATION_TASK_SYNC(taskid) (void)(taskid)
 
     #define INSTRUMENTATION_SET_NTASKS(ntasks) (void)(ntasks)
 

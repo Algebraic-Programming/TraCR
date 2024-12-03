@@ -45,4 +45,16 @@ foreach args : cpp_args_list
     if get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION']
         # TODO: do ovniemu ovni/ here
     endif
+
+    # TEST 4: different tasking states
+    tasking_states_exe = executable('tasking_states_' + test_name, 'tasking_states.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
+
+    test_output_dir = 'tasking_states_output_' + test_name
+    test('tasking_states_' + test_name, tasking_states_exe,
+        #  workdir: meson.build_root(),
+         suite : testSuite)
+
+    if get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION']
+        # TODO: do ovniemu ovni/ here
+    endif
 endforeach

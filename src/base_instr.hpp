@@ -19,6 +19,22 @@
 
 #include <ovni.h>
 
+#define INSTR_1ARG(name, mcv, ta, a)                              \
+	static inline void name(ta a)                             \
+	{                                                         \
+		struct ovni_ev ev = {0};                          \
+		ovni_ev_set_clock(&ev, (uint64_t) ovni_clock_now());   \
+		ovni_ev_set_mcv(&ev, mcv);                        \
+		ovni_payload_add(&ev, (uint8_t *) &a, sizeof(a)); \
+		ovni_ev_emit(&ev);                                \
+	}
+
+INSTR_1ARG(instr_taskr_task_execute, "tTx", uint32_t, taskid)
+INSTR_1ARG(instr_taskr_task_end, "tTe", uint32_t, taskid)
+INSTR_1ARG(instr_taskr_task_pause, "tTp", uint32_t, taskid)
+INSTR_1ARG(instr_taskr_task_finish, "tTf", uint32_t, taskid)
+INSTR_1ARG(instr_taskr_task_sync, "tTs", uint32_t, taskid)
+
 /**
  * Function taken from here:
  * https://ovni.readthedocs.io/en/master/user/runtime/#setup_metadata
@@ -32,26 +48,6 @@ thread_execute(int32_t cpu, int32_t ctid, uint64_t tag)
     ovni_payload_add(&ev, (uint8_t *) &cpu, sizeof(cpu));
     ovni_payload_add(&ev, (uint8_t *) &ctid, sizeof(ctid));
     ovni_payload_add(&ev, (uint8_t *) &tag, sizeof(tag));
-    ovni_ev_emit(&ev);
-}
-
-static inline void
-instr_taskr_task_execute(uint32_t taskid)
-{
-	struct ovni_ev ev = {0};
-    ovni_ev_set_clock(&ev, ovni_clock_now());
-    ovni_ev_set_mcv(&ev, "tTx");
-    ovni_payload_add(&ev, (uint8_t *) &taskid, sizeof(taskid));
-    ovni_ev_emit(&ev);
-}
-
-static inline void
-instr_taskr_task_end(uint32_t taskid)
-{
-	struct ovni_ev ev = {0};
-    ovni_ev_set_clock(&ev, ovni_clock_now());
-    ovni_ev_set_mcv(&ev, "tTe");
-    ovni_payload_add(&ev, (uint8_t *) &taskid, sizeof(taskid));
     ovni_ev_emit(&ev);
 }
 
