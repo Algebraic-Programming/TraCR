@@ -11,50 +11,52 @@ else
     ]
 endif
 
+# TODO: allow parallelism if possible.
+
+test_types = ['markers', 'pthreads', 'tasking_states']
 foreach args : cpp_args_list
-    test_name = get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION', '-DENABLE_DEBUG'] ? 'with_instrumentation' : 'no_instrumentation'
+    instrumentation_enabled = get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION', '-DENABLE_DEBUG'] ? true : false
+
+    flag_name = instrumentation_enabled ? 'with_instrumentation' : 'no_instrumentation'
+
+    if instrumentation_enabled
+        cleanup_script = find_program('cleanup_script.sh', native: true, required: true)
+
+        ovniemu_test_script = find_program('ovniemu_test.sh', native: true, required: true)
+    endif
 
 
     # TEST 1: Basic ovni test
-    basic_ovni_exe = executable('basic_ovni_' + test_name, 'basic_ovni.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
+    basic_ovni_exe = executable('basic_ovni_' + flag_name, 'basic_ovni.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
-    test('basic_ovni_' + test_name, basic_ovni_exe, args : [], suite : testSuite)
+    test('basic_ovni_' + flag_name, basic_ovni_exe, args : [], suite : testSuite)
 
+    foreach test_type : test_types
+        test_name = test_type + '_' + flag_name
+        exe = executable(test_name, test_type + '.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
-    # TEST 2: trace test
-    trace_test_exe = executable('trace_test_' + test_name, 'trace_test.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
+        output_dir = meson.build_root() + '/examples/' + test_name + '.p'
 
-    test_output_dir = 'trace_test_output_' + test_name
-    test('trace_test_' + test_name, trace_test_exe,
-        #  workdir: meson.build_root(),
-         suite : testSuite)
+        if instrumentation_enabled
+            test('cleanup_script_' + test_name, cleanup_script, 
+                    workdir: output_dir,
+                    suite : testSuite,
+                    is_parallel : false,
+                    priority : 2)
+        endif
 
-    if get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION']
-        # TODO: do ovniemu ovni/ here
-    endif
+        test(test_name, exe,
+             workdir: output_dir,
+             suite : testSuite,
+             is_parallel : false,
+             priority : 1)
 
-
-    # TEST 3: tasking level tracing test with pthreads
-    tasking_example_exe = executable('tasking_example_' + test_name, 'tasking_example.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
-
-    test_output_dir = 'tasking_example_output_' + test_name
-    test('tasking_example_' + test_name, tasking_example_exe,
-        #  workdir: meson.build_root(),
-         suite : testSuite)
-
-    if get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION']
-        # TODO: do ovniemu ovni/ here
-    endif
-
-    # TEST 4: different tasking states
-    tasking_states_exe = executable('tasking_states_' + test_name, 'tasking_states.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
-
-    test_output_dir = 'tasking_states_output_' + test_name
-    test('tasking_states_' + test_name, tasking_states_exe,
-        #  workdir: meson.build_root(),
-         suite : testSuite)
-
-    if get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION']
-        # TODO: do ovniemu ovni/ here
-    endif
+        if instrumentation_enabled
+            test('ovniemu_test_' + test_name, ovniemu_test_script, 
+                 workdir: output_dir,
+                 suite : testSuite,
+                 is_parallel : false,
+                 priority : 0)
+        endif
+    endforeach
 endforeach

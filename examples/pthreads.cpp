@@ -35,7 +35,7 @@ void* threadFunction(void* arg) {
     for(int i = 0; i < NTASKS; ++i) {
         uint32_t taskid = id*NTASKS + i;
 
-        INSTRUMENTATION_TASK_INIT(taskid);
+        INSTRUMENTATION_TASK_INIT(taskid);  // always init first
 
         INSTRUMENTATION_TASK_EXEC(taskid);
 
