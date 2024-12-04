@@ -3,7 +3,6 @@
 #include <sys/syscall.h> // For syscall() and SYS_gettid
 #include <unistd.h>      // For getpid()
 #include <vector>
-#include <atomic>       // atomic counter to keep track how many tasks go executed
 
 #include <detectr.hpp>
 
@@ -12,9 +11,6 @@
 
 // Define a mutex
 pthread_mutex_t printMutex;
-
-// global task counter
-std::atomic<uint32_t> task_counter(0);
 
 // Function to be executed by a thread
 void* threadFunction(void* arg) {
@@ -37,7 +33,9 @@ void* threadFunction(void* arg) {
 
     // running tasks
     for(int i = 0; i < NTASKS; ++i) {
-        uint32_t taskid = task_counter.fetch_add(1);
+        uint32_t taskid = id*NTASKS + i;
+
+        INSTRUMENTATION_TASK_INIT(taskid);
 
         INSTRUMENTATION_TASK_EXEC(taskid);
 
@@ -57,23 +55,20 @@ int main() {
     // ovni proc init
     INSTRUMENTATION_START();
 
-    INSTRUMENTATION_REQUIRE_TASKR();
-
-    int nranks = 4;  // You can change this to create any number of threads
-    std::vector<pthread_t> threads(nranks);  // Vector to hold pthreads
-    std::vector<int> threadIds(nranks);      // Vector to hold thread IDs
+    std::vector<pthread_t> threads(NRANKS);  // Vector to hold pthreads
+    std::vector<int> threadIds(NRANKS);      // Vector to hold thread IDs
 
     // Initialize the mutex
     pthread_mutex_init(&printMutex, nullptr);
 
-    // Create nranks number of threads
-    for (int i = 0; i < nranks; ++i) {
-        threadIds[i] = i + 1;  // Assign thread ID starting from 1
+    // Create NRANKS number of threads
+    for (int i = 0; i < NRANKS; ++i) {
+        threadIds[i] = i;  // Assign thread ID
         pthread_create(&threads[i], nullptr, threadFunction, &threadIds[i]);
     }
 
     // Wait for all threads to finish
-    for (int i = 0; i < nranks; ++i) {
+    for (int i = 0; i < NRANKS; ++i) {
         pthread_join(threads[i], nullptr);
     }
 
@@ -81,9 +76,6 @@ int main() {
 
     // Destroy the mutex
     pthread_mutex_destroy(&printMutex);
-
-    /* Write ntasks in metadata */
-	INSTRUMENTATION_SET_NTASKS(task_counter.load());
 
     // ovni free proc
     INSTRUMENTATION_END();

@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <ovni.h>
 #include "base_instr.hpp"
 
@@ -59,6 +60,7 @@ enum mark_type : int32_t {
  */
 #ifdef USE_INSTRUMENTATION
 
+    // debug printing method. Can be enable with the ENABLE_DEBUG flag included.
     #ifdef ENABLE_DEBUG
         #define debug_print(fmt, ...) \
             printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
@@ -66,15 +68,20 @@ enum mark_type : int32_t {
         #define debug_print(fmt, ...)
     #endif
 
-    // this boolean is needed if something other than ovni has to be called.
+    // atomic counter of how many tasks got created
+    std::atomic<int> ntasks_counter(0);
+
+    // this boolean is needed if something other than DetectR has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
     #define INSTRUMENTATION_START()         \
         debug_print("instr_start (TID: %d)", get_tid());       \
-        instrumentation_init_proc(0, 1)
+        instrumentation_init_proc(0, 1);    \
+        ovni_thread_require("taskr", "1.0.0")
     
-    #define INSTRUMENTATION_END()   \
-        debug_print("instr_end (TID: %d)", get_tid()); \
+    #define INSTRUMENTATION_END()                                               \
+        debug_print("instr_end (TID: %d)", get_tid());                          \
+        ovni_attr_set_double("taskr.ntasks", (double) ntasks_counter.load());   \
         instrumentation_end()
 
     #define INSTRUMENTATION_THREAD_INIT()                                           \
@@ -90,10 +97,11 @@ enum mark_type : int32_t {
             ovni_thread_free();                                                     \
         }
 
-    #define INSTRUMENTATION_REQUIRE_TASKR()     \
-        debug_print("instr_enable_taskr (TID: %d)", get_tid());    \
-        ovni_thread_require("taskr", "1.0.0")
-
+    #define INSTRUMENTATION_TASK_INIT(taskid)           \
+        debug_print("instr_task_init: %d (TID: %d)", (int) taskid, get_tid());   \
+        instr_taskr_task_init(taskid);                  \
+        ntasks_counter++
+    
     #define INSTRUMENTATION_TASK_EXEC(taskid)           \
         debug_print("instr_task_exec: %d (TID: %d)", (int) taskid, get_tid());   \
         instr_taskr_task_execute(taskid)
@@ -113,10 +121,7 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_TASK_SYNC(taskid)            \
         debug_print("instr_task_sync: %d (TID: %d)", (int) taskid, get_tid());   \
         instr_taskr_task_sync(taskid)
-
-    #define INSTRUMENTATION_SET_NTASKS(ntasks)                  \
-        debug_print("instr_set_ntasks: %d (TID: %d)", (int) ntasks, get_tid());          \
-        ovni_attr_set_double("taskr.ntasks", (double) ntasks);
+        
 
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title)    \
@@ -147,7 +152,7 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_THREAD_END()
 
-    #define INSTRUMENTATION_REQUIRE_TASKR()
+    #define INSTRUMENTATION_TASK_INIT(taskid) (void)(taskid)
 
     #define INSTRUMENTATION_TASK_EXEC(taskid) (void)(taskid)
 
@@ -158,8 +163,6 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_TASK_FINISH(taskid) (void)(taskid)
 
     #define INSTRUMENTATION_TASK_SYNC(taskid) (void)(taskid)
-
-    #define INSTRUMENTATION_SET_NTASKS(ntasks) (void)(ntasks)
 
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title) (void)(type); (void)(flag); (void)(title)

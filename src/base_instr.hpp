@@ -29,6 +29,7 @@
 		ovni_ev_emit(&ev);                                \
 	}
 
+INSTR_1ARG(instr_taskr_task_init, "tTi", uint32_t, taskid)
 INSTR_1ARG(instr_taskr_task_execute, "tTx", uint32_t, taskid)
 INSTR_1ARG(instr_taskr_task_end, "tTe", uint32_t, taskid)
 INSTR_1ARG(instr_taskr_task_pause, "tTp", uint32_t, taskid)

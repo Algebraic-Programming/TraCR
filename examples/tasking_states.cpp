@@ -9,7 +9,10 @@ main(void)
 	const uint32_t taskid = 0;
 
 	INSTRUMENTATION_START();
-	INSTRUMENTATION_REQUIRE_TASKR();
+
+	INSTRUMENTATION_TASK_INIT(taskid);
+
+	printf("task(%d) initialized\n", taskid);
 
 	INSTRUMENTATION_TASK_EXEC(taskid);
 
@@ -30,9 +33,6 @@ main(void)
 	INSTRUMENTATION_TASK_END(taskid);
 
 	printf("task(%d) ended\n", taskid);
-
-	/* Write ntasks in metadata */
-	INSTRUMENTATION_SET_NTASKS(1.0);
 
 	INSTRUMENTATION_END();
 
