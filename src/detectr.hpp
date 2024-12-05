@@ -110,18 +110,25 @@ enum mark_type : int32_t {
         debug_print("instr_task_end: %d (TID: %d)", (int) taskid, get_tid());   \
         instr_taskr_task_end(taskid)
 
-    #define INSTRUMENTATION_TASK_PAUSE(taskid)            \
-        debug_print("instr_task_pause: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_pause(taskid)
+    #define INSTRUMENTATION_TASK_SUSPEND(taskid)            \
+        debug_print("instr_task_suspend: %d (TID: %d)", (int) taskid, get_tid());   \
+        instr_taskr_task_suspend(taskid)
 
     #define INSTRUMENTATION_TASK_FINISH(taskid)            \
         debug_print("instr_task_finish: %d (TID: %d)", (int) taskid, get_tid());   \
         instr_taskr_task_finish(taskid)
 
-    #define INSTRUMENTATION_TASK_SYNC(taskid)            \
-        debug_print("instr_task_sync: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_sync(taskid)
-        
+    #define INSTRUMENTATION_TASK_NOTADD(taskid)            \
+        debug_print("instr_task_notadd: %d (TID: %d)", (int) taskid, get_tid());   \
+        instr_taskr_task_notadd(taskid)
+
+    #define INSTRUMENTATION_TASK_ADD(taskid)            \
+        debug_print("instr_task_add: %d (TID: %d)", (int) taskid, get_tid());   \
+        instr_taskr_task_add(taskid)
+
+    #define INSTRUMENTATION_TASK_READY(taskid)            \
+        debug_print("instr_task_ready: %d (TID: %d)", (int) taskid, get_tid());   \
+        instr_taskr_task_ready(taskid)    
 
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title)    \
@@ -158,11 +165,15 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_TASK_END(taskid) (void)(taskid)
 
-    #define INSTRUMENTATION_TASK_PAUSE(taskid) (void)(taskid)
+    #define INSTRUMENTATION_TASK_SUSPEND(taskid) (void)(taskid)
 
     #define INSTRUMENTATION_TASK_FINISH(taskid) (void)(taskid)
 
-    #define INSTRUMENTATION_TASK_SYNC(taskid) (void)(taskid)
+    #define INSTRUMENTATION_TASK_NOTADD(taskid) (void)(taskid)
+
+    #define INSTRUMENTATION_TASK_ADD(taskid) (void)(taskid)
+
+    #define INSTRUMENTATION_TASK_READY(taskid) (void)(taskid)
 
     // markers
     #define INSTRUMENTATION_MARK_TYPE(type, flag, title) (void)(type); (void)(flag); (void)(title)

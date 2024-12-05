@@ -16,15 +16,23 @@ main(void)
 
 	INSTRUMENTATION_TASK_EXEC(taskid);
 
-	printf("task(%d) executing\n", taskid);
+	printf("task(%d) executed\n", taskid);
 
-	INSTRUMENTATION_TASK_PAUSE(taskid);
+	INSTRUMENTATION_TASK_SUSPEND(taskid);
 
-	printf("task(%d) paused\n", taskid);
+	printf("task(%d) suspended\n", taskid);
 
-	INSTRUMENTATION_TASK_SYNC(taskid);
+	INSTRUMENTATION_TASK_NOTADD(taskid);
 
-	printf("task(%d) syncing\n", taskid);
+	printf("task(%d) not added\n", taskid);
+
+	INSTRUMENTATION_TASK_ADD(taskid);
+
+	printf("task(%d) added\n", taskid);
+
+	INSTRUMENTATION_TASK_READY(taskid);
+
+	printf("task(%d) ready\n", taskid);
 
 	INSTRUMENTATION_TASK_FINISH(taskid);
 

@@ -2,12 +2,12 @@ testSuite = ['ovni']
 
 if get_option('enableInstrumentations')
     cpp_args_list = [
-    []                          # instrumentation already enabled
+    []                                            # instrumentation already enabled
     ]
 else
     cpp_args_list = [
     ['-DUSE_INSTRUMENTATION', '-DENABLE_DEBUG'],  # With instrumentation
-    []                          # Without instrumentation
+    []                                            # Without instrumentation
     ]
 endif
 

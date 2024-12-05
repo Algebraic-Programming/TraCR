@@ -32,9 +32,11 @@
 INSTR_1ARG(instr_taskr_task_init, "tTi", uint32_t, taskid)
 INSTR_1ARG(instr_taskr_task_execute, "tTx", uint32_t, taskid)
 INSTR_1ARG(instr_taskr_task_end, "tTe", uint32_t, taskid)
-INSTR_1ARG(instr_taskr_task_pause, "tTp", uint32_t, taskid)
+INSTR_1ARG(instr_taskr_task_suspend, "tTs", uint32_t, taskid)
 INSTR_1ARG(instr_taskr_task_finish, "tTf", uint32_t, taskid)
-INSTR_1ARG(instr_taskr_task_sync, "tTs", uint32_t, taskid)
+INSTR_1ARG(instr_taskr_task_notadd, "tTn", uint32_t, taskid)
+INSTR_1ARG(instr_taskr_task_add, "tTa", uint32_t, taskid)
+INSTR_1ARG(instr_taskr_task_ready, "tTr", uint32_t, taskid)
 
 /**
  * Function taken from here:
