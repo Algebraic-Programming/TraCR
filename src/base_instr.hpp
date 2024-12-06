@@ -142,7 +142,7 @@ instrumentation_end(void)
  * This will let the user define their own label id's like this:
  * const size_t free_mem_label_id  = INSTRUMENTATION_MARKER_ADD("Free memory", MARK_COLOR_MINT);
  * This class is build very lightweight for performance. An older version with storing the string exists in the newest 'task_more_states' branch
- * 
+ * https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/detectr/-/tree/task_more_states?ref_type=heads
  */
 class ColorMap {
 public:
