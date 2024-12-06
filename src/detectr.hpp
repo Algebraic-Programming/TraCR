@@ -151,20 +151,20 @@ enum mark_type : int32_t {
         marker_init(flag)
 
     #define INSTRUMENTATION_MARKER_ADD(str, value)  \
-        debug_print("instr_marker_add (TID: %d)", get_tid());   \
-        marker_add(str, value)
+        marker_add(str, value);                      \
+        debug_print("instr_marker_add (TID: %d)", get_tid())   \
 
-    #define INSTRUMENTATION_MARKER_SET(str)  \
+    #define INSTRUMENTATION_MARKER_SET(idx)  \
         debug_print("instr_marker_set (TID: %d)", get_tid());   \
-        marker_set(str)
+        marker_set(idx)
 
-    #define INSTRUMENTATION_MARKER_PUSH(str)  \
+    #define INSTRUMENTATION_MARKER_PUSH(idx)  \
         debug_print("instr_marker_push (TID: %d)", get_tid());   \
-        marker_push(str)
+        marker_push(idx)
 
-    #define INSTRUMENTATION_MARKER_POP(str)  \
+    #define INSTRUMENTATION_MARKER_POP(idx)  \
         debug_print("instr_marker_pop (TID: %d)", get_tid());   \
-        marker_pop(str)
+        marker_pop(idx)
 
 
 #else   /* No instrumentation (void) */
@@ -209,13 +209,13 @@ enum mark_type : int32_t {
     // markers simplified
     #define INSTRUMENTATION_MARKER_INIT(flag) (void)(flag)
 
-    #define INSTRUMENTATION_MARKER_ADD(str, value)  (void)(str); (void)(value)
+    #define INSTRUMENTATION_MARKER_ADD(str, value)  -1; (void)(str); (void)(value)
 
-    #define INSTRUMENTATION_MARKER_SET(str)  (void)(str)
+    #define INSTRUMENTATION_MARKER_SET(idx)  (void)(idx)
 
-    #define INSTRUMENTATION_MARKER_PUSH(str)  (void)(str)
+    #define INSTRUMENTATION_MARKER_PUSH(idx)  (void)(idx)
 
-    #define INSTRUMENTATION_MARKER_POP(str)  (void)(str)
+    #define INSTRUMENTATION_MARKER_POP(idx)  (void)(idx)
 
 
 #endif  /* USE_INSTRUMENTATION */

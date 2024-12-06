@@ -17,10 +17,11 @@ static void print_matrix(mytype* matrix, const size_t N)
     printf("\n");
 }
 
-/*
-Basic c code to allocate memory, run mmm, and free memory.
-Ovni trace test included with markers.
-*/
+/**
+ * Basic c code to allocate memory, run mmm, and free memory.
+ * Ovni trace test included with markers.
+ * OUTDATED, will be no longer used, only for speed comparisons
+ */
 int main(void)
 {
     std::chrono::time_point<std::chrono::system_clock> start, end, after_label_set;

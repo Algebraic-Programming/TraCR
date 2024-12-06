@@ -138,9 +138,13 @@ instrumentation_end(void)
 // Ovni Markers (user friendly)
 
 /**
- * The class we use to store the strings with their given color (int)
+ * The class we use to store the colors in a vector the keep track the label (int)
+ * This will let the user define their own label id's like this:
+ * const size_t free_mem_label_id  = INSTRUMENTATION_MARKER_ADD("Free memory", MARK_COLOR_MINT);
+ * This class is build very lightweight for performance. An older version with storing the string exists in the newest 'task_more_states' branch
+ * 
  */
-class StringIntegerMap {
+class ColorMap {
 public:
 	/**
 	 * This method has to be called first before any other methods.
@@ -152,126 +156,45 @@ public:
 	}
 
 	/**
-	 * Store the ovni mark label if not yet existing in the vector.
-	 * If existing, error not allowed
+	 * Store the ovni mark label color value in the vector.
+	 * NOTE: value (i.e. the color) has to be unique otherwise only will call an error!
 	 */
-    void add(const std::string& str, int64_t value) {
+    size_t add(const std::string& str, int64_t value) {
 
-        // Check if the string is not yet in the map (and in ovni)
-		std::pair<bool, int> found_idx = find(str);
-		bool found = found_idx.first;
-		int idx = found_idx.second;
+		ovni_mark_label(0, value, str.c_str());
 
-		if(!found) {
+		// Insert the corresponding integer value
+		colors.push_back(value);
 
-			ovni_mark_label(0, value, str.c_str());
-
-        	// Insert the string with its corresponding integer value
-        	labels.push_back(str);
-			colors.push_back(value);
-        } else {
-			std::cerr << "Error: Illegal move, String '" << str 
-						<< "' exists with color: " << idx <<  std::endl;
-
-			print();
-
-			return;
-		}
+		return colors.size() - 1;
     }
 
 	/**
-	 * ovni mark set call only if the string is present in the marker_map.
-	 * Else, error
+	 * ovni mark set call with the returned idx from the 'add' method
 	 */
-	void set(const std::string& str) {
-		std::pair<bool, int> found_idx = find(str);
-		bool found = found_idx.first;
-		int idx = found_idx.second;
-
-		if(!found) {
-			std::cerr << "Error: String '" << str 
-					  << "' not found in vector:" <<  std::endl;
-
-			print();
-
-			return;
-		}
-
+	void set(size_t idx) {
 		ovni_mark_set(0, colors[idx]);
 	}
 
 	/**
-	 * ovni mark push call only if the string is present in the marker_map.
-	 * Else, error
+	 * ovni mark push call with the returned idx from the 'add' method
 	 */
-	void push(const std::string& str) {
-		std::pair<bool, int> found_idx = find(str);
-		bool found = found_idx.first;
-		int idx = found_idx.second;
-
-		if(!found) {
-			std::cerr << "Error: String '" << str 
-					  << "' not found in vector:" <<  std::endl;
-
-			print();
-
-			return;
-		}
-
+	void push(size_t idx) {
 		ovni_mark_push(0, colors[idx]);
 	}
 
 	/**
-	 * ovni mark pop call only if the string is present in the marker_map.
-	 * Else, error
+	 * ovni mark pop call with the returned idx from the 'add' method
 	 */
-	void pop(const std::string& str) {
-		std::pair<bool, int> found_idx = find(str);
-		bool found = found_idx.first;
-		int idx = found_idx.second;
-
-		if(!found) {
-			std::cerr << "Error: String '" << str 
-					  << "' not found in vector:" <<  std::endl;
-
-			print();
-
-			return;
-		}
-
+	void pop(size_t idx) {
 		ovni_mark_pop(0, colors[idx]);
 	}
 
-	/**
-	 * Checking if the given string is already existing.
-	 * If yes, return true and the idx
-	 * If no, return false
-	 */
-	std::pair<bool, int> find(const std::string& str) const {
-		for (size_t i = 0; i < labels.size(); i++) {
-			if(labels[i] == str) {
-				return std::pair<bool, int>(true, (int) i);
-			}
-		}
-		return std::pair<bool, int>(false, -1);
-	}
-    
-	/**
-	 * prints out the labels with the corresponding colors.
-	 * (for debugging)
-	 */
-    void print() const {
-        for (size_t i = 0; i < labels.size(); i++) {
-            std::cout << "label: " << labels[i] << ", color: " << colors[i] << std::endl;
-        }
-    }
-
 private:
-    std::vector<std::string> labels;
 	std::vector<int64_t> colors;
 };
 
-StringIntegerMap marker_map; // define globali
+ColorMap marker_map; // define globali
 
 /**
  * Initialize the marker map.
@@ -288,35 +211,35 @@ marker_init(long flag)
  * No duplicates allowed. 
  * NOT THREAD SAFE! Only the main thread should handle this.
  */
-static inline void 
+static inline size_t 
 marker_add(const std::string& str, int64_t value)
 {
-	marker_map.add(str, value);
+	return marker_map.add(str, value);
 }
 
 /**
- * Set ovni mark if the string exists in the marker_map, else error
+ * ovni mark set call with the returned idx from the 'add' method
  */
 static inline void 
-marker_set(const std::string& str)
+marker_set(const size_t& idx)
 {
-	marker_map.set(str);
+	marker_map.set(idx);
 }
 
 /**
- * Push ovni mark if the string exists in the marker_map, else error
+ * ovni mark push call with the returned idx from the 'add' method
  */
 static inline void 
-marker_push(const std::string& str)
+marker_push(const size_t& idx)
 {
-	marker_map.push(str);
+	marker_map.push(idx);
 }
 
 /**
- * Pop ovni mark if the string exists in the marker_map, else error
+ * ovni mark pop call with the returned idx from the 'add' method
  */
 static inline void 
-marker_pop(const std::string& str)
+marker_pop(const size_t& idx)
 {
-	marker_map.pop(str);
+	marker_map.pop(idx);
 }
