@@ -32,36 +32,36 @@ int main(void)
     // initialize ovni
     INSTRUMENTATION_START();
 
-    INSTRUMENTATION_MARKER_INIT(1);
+    INSTRUMENTATION_MARK_TYPE(1, "Simple Marker Example"); // use flag == 1 for push/pop and flag != 1 for set
 
-    INSTRUMENTATION_MARKER_ADD("Allocate Memory", MARK_COLOR_TEAL);          //fyi it is costly (~3us) could be done at the beginning or ending
-    INSTRUMENTATION_MARKER_ADD("Fill matrices with values", MARK_COLOR_LAVENDER);
-    INSTRUMENTATION_MARKER_ADD("Print all matrices", MARK_COLOR_GRAY);
-    INSTRUMENTATION_MARKER_ADD("MMM", MARK_COLOR_PEACH);
-    INSTRUMENTATION_MARKER_ADD("Print solution of matrix A", MARK_COLOR_LIGHT_GRAY);
-    INSTRUMENTATION_MARKER_ADD("Free memory", MARK_COLOR_MINT);
+    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory");    //fyi it is costly (~3us) could be done at the beginning or ending
+    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_LAVENDER, "Fill matrices with values");
+    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_MAROON, "Print all matrices");
+    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_OLIVE, "MMM");
+    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_NAVY, "Print solution of matrix A");
+    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_PINK, "Free memory");
 
     after_label_set = std::chrono::system_clock::now();
-
+    
     // allocate memory
-    INSTRUMENTATION_MARKER_PUSH("Allocate Memory");
+    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_LIGHT_GREEN);
     mytype* A = (mytype*) calloc (1, N*N*sizeof(mytype));
     mytype* B = (mytype*) malloc (N*N*sizeof(mytype));
     mytype* C = (mytype*) malloc (N*N*sizeof(mytype));
-    INSTRUMENTATION_MARKER_POP("Allocate Memory");
+    INSTRUMENTATION_MARK_POP(MARK_COLOR_LIGHT_GREEN);
 
     // fill matrices
-    INSTRUMENTATION_MARKER_PUSH("Fill matrices with values");
+    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_LAVENDER);
     for(size_t i = 0; i < N; ++i){
         for(size_t j = 0; j < N; ++j){
             B[i*N + j] = (mytype) i;
             C[i*N + j] = (mytype) j;
         } 
     }
-    INSTRUMENTATION_MARKER_POP("Fill matrices with values");
+    INSTRUMENTATION_MARK_POP(MARK_COLOR_LAVENDER);
 
     // print matrices
-    INSTRUMENTATION_MARKER_PUSH("Print all matrices");
+    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_MAROON);
     printf("A:\n");
     print_matrix(A, N);
 
@@ -70,10 +70,10 @@ int main(void)
 
     printf("C:\n");
     print_matrix(C, N);
-    INSTRUMENTATION_MARKER_POP("Print all matrices");
+    INSTRUMENTATION_MARK_POP(MARK_COLOR_MAROON);
 
     // mmm
-    INSTRUMENTATION_MARKER_PUSH("MMM");
+    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_OLIVE);
     for(size_t i = 0; i < N; ++i){
         for(size_t j = 0; j < N; ++j){
             for(size_t k = 0; k < N; ++k){
@@ -81,24 +81,24 @@ int main(void)
             }
         }    
     }
-    INSTRUMENTATION_MARKER_POP("MMM");
+    INSTRUMENTATION_MARK_POP(MARK_COLOR_OLIVE);
 
     // last print
-    INSTRUMENTATION_MARKER_PUSH("Print solution of matrix A");
+    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_NAVY);
     printf("A (after mmm):\n");
     print_matrix(A, N);
-    INSTRUMENTATION_MARKER_POP("Print solution of matrix A");
-    
+    INSTRUMENTATION_MARK_POP(MARK_COLOR_NAVY);
+
     // free memory
-    INSTRUMENTATION_MARKER_PUSH("Free memory");
+    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_PINK);
     free(A);
     free(B);
     free(C);
-    INSTRUMENTATION_MARKER_POP("Free memory");
+    INSTRUMENTATION_MARK_POP(MARK_COLOR_PINK);
 
     // ovni fini finish
     INSTRUMENTATION_END();
-    
+
     end = std::chrono::system_clock::now();
 
     std::chrono::duration<double> total_time = (end - start);

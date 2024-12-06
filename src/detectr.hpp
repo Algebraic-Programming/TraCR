@@ -130,6 +130,22 @@ enum mark_type : int32_t {
         instr_taskr_task_ready(taskid)    
 
     // markers
+    #define INSTRUMENTATION_MARK_TYPE(flag, title)    \
+        ovni_mark_type(0, flag, title)
+
+    #define INSTRUMENTATION_MARK_LABEL(value, label)  \
+        ovni_mark_label(0, value, label)
+
+    #define INSTRUMENTATION_MARK_PUSH(value)  \
+        ovni_mark_push(0, value)
+
+    #define INSTRUMENTATION_MARK_POP(value)   \
+        ovni_mark_pop(0, value)
+
+    #define INSTRUMENTATION_MARK_SET(value)   \
+        ovni_mark_set(0, value)
+
+    // markers simplified
     #define INSTRUMENTATION_MARKER_INIT(flag)  \
         debug_print("instr_marker_init (TID: %d)", get_tid());   \
         marker_init(flag)
@@ -180,6 +196,17 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_TASK_READY(taskid) (void)(taskid)
 
     // markers
+    #define INSTRUMENTATION_MARK_TYPE(flag, title) (void)(flag); (void)(title)
+
+    #define INSTRUMENTATION_MARK_LABEL(value, label) (void)(value); (void)(label)
+
+    #define INSTRUMENTATION_MARK_PUSH(value) (void)(value)
+
+    #define INSTRUMENTATION_MARK_POP(value) (void)(value)
+
+    #define INSTRUMENTATION_MARK_SET(value) (void)(value)
+
+    // markers simplified
     #define INSTRUMENTATION_MARKER_INIT(flag) (void)(flag)
 
     #define INSTRUMENTATION_MARKER_ADD(str, value)  (void)(str); (void)(value)

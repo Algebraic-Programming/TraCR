@@ -13,7 +13,7 @@ endif
 
 # TODO: allow parallelism if possible.
 
-test_types = ['markers','pthreads', 'pthreads_markers', 'tasking_states']
+test_types = ['markers', 'markers_vanilla', 'pthreads', 'pthreads_markers', 'tasking_states']
 foreach args : cpp_args_list
     instrumentation_enabled = get_option('enableInstrumentations') or args == ['-DUSE_INSTRUMENTATION', '-DENABLE_DEBUG'] ? true : false
 
