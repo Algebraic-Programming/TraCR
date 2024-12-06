@@ -21,29 +21,28 @@
  * Marker colors values of the default Paraver color palette
  */
 enum mark_color : int64_t {
-    MARK_COLOR_BLACK = 0,
     MARK_COLOR_BLUE = 1,
-    MARK_COLOR_LIGHT_GRAY = 2,
-    MARK_COLOR_RED = 3,
-    MARK_COLOR_GREEN = 4,
-    MARK_COLOR_YELLOW = 5,
-    MARK_COLOR_ORANGE = 6,
-    MARK_COLOR_PURPLE = 7,
-    MARK_COLOR_CYAN = 8,
-    MARK_COLOR_MAGENTA = 9,
-    MARK_COLOR_LIGHT_GREEN = 10,
-    MARK_COLOR_PINK = 11,
-    MARK_COLOR_TEAL = 12,
-    MARK_COLOR_GRAY = 13,
-    MARK_COLOR_LAVENDER = 14,
-    MARK_COLOR_BROWN = 15,
-    MARK_COLOR_LIGHT_YELLOW = 16,
-    MARK_COLOR_MAROON = 17,
-    MARK_COLOR_MINT = 18,
-    MARK_COLOR_OLIVE = 19,
-    MARK_COLOR_PEACH = 20,
-    MARK_COLOR_NAVY = 21,
-    MARK_COLOR_BRIGHT_BLUE = 22
+    MARK_COLOR_LIGHT_GRAY,
+    MARK_COLOR_RED,
+    MARK_COLOR_GREEN,
+    MARK_COLOR_YELLOW,
+    MARK_COLOR_ORANGE,
+    MARK_COLOR_PURPLE,
+    MARK_COLOR_CYAN,
+    MARK_COLOR_MAGENTA,
+    MARK_COLOR_LIGHT_GREEN,
+    MARK_COLOR_PINK,
+    MARK_COLOR_TEAL,
+    MARK_COLOR_GRAY,
+    MARK_COLOR_LAVENDER,
+    MARK_COLOR_BROWN,
+    MARK_COLOR_LIGHT_YELLOW,
+    MARK_COLOR_MAROON,
+    MARK_COLOR_MINT,
+    MARK_COLOR_OLIVE,
+    MARK_COLOR_PEACH,
+    MARK_COLOR_NAVY,
+    MARK_COLOR_BRIGHT_BLUE
 };
 
 /**
@@ -131,20 +130,25 @@ enum mark_type : int32_t {
         instr_taskr_task_ready(taskid)    
 
     // markers
-    #define INSTRUMENTATION_MARK_TYPE(type, flag, title)    \
-        ovni_mark_type(type, flag, title)
+    #define INSTRUMENTATION_MARKER_INIT(flag)  \
+        debug_print("instr_marker_init (TID: %d)", get_tid());   \
+        marker_init(flag)
 
-    #define INSTRUMENTATION_MARK_LABEL(type, value, label)  \
-        ovni_mark_label(type, value, label)
+    #define INSTRUMENTATION_MARKER_ADD(str, value)  \
+        debug_print("instr_marker_add (TID: %d)", get_tid());   \
+        marker_add(str, value)
 
-    #define INSTRUMENTATION_MARK_PUSH(type, value)  \
-        ovni_mark_push(type, value)
+    #define INSTRUMENTATION_MARKER_SET(str)  \
+        debug_print("instr_marker_set (TID: %d)", get_tid());   \
+        marker_set(str)
 
-    #define INSTRUMENTATION_MARK_POP(type, value)   \
-        ovni_mark_pop(type, value)
+    #define INSTRUMENTATION_MARKER_PUSH(str)  \
+        debug_print("instr_marker_push (TID: %d)", get_tid());   \
+        marker_push(str)
 
-    #define INSTRUMENTATION_MARK_SET(type, value)   \
-        ovni_mark_set(type, value)
+    #define INSTRUMENTATION_MARKER_POP(str)  \
+        debug_print("instr_marker_pop (TID: %d)", get_tid());   \
+        marker_pop(str)
 
 
 #else   /* No instrumentation (void) */
@@ -176,15 +180,15 @@ enum mark_type : int32_t {
     #define INSTRUMENTATION_TASK_READY(taskid) (void)(taskid)
 
     // markers
-    #define INSTRUMENTATION_MARK_TYPE(type, flag, title) (void)(type); (void)(flag); (void)(title)
+    #define INSTRUMENTATION_MARKER_INIT(flag) (void)(flag)
 
-    #define INSTRUMENTATION_MARK_LABEL(type, value, label) (void)(type); (void)(value); (void)(label)
+    #define INSTRUMENTATION_MARKER_ADD(str, value)  (void)(str); (void)(value)
 
-    #define INSTRUMENTATION_MARK_PUSH(type, value) (void)(type); (void)(value)
+    #define INSTRUMENTATION_MARKER_SET(str)  (void)(str)
 
-    #define INSTRUMENTATION_MARK_POP(type, value) (void)(type); (void)(value)
+    #define INSTRUMENTATION_MARKER_PUSH(str)  (void)(str)
 
-    #define INSTRUMENTATION_MARK_SET(type, value) (void)(type); (void)(value)
+    #define INSTRUMENTATION_MARKER_POP(str)  (void)(str)
 
 
 #endif  /* USE_INSTRUMENTATION */
