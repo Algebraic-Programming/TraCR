@@ -7,7 +7,7 @@
 #include <detectr.hpp>
 
 #define NRANKS 4  // number of threads
-#define NTASKS 4  // number of tasks per thread
+#define NTASKS 3  // number of tasks per thread
 
 // globali accessible variables
 size_t thrd_running_id;
@@ -41,13 +41,7 @@ void* threadFunction(void* arg) {
     for(int i = 0; i < NTASKS; ++i) {
         uint32_t taskid = id*NTASKS + i;
 
-        INSTRUMENTATION_TASK_INIT(taskid);  // always init first
-
-        INSTRUMENTATION_TASK_EXEC(taskid);
-
         std::cout << "Thread " << id << " is running task: " << taskid << std::endl;
-
-        INSTRUMENTATION_TASK_END(taskid);
     }
 
     INSTRUMENTATION_MARKER_SET(thrd_finished_id);
@@ -64,10 +58,10 @@ int main() {
 
     INSTRUMENTATION_MARKER_INIT(0);
 
-    thrd_running_id = INSTRUMENTATION_MARKER_ADD("thread running", MARK_COLOR_MINT);
-    thrd_finished_id = INSTRUMENTATION_MARKER_ADD("thread finished", MARK_COLOR_GREEN);
-    const size_t thrd_join_id = INSTRUMENTATION_MARKER_ADD("join threads", MARK_COLOR_BROWN);
-    const size_t thrds_end_id = INSTRUMENTATION_MARKER_ADD("threads end", MARK_COLOR_GRAY);
+    thrd_running_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_MINT, "thread running");
+    thrd_finished_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_GREEN, "thread finished");
+    const size_t thrd_join_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_BROWN, "join threads");
+    const size_t thrds_end_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_GRAY, "threads end");
 
     std::vector<pthread_t> threads(NRANKS);  // Vector to hold pthreads
     std::vector<int> threadIds(NRANKS);      // Vector to hold thread IDs

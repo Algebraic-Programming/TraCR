@@ -7,7 +7,11 @@
 #include <detectr.hpp>
 
 #define NRANKS 4  // number of threads
-#define NTASKS 4  // number of tasks per thread
+#define NTASKS 3  // number of tasks per thread
+
+// globali accessible variables
+size_t task_running_id;
+size_t task_finished_id;
 
 // Define a mutex
 pthread_mutex_t printMutex;
@@ -35,13 +39,13 @@ void* threadFunction(void* arg) {
     for(int i = 0; i < NTASKS; ++i) {
         uint32_t taskid = id*NTASKS + i;
 
-        INSTRUMENTATION_TASK_INIT(taskid);  // always init first
+        INSTRUMENTATION_TASK_INIT();  // always init first
 
-        INSTRUMENTATION_TASK_EXEC(taskid);
+        INSTRUMENTATION_TASK_SET(taskid, task_running_id);
 
         std::cout << "Thread " << id << " is running task: " << taskid << std::endl;
 
-        INSTRUMENTATION_TASK_END(taskid);
+        INSTRUMENTATION_TASK_SET(taskid, task_finished_id);
     }
 
 
@@ -54,6 +58,9 @@ void* threadFunction(void* arg) {
 int main() {
     // ovni proc init
     INSTRUMENTATION_START();
+
+    task_running_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_MINT, "thread running");
+    task_finished_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_GREEN, "thread finished");
 
     std::vector<pthread_t> threads(NRANKS);  // Vector to hold pthreads
     std::vector<int> threadIds(NRANKS);      // Vector to hold thread IDs

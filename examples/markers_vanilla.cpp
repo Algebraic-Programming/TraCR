@@ -33,36 +33,36 @@ int main(void)
     // initialize ovni
     INSTRUMENTATION_START();
 
-    INSTRUMENTATION_MARK_TYPE(1, "Simple Marker Example"); // use flag == 1 for push/pop and flag != 1 for set
+    INSTRUMENTATION_VMARKER_TYPE(1, "Simple Marker Example"); // use flag == 1 for push/pop and flag != 1 for set
 
-    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory");    //fyi it is costly (~3us) could be done at the beginning or ending
-    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_LAVENDER, "Fill matrices with values");
-    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_MAROON, "Print all matrices");
-    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_OLIVE, "MMM");
-    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_NAVY, "Print solution of matrix A");
-    INSTRUMENTATION_MARK_LABEL(MARK_COLOR_PINK, "Free memory");
+    INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory");    //fyi it is costly (~3us) could be done at the beginning or ending
+    INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_LAVENDER, "Fill matrices with values");
+    INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_MAROON, "Print all matrices");
+    INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_OLIVE, "MMM");
+    INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_NAVY, "Print solution of matrix A");
+    INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_PINK, "Free memory");
 
     after_label_set = std::chrono::system_clock::now();
     
     // allocate memory
-    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_LIGHT_GREEN);
+    INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_LIGHT_GREEN);
     mytype* A = (mytype*) calloc (1, N*N*sizeof(mytype));
     mytype* B = (mytype*) malloc (N*N*sizeof(mytype));
     mytype* C = (mytype*) malloc (N*N*sizeof(mytype));
-    INSTRUMENTATION_MARK_POP(MARK_COLOR_LIGHT_GREEN);
+    INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LIGHT_GREEN);
 
     // fill matrices
-    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_LAVENDER);
+    INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_LAVENDER);
     for(size_t i = 0; i < N; ++i){
         for(size_t j = 0; j < N; ++j){
             B[i*N + j] = (mytype) i;
             C[i*N + j] = (mytype) j;
         } 
     }
-    INSTRUMENTATION_MARK_POP(MARK_COLOR_LAVENDER);
+    INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LAVENDER);
 
     // print matrices
-    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_MAROON);
+    INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_MAROON);
     printf("A:\n");
     print_matrix(A, N);
 
@@ -71,10 +71,10 @@ int main(void)
 
     printf("C:\n");
     print_matrix(C, N);
-    INSTRUMENTATION_MARK_POP(MARK_COLOR_MAROON);
+    INSTRUMENTATION_VMARKER_POP(MARK_COLOR_MAROON);
 
     // mmm
-    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_OLIVE);
+    INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_OLIVE);
     for(size_t i = 0; i < N; ++i){
         for(size_t j = 0; j < N; ++j){
             for(size_t k = 0; k < N; ++k){
@@ -82,20 +82,20 @@ int main(void)
             }
         }    
     }
-    INSTRUMENTATION_MARK_POP(MARK_COLOR_OLIVE);
+    INSTRUMENTATION_VMARKER_POP(MARK_COLOR_OLIVE);
 
     // last print
-    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_NAVY);
+    INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_NAVY);
     printf("A (after mmm):\n");
     print_matrix(A, N);
-    INSTRUMENTATION_MARK_POP(MARK_COLOR_NAVY);
+    INSTRUMENTATION_VMARKER_POP(MARK_COLOR_NAVY);
 
     // free memory
-    INSTRUMENTATION_MARK_PUSH(MARK_COLOR_PINK);
+    INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_PINK);
     free(A);
     free(B);
     free(C);
-    INSTRUMENTATION_MARK_POP(MARK_COLOR_PINK);
+    INSTRUMENTATION_VMARKER_POP(MARK_COLOR_PINK);
 
     // ovni fini finish
     INSTRUMENTATION_END();

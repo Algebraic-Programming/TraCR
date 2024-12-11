@@ -34,12 +34,14 @@ int main(void)
 
     INSTRUMENTATION_MARKER_INIT(1);
 
-    const size_t alloc_mem_label_id = INSTRUMENTATION_MARKER_ADD("Allocate Memory", MARK_COLOR_TEAL);          //fyi it is costly (~3us) could be done at the beginning or ending
-    const size_t fill_mat_label_id  = INSTRUMENTATION_MARKER_ADD("Fill matrices with values", MARK_COLOR_LAVENDER);
-    const size_t prt_mat_label_id   = INSTRUMENTATION_MARKER_ADD("Print all matrices", MARK_COLOR_GRAY);
-    const size_t mmm_label_id       = INSTRUMENTATION_MARKER_ADD("MMM", MARK_COLOR_PEACH);
-    const size_t prt_A_label_id     = INSTRUMENTATION_MARKER_ADD("Print solution of matrix A", MARK_COLOR_LIGHT_GRAY);
-    const size_t free_mem_label_id  = INSTRUMENTATION_MARKER_ADD("Free memory", MARK_COLOR_MINT);
+    // fyi, one of those function costs around ~3us. 
+    // It should be done at the beginning or ending.
+    const size_t alloc_mem_label_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_TEAL, "Allocate Memory");          
+    const size_t fill_mat_label_id  = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_LAVENDER, "Fill matrices with values");
+    const size_t prt_mat_label_id   = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_GRAY, "Print all matrices");
+    const size_t mmm_label_id       = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_PEACH, "MMM");
+    const size_t prt_A_label_id     = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_LIGHT_GRAY, "Print solution of matrix A");
+    const size_t free_mem_label_id  = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_MINT, "Free memory");
 
     after_label_set = std::chrono::system_clock::now();
 

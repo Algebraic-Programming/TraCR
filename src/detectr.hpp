@@ -21,7 +21,8 @@
  * Marker colors values of the default Paraver color palette
  */
 enum mark_color : int64_t {
-    MARK_COLOR_BLUE = 1,
+    MARK_COLOR_BLACK = 0,
+    MARK_COLOR_BLUE,
     MARK_COLOR_LIGHT_GRAY,
     MARK_COLOR_RED,
     MARK_COLOR_GREEN,
@@ -73,6 +74,7 @@ enum mark_type : int32_t {
     // this boolean is needed if something other than DetectR has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
+    // ovni proc methods
     #define INSTRUMENTATION_START()         \
         debug_print("instr_start (TID: %d)", get_tid());       \
         instrumentation_init_proc(0, 1);    \
@@ -83,6 +85,7 @@ enum mark_type : int32_t {
         ovni_attr_set_double("taskr.ntasks", (double) ntasks_counter.load());   \
         instrumentation_end()
 
+    // ovni thread methods
     #define INSTRUMENTATION_THREAD_INIT()                                           \
         debug_print("instr_thread_init with isready: %d (TID: %d)", ovni_thread_isready(), get_tid()); \
         if(!ovni_thread_isready()) {                                                \
@@ -96,126 +99,119 @@ enum mark_type : int32_t {
             ovni_thread_free();                                                     \
         }
 
-    #define INSTRUMENTATION_TASK_INIT(taskid)           \
-        debug_print("instr_task_init: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_init(taskid);                  \
-        ntasks_counter++
+    // task marker methods
+    #define INSTRUMENTATION_TASK_MARK_TYPE(chan_type)           \
+        debug_print("instr_task_type_set: (TID: %d)", get_tid());   \
+        ovni_attr_set_double("taskr.chan_type", (double) chan_type)
     
-    #define INSTRUMENTATION_TASK_EXEC(taskid)           \
-        debug_print("instr_task_exec: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_execute(taskid)
+    #define INSTRUMENTATION_TASK_INIT()            \
+        debug_print("instr_task_init: (TID: %d)", get_tid());   \
+        ntasks_counter++
 
-    #define INSTRUMENTATION_TASK_END(taskid)            \
-        debug_print("instr_task_end: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_end(taskid)
+    #define INSTRUMENTATION_TASK_ADD(labelid, label)           \
+        task_marker_map.add(labelid, label);                       \
+        debug_print("instr_taskr_create: (TID: %d)", get_tid())
 
-    #define INSTRUMENTATION_TASK_SUSPEND(taskid)            \
-        debug_print("instr_task_suspend: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_suspend(taskid)
+    #define INSTRUMENTATION_TASK_SET(taskid, idx)            \
+        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
+        task_marker_map.set(taskid, idx)
 
-    #define INSTRUMENTATION_TASK_FINISH(taskid)            \
-        debug_print("instr_task_finish: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_finish(taskid)
+    #define INSTRUMENTATION_TASK_PUSH(taskid, idx)            \
+        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
+        task_marker_map.push(taskid, idx)
 
-    #define INSTRUMENTATION_TASK_NOTADD(taskid)            \
-        debug_print("instr_task_notadd: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_notadd(taskid)
+    #define INSTRUMENTATION_TASK_POP(taskid, idx)            \
+        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
+        task_marker_map.pop(taskid, idx)
 
-    #define INSTRUMENTATION_TASK_ADD(taskid)            \
-        debug_print("instr_task_add: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_add(taskid)
-
-    #define INSTRUMENTATION_TASK_READY(taskid)            \
-        debug_print("instr_task_ready: %d (TID: %d)", (int) taskid, get_tid());   \
-        instr_taskr_task_ready(taskid)    
-
-    // markers
-    #define INSTRUMENTATION_MARK_TYPE(flag, title)    \
-        ovni_mark_type(0, flag, title)
-
-    #define INSTRUMENTATION_MARK_LABEL(value, label)  \
-        ovni_mark_label(0, value, label)
-
-    #define INSTRUMENTATION_MARK_PUSH(value)  \
-        ovni_mark_push(0, value)
-
-    #define INSTRUMENTATION_MARK_POP(value)   \
-        ovni_mark_pop(0, value)
-
-    #define INSTRUMENTATION_MARK_SET(value)   \
-        ovni_mark_set(0, value)
-
-    // markers simplified
+    // ovni marker methods simplified
     #define INSTRUMENTATION_MARKER_INIT(flag)  \
         debug_print("instr_marker_init (TID: %d)", get_tid());   \
-        marker_init(flag)
+        ovni_mark_type(0, flag, "DetectR Thread Markers");
 
-    #define INSTRUMENTATION_MARKER_ADD(str, value)  \
-        marker_add(str, value);                      \
+    #define INSTRUMENTATION_MARKER_ADD(value, label)  \
+        thread_marker_map.add(value, label);                    \
         debug_print("instr_marker_add (TID: %d)", get_tid())   \
 
     #define INSTRUMENTATION_MARKER_SET(idx)  \
         debug_print("instr_marker_set (TID: %d)", get_tid());   \
-        marker_set(idx)
+        thread_marker_map.set(idx);
 
     #define INSTRUMENTATION_MARKER_PUSH(idx)  \
         debug_print("instr_marker_push (TID: %d)", get_tid());   \
-        marker_push(idx)
+        thread_marker_map.push(idx);
 
     #define INSTRUMENTATION_MARKER_POP(idx)  \
         debug_print("instr_marker_pop (TID: %d)", get_tid());   \
-        marker_pop(idx)
+        thread_marker_map.pop(idx);
+
+    // ovni marker methods (vanilla) (only used for performance comparisons)
+    #define INSTRUMENTATION_VMARKER_TYPE(flag, title)    \
+        ovni_mark_type(0, flag, title)
+
+    #define INSTRUMENTATION_VMARKER_LABEL(value, label)  \
+        ovni_mark_label(0, value, label)
+
+    #define INSTRUMENTATION_VMARKER_SET(value)   \
+        debug_print("instr_marker_set (TID: %d)", get_tid());   \
+        ovni_mark_set(0, value)
+    
+    #define INSTRUMENTATION_VMARKER_PUSH(value)  \
+        debug_print("instr_marker_push (TID: %d)", get_tid());   \
+        ovni_mark_push(0, value)
+
+    #define INSTRUMENTATION_VMARKER_POP(value)   \
+        debug_print("instr_marker_pop (TID: %d)", get_tid());   \
+        ovni_mark_pop(0, value)
 
 
 #else   /* No instrumentation (void) */
 
     #define INSTRUMENTATION_ACTIVE false
 
+    // ovni proc methods
     #define INSTRUMENTATION_START()
 
     #define INSTRUMENTATION_END()
 
+    // ovni thread methods
     #define INSTRUMENTATION_THREAD_INIT()
 
     #define INSTRUMENTATION_THREAD_END()
 
-    #define INSTRUMENTATION_TASK_INIT(taskid) (void)(taskid)
+    // task marker methods
+    #define INSTRUMENTATION_TASK_MARK_TYPE(chan_type) (void)(chan_type)
+    
+    #define INSTRUMENTATION_TASK_INIT()
 
-    #define INSTRUMENTATION_TASK_EXEC(taskid) (void)(taskid)
+    #define INSTRUMENTATION_TASK_ADD(labelid, label) -1; (void)(labelid); (void)(label)
 
-    #define INSTRUMENTATION_TASK_END(taskid) (void)(taskid)
+    #define INSTRUMENTATION_TASK_SET(taskid, idx) (void)(taskid); (void)(idx)
 
-    #define INSTRUMENTATION_TASK_SUSPEND(taskid) (void)(taskid)
+    #define INSTRUMENTATION_TASK_PUSH(taskid, idx) (void)(taskid); (void)(idx)
 
-    #define INSTRUMENTATION_TASK_FINISH(taskid) (void)(taskid)
+    #define INSTRUMENTATION_TASK_POP(taskid, idx) (void)(taskid); (void)(idx)
 
-    #define INSTRUMENTATION_TASK_NOTADD(taskid) (void)(taskid)
-
-    #define INSTRUMENTATION_TASK_ADD(taskid) (void)(taskid)
-
-    #define INSTRUMENTATION_TASK_READY(taskid) (void)(taskid)
-
-    // markers
-    #define INSTRUMENTATION_MARK_TYPE(flag, title) (void)(flag); (void)(title)
-
-    #define INSTRUMENTATION_MARK_LABEL(value, label) (void)(value); (void)(label)
-
-    #define INSTRUMENTATION_MARK_PUSH(value) (void)(value)
-
-    #define INSTRUMENTATION_MARK_POP(value) (void)(value)
-
-    #define INSTRUMENTATION_MARK_SET(value) (void)(value)
-
-    // markers simplified
+    // ovni marker methods simplified
     #define INSTRUMENTATION_MARKER_INIT(flag) (void)(flag)
 
-    #define INSTRUMENTATION_MARKER_ADD(str, value)  -1; (void)(str); (void)(value)
+    #define INSTRUMENTATION_MARKER_ADD(value, label) -1; (void)(value); (void)(label)
 
-    #define INSTRUMENTATION_MARKER_SET(idx)  (void)(idx)
+    #define INSTRUMENTATION_MARKER_SET(idx) (void)(idx)
 
-    #define INSTRUMENTATION_MARKER_PUSH(idx)  (void)(idx)
+    #define INSTRUMENTATION_MARKER_PUSH(idx) (void)(idx)
 
-    #define INSTRUMENTATION_MARKER_POP(idx)  (void)(idx)
+    #define INSTRUMENTATION_MARKER_POP(idx) (void)(idx)
 
+    // ovni marker methods (vanilla) (only used for performance comparisons)
+    #define INSTRUMENTATION_VMARKER_TYPE(flag, title) (void)(flag); (void)(title)
+
+    #define INSTRUMENTATION_VMARKER_LABEL(value, label) (void)(value); (void)(label)
+
+    #define INSTRUMENTATION_VMARKER_SET(value) (void)(value)
+
+    #define INSTRUMENTATION_VMARKER_PUSH(value) (void)(value)
+
+    #define INSTRUMENTATION_VMARKER_POP(value) (void)(value)
 
 #endif  /* USE_INSTRUMENTATION */
