@@ -59,8 +59,13 @@ int main() {
     // ovni proc init
     INSTRUMENTATION_START();
 
-    task_running_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_MINT, "thread running");
-    task_finished_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_GREEN, "thread finished");
+    /**
+	 * 0 == Set (Default) and 1 == Push/Pop
+	 */
+    INSTRUMENTATION_TASK_MARK_TYPE(0);
+
+    task_running_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_MINT, "task running");
+    task_finished_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_GREEN, "task finished");
 
     std::vector<pthread_t> threads(NRANKS);  // Vector to hold pthreads
     std::vector<int> threadIds(NRANKS);      // Vector to hold thread IDs

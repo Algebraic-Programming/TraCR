@@ -12,14 +12,13 @@ main(void)
 
 	/**
 	 * 0 == Set (Default) and 1 == Push/Pop
-	 * Note for 0, actually not needed to be set as 0 is the default value.
 	 */
 	INSTRUMENTATION_TASK_MARK_TYPE(0);
 
 	const size_t task_init_idx = INSTRUMENTATION_TASK_ADD(MARK_COLOR_GRAY, "task initialized");
 	const size_t task_exec_idx = INSTRUMENTATION_TASK_ADD(MARK_COLOR_LIGHT_GREEN, "task executed");
 	const size_t task_susp_idx = INSTRUMENTATION_TASK_ADD(MARK_COLOR_LIGHT_GRAY, "task suspended");
-	const size_t task_fini_idx = INSTRUMENTATION_TASK_ADD(MARK_COLOR_MAROON, "task finished");
+	const size_t task_fini_idx = INSTRUMENTATION_TASK_ADD(MARK_COLOR_BLACK, "task finished");
 	
 	for(uint32_t taskid = 0; taskid < ntasks; taskid++) {
 
