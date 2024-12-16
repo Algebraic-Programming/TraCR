@@ -138,7 +138,7 @@ enum mark_type : int32_t {
         debug_print("instr_marker_add (TID: %d)", get_tid())   \
 
     #define INSTRUMENTATION_MARKER_SET(idx)  \
-        debug_print("instr_marker_set (TID: %d)", get_tid());   \
+        debug_print("instr_marker_set idx: %ld (TID: %d)", idx, get_tid());   \
         thread_marker_map.set(idx);
 
     #define INSTRUMENTATION_MARKER_PUSH(idx)  \
