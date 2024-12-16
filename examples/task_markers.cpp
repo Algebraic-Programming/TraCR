@@ -11,7 +11,7 @@ main(void)
 	INSTRUMENTATION_START();
 
 	/**
-	 * 0 == Set (Default) and 1 == Push/Pop
+	 * 0 == Set and 1 == Push/Pop
 	 */
 	INSTRUMENTATION_TASK_MARK_TYPE(0);
 

@@ -142,8 +142,10 @@ instrumentation_thread_end(void)
 static inline void
 instrumentation_end(void)
 {
-	instrumentation_thread_end();
-	ovni_thread_free();
+	if(ovni_thread_isready()) {
+		instrumentation_thread_end();
+		ovni_thread_free();
+	}
 	ovni_proc_fini();
 }
 
@@ -206,14 +208,14 @@ class ThreadMarkerMap {
 public:
 	/**
 	 * Store the ovni mark label color value in the vector.
-	 * NOTE: value (i.e. the color) has to be unique otherwise only will call an error!
+	 * NOTE: labelid (i.e. the color) has to be unique otherwise only will call an error!
 	 */
-    size_t add(int64_t value, const std::string& label) {
+    size_t add(int64_t labelid, const std::string& label) {
 
-		ovni_mark_label(0, value, label.c_str());
+		ovni_mark_label(0, labelid, label.c_str());
 
-		// Insert the corresponding integer value
-		colors.push_back(value);
+		// Insert the corresponding integer labelid
+		colors.push_back(labelid);
 
 		return colors.size() - 1;
     }

@@ -129,8 +129,8 @@ enum mark_type : int32_t {
         debug_print("instr_marker_init (TID: %d)", get_tid());   \
         ovni_mark_type(0, flag, "DetectR Thread Markers");
 
-    #define INSTRUMENTATION_MARKER_ADD(value, label)  \
-        thread_marker_map.add(value, label);                    \
+    #define INSTRUMENTATION_MARKER_ADD(labelid, label)  \
+        thread_marker_map.add(labelid, label);                    \
         debug_print("instr_marker_add (TID: %d)", get_tid())   \
 
     #define INSTRUMENTATION_MARKER_SET(idx)  \
