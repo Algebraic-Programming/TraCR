@@ -71,12 +71,16 @@ enum mark_type : int32_t {
     // atomic counter of how many tasks got created
     std::atomic<int> ntasks_counter(0);
 
+    // keep track of the main thread as this one has to be free'd when instr_end is called
+    int main_TID;
+
     // this boolean is needed if something other than DetectR has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
     // ovni proc methods
     #define INSTRUMENTATION_START()         \
         debug_print("instr_start (TID: %d)", get_tid());       \
+        main_TID = get_tid();               \
         instrumentation_init_proc(0, 1);    \
         ovni_thread_require("taskr", "1.0.0")
     
@@ -94,7 +98,7 @@ enum mark_type : int32_t {
 
     #define INSTRUMENTATION_THREAD_END()                                            \
         debug_print("instr_thread_end with isready: %d (TID: %d)", ovni_thread_isready(), get_tid());  \
-        if(ovni_thread_isready()) {                                                 \
+        if(ovni_thread_isready() && !(main_TID == get_tid())) {                                                 \
             instrumentation_thread_end();                                           \
             ovni_thread_free();                                                     \
         }

@@ -142,10 +142,8 @@ instrumentation_thread_end(void)
 static inline void
 instrumentation_end(void)
 {
-	if(ovni_thread_isready()) {
-		instrumentation_thread_end();
-		ovni_thread_free();
-	}
+	instrumentation_thread_end();
+	ovni_thread_free();
 	ovni_proc_fini();
 }
 
