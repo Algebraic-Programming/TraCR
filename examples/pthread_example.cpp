@@ -10,6 +10,8 @@
 #define NTASKS 3  // number of tasks per thread
 
 // globali accessible variables
+size_t task_running_id;
+size_t task_finished_id;
 size_t thrd_running_id;
 size_t thrd_finished_id;
 
@@ -41,7 +43,13 @@ void* threadFunction(void* arg) {
     for(int i = 0; i < NTASKS; ++i) {
         uint32_t taskid = id*NTASKS + i;
 
+        INSTRUMENTATION_TASK_INIT();  // always init first
+
+        INSTRUMENTATION_TASK_SET(taskid, task_running_id);
+
         std::cout << "Thread " << id << " is running task: " << taskid << std::endl;
+
+        INSTRUMENTATION_TASK_SET(taskid, task_finished_id);
     }
 
     INSTRUMENTATION_MARKER_SET(thrd_finished_id);
@@ -55,6 +63,14 @@ void* threadFunction(void* arg) {
 int main() {
     // ovni proc init
     INSTRUMENTATION_START();
+
+    /**
+	 * 0 == Set (Default) and 1 == Push/Pop
+	 */
+    INSTRUMENTATION_TASK_MARK_TYPE(0);
+
+    task_running_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_MINT, "task running");
+    task_finished_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_GREEN, "task finished");
 
     INSTRUMENTATION_MARKER_INIT(0);
 
@@ -75,8 +91,9 @@ int main() {
         pthread_create(&threads[i], nullptr, threadFunction, &threadIds[i]);
     }
 
-    // Wait for all threads to finish
     INSTRUMENTATION_MARKER_SET(thrd_join_id);
+
+    // Wait for all threads to finish
     for (int i = 0; i < NRANKS; ++i) {
         pthread_join(threads[i], nullptr);
     }

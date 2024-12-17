@@ -7,7 +7,7 @@
  * @file detectr.hpp
  * @brief instrumentation calls inside #define functionalities
  * @author Noah Baumann
- * @date 11/11/2024
+ * @date 17/12/2024
  */
 
 #pragma once
@@ -49,8 +49,7 @@ enum mark_color : int64_t {
 /**
  * 
  */
-#ifdef USE_INSTRUMENTATION
-
+#if defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS)
     // debug printing method. Can be enable with the ENABLE_DEBUG flag included.
     // NOT THREAD SAFE: will sometimes lead to segmentation fault. Use it on small examples.
     #ifdef ENABLE_DEBUG
@@ -64,7 +63,7 @@ enum mark_color : int64_t {
     std::atomic<int> ntasks_counter(0);
 
     // keep track of the main thread as this one has to be free'd when instr_end is called
-    int main_TID;
+    pid_t main_TID;
 
     // this boolean is needed if something other than DetectR has to be called.
     #define INSTRUMENTATION_ACTIVE true    
@@ -95,7 +94,28 @@ enum mark_color : int64_t {
             ovni_thread_free();                                                     \
         }
 
-    // task marker methods
+#else   /* No instrumentation (void) */
+
+    #define INSTRUMENTATION_ACTIVE false
+
+    // ovni proc methods
+    #define INSTRUMENTATION_START()
+
+    #define INSTRUMENTATION_END()
+
+    // ovni thread methods
+    #define INSTRUMENTATION_THREAD_INIT()
+
+    #define INSTRUMENTATION_THREAD_END()
+    
+#endif
+
+    
+
+/**
+ *  task marker methods
+ */
+#ifdef INSTRUMENTATION_TASKS
     #define INSTRUMENTATION_TASK_MARK_TYPE(chan_type)           \
         debug_print("instr_task_type_set: (TID: %d)", get_tid());   \
         ovni_attr_set_double("taskr.chan_type", (double) chan_type)
@@ -119,8 +139,24 @@ enum mark_color : int64_t {
     #define INSTRUMENTATION_TASK_POP(taskid, idx)            \
         debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
         task_marker_map.pop(taskid, idx)
+#else
+    #define INSTRUMENTATION_TASK_MARK_TYPE(chan_type) (void)(chan_type)
 
-    // ovni marker methods simplified
+    #define INSTRUMENTATION_TASK_INIT()
+
+    #define INSTRUMENTATION_TASK_ADD(labelid, label) -1; (void)(labelid); (void)(label)
+
+    #define INSTRUMENTATION_TASK_SET(taskid, idx) (void)(taskid); (void)(idx)
+
+    #define INSTRUMENTATION_TASK_PUSH(taskid, idx) (void)(taskid); (void)(idx)
+
+    #define INSTRUMENTATION_TASK_POP(taskid, idx) (void)(taskid); (void)(idx)
+#endif
+
+/**
+ * ovni thread marker methods
+ */
+#ifdef INSTRUMENTATION_THREADS
     #define INSTRUMENTATION_MARKER_INIT(flag)  \
         debug_print("instr_marker_init (TID: %d)", get_tid());   \
         ovni_mark_type(0, flag, "DetectR Thread Markers");
@@ -159,36 +195,7 @@ enum mark_color : int64_t {
     #define INSTRUMENTATION_VMARKER_POP(value)   \
         debug_print("instr_marker_pop (TID: %d)", get_tid());   \
         ovni_mark_pop(0, value)
-
-
-#else   /* No instrumentation (void) */
-
-    #define INSTRUMENTATION_ACTIVE false
-
-    // ovni proc methods
-    #define INSTRUMENTATION_START()
-
-    #define INSTRUMENTATION_END()
-
-    // ovni thread methods
-    #define INSTRUMENTATION_THREAD_INIT()
-
-    #define INSTRUMENTATION_THREAD_END()
-
-    // task marker methods
-    #define INSTRUMENTATION_TASK_MARK_TYPE(chan_type) (void)(chan_type)
-    
-    #define INSTRUMENTATION_TASK_INIT()
-
-    #define INSTRUMENTATION_TASK_ADD(labelid, label) -1; (void)(labelid); (void)(label)
-
-    #define INSTRUMENTATION_TASK_SET(taskid, idx) (void)(taskid); (void)(idx)
-
-    #define INSTRUMENTATION_TASK_PUSH(taskid, idx) (void)(taskid); (void)(idx)
-
-    #define INSTRUMENTATION_TASK_POP(taskid, idx) (void)(taskid); (void)(idx)
-
-    // ovni marker methods simplified
+#else
     #define INSTRUMENTATION_MARKER_INIT(flag) (void)(flag)
 
     #define INSTRUMENTATION_MARKER_ADD(value, label) -1; (void)(value); (void)(label)
@@ -209,5 +216,4 @@ enum mark_color : int64_t {
     #define INSTRUMENTATION_VMARKER_PUSH(value) (void)(value)
 
     #define INSTRUMENTATION_VMARKER_POP(value) (void)(value)
-
-#endif  /* USE_INSTRUMENTATION */
+#endif
