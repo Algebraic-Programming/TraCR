@@ -47,20 +47,12 @@ enum mark_color : int64_t {
 };
 
 /**
- * Marker type defines the group a set of markers are from.
- * In our case, e.g. MARK_TYPE_RUNTIME are all markers for the runtime perspective.
- */
-enum mark_type : int32_t {
-    MARK_TYPE_RUNTIME = 0,
-    MARK_TYPE_WORKER = 1
-};
-
-/**
  * 
  */
 #ifdef USE_INSTRUMENTATION
 
     // debug printing method. Can be enable with the ENABLE_DEBUG flag included.
+    // NOT THREAD SAFE: will sometimes lead to segmentation fault. Use it on small examples.
     #ifdef ENABLE_DEBUG
         #define debug_print(fmt, ...) \
             printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)

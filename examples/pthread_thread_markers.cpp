@@ -61,7 +61,7 @@ int main() {
     thrd_running_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_MINT, "thread running");
     thrd_finished_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_GREEN, "thread finished");
     const size_t thrd_join_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_BROWN, "join threads");
-    const size_t thrds_end_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_GRAY, "threads end");
+    const size_t thrds_end_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_BLACK, "threads end");
 
     std::vector<pthread_t> threads(NRANKS);  // Vector to hold pthreads
     std::vector<int> threadIds(NRANKS);      // Vector to hold thread IDs
