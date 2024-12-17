@@ -26,13 +26,9 @@ InstrumentationBuildCppArgs = [
   ])
   
 
-####### Build ovni and DetectR part
+####### Build ovni
 
 subdir('src')
-
-if get_option('enableInstrumentations')
-  add_project_arguments('-DUSE_INSTRUMENTATION', language: 'cpp')
-endif
 
 ####### Collect the dependencies
 
