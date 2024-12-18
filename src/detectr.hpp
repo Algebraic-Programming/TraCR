@@ -50,8 +50,8 @@ enum mark_color : int64_t {
  * 
  */
 #if defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS)
-    // debug printing method. Can be enable with the ENABLE_DEBUG flag included.
-    // NOT THREAD SAFE: will sometimes lead to segmentation fault. Use it on small examples.
+
+    // debug printing method. Can be enabled with the ENABLE_DEBUG flag included.
     #ifdef ENABLE_DEBUG
         #define debug_print(fmt, ...) \
             printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
