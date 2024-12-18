@@ -13,7 +13,7 @@ main(void)
 	/**
 	 * 0 == Set and 1 == Push/Pop
 	 */
-	INSTRUMENTATION_TASK_MARK_TYPE(0);
+	INSTRUMENTATION_TASK_MARK_INIT(0);
 
 	const size_t task_init_idx = INSTRUMENTATION_TASK_ADD(MARK_COLOR_GRAY, "task initialized");
 	const size_t task_exec_idx = INSTRUMENTATION_TASK_ADD(MARK_COLOR_LIGHT_GREEN, "task executed");

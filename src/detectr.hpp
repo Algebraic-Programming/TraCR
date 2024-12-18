@@ -60,10 +60,10 @@ enum mark_color : int64_t {
     #endif
 
     // atomic counter of how many tasks got created
-    std::atomic<int> ntasks_counter(0);
+    extern std::atomic<int> ntasks_counter;
 
     // keep track of the main thread as this one has to be free'd when instr_end is called
-    pid_t main_TID;
+    extern pid_t main_TID;
 
     // this boolean is needed if something other than DetectR has to be called.
     #define INSTRUMENTATION_ACTIVE true    
@@ -116,8 +116,11 @@ enum mark_color : int64_t {
  *  task marker methods
  */
 #ifdef INSTRUMENTATION_TASKS
-    #define INSTRUMENTATION_TASK_MARK_TYPE(chan_type)           \
-        debug_print("instr_task_type_set: (TID: %d)", get_tid());   \
+
+    extern TaskMarkerMap task_marker_map;
+    
+    #define INSTRUMENTATION_TASK_MARK_INIT(chan_type)                \
+        debug_print("instr_task_type_set: (TID: %d)", get_tid());    \
         ovni_attr_set_double("taskr.chan_type", (double) chan_type)
     
     #define INSTRUMENTATION_TASK_INIT()            \
@@ -140,7 +143,7 @@ enum mark_color : int64_t {
         debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
         task_marker_map.pop(taskid, idx)
 #else
-    #define INSTRUMENTATION_TASK_MARK_TYPE(chan_type) (void)(chan_type)
+    #define INSTRUMENTATION_TASK_MARK_INIT(chan_type) (void)(chan_type)
 
     #define INSTRUMENTATION_TASK_INIT()
 
@@ -157,23 +160,26 @@ enum mark_color : int64_t {
  * ovni thread marker methods
  */
 #ifdef INSTRUMENTATION_THREADS
-    #define INSTRUMENTATION_MARKER_INIT(flag)  \
-        debug_print("instr_marker_init (TID: %d)", get_tid());   \
-        ovni_mark_type(0, flag, "DetectR Thread Markers");
 
-    #define INSTRUMENTATION_MARKER_ADD(labelid, label)  \
+    extern ThreadMarkerMap thread_marker_map;
+
+    #define INSTRUMENTATION_THREAD_MARK_INIT(flag)  \
+        debug_print("instr_marker_init (TID: %d)", get_tid());   \
+        ovni_mark_type(0, flag, "DetectR Thread Markers")
+
+    #define INSTRUMENTATION_THREAD_MARK_ADD(labelid, label)  \
         thread_marker_map.add(labelid, label);                    \
         debug_print("instr_marker_add (TID: %d)", get_tid())   \
 
-    #define INSTRUMENTATION_MARKER_SET(idx)  \
+    #define INSTRUMENTATION_THREAD_MARK_SET(idx)  \
         debug_print("instr_marker_set idx: %ld (TID: %d)", idx, get_tid());   \
         thread_marker_map.set(idx);
 
-    #define INSTRUMENTATION_MARKER_PUSH(idx)  \
+    #define INSTRUMENTATION_THREAD_MARK_PUSH(idx)  \
         debug_print("instr_marker_push (TID: %d)", get_tid());   \
         thread_marker_map.push(idx);
 
-    #define INSTRUMENTATION_MARKER_POP(idx)  \
+    #define INSTRUMENTATION_THREAD_MARK_POP(idx)  \
         debug_print("instr_marker_pop (TID: %d)", get_tid());   \
         thread_marker_map.pop(idx);
 
@@ -196,15 +202,15 @@ enum mark_color : int64_t {
         debug_print("instr_marker_pop (TID: %d)", get_tid());   \
         ovni_mark_pop(0, value)
 #else
-    #define INSTRUMENTATION_MARKER_INIT(flag) (void)(flag)
+    #define INSTRUMENTATION_THREAD_MARK_INIT(flag) (void)(flag)
 
-    #define INSTRUMENTATION_MARKER_ADD(value, label) -1; (void)(value); (void)(label)
+    #define INSTRUMENTATION_THREAD_MARK_ADD(value, label) -1; (void)(value); (void)(label)
 
-    #define INSTRUMENTATION_MARKER_SET(idx) (void)(idx)
+    #define INSTRUMENTATION_THREAD_MARK_SET(idx) (void)(idx)
 
-    #define INSTRUMENTATION_MARKER_PUSH(idx) (void)(idx)
+    #define INSTRUMENTATION_THREAD_MARK_PUSH(idx) (void)(idx)
 
-    #define INSTRUMENTATION_MARKER_POP(idx) (void)(idx)
+    #define INSTRUMENTATION_THREAD_MARK_POP(idx) (void)(idx)
 
     // ovni marker methods (vanilla) (only used for performance comparisons)
     #define INSTRUMENTATION_VMARKER_TYPE(flag, title) (void)(flag); (void)(title)

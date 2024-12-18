@@ -191,8 +191,6 @@ private:
 	std::vector<uint32_t> colors;
 };
 
-TaskMarkerMap task_marker_map; // defined globali
-
 /* Ovni Thread Markers */
 
 /**
@@ -242,5 +240,3 @@ public:
 private:
 	std::vector<int64_t> colors;
 };
-
-ThreadMarkerMap thread_marker_map; // define globali

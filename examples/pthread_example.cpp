@@ -26,7 +26,7 @@ void* threadFunction(void* arg) {
     // ovni init thread
     INSTRUMENTATION_THREAD_INIT();
 
-    INSTRUMENTATION_MARKER_SET(thrd_running_id);
+    INSTRUMENTATION_THREAD_MARK_SET(thrd_running_id);
 
     // Get the process ID (PID) and thread ID (TID)
     pid_t pid = getpid();              // Process ID
@@ -52,7 +52,7 @@ void* threadFunction(void* arg) {
         INSTRUMENTATION_TASK_SET(taskid, task_finished_id);
     }
 
-    INSTRUMENTATION_MARKER_SET(thrd_finished_id);
+    INSTRUMENTATION_THREAD_MARK_SET(thrd_finished_id);
 
     // ovni free thread
     INSTRUMENTATION_THREAD_END();
@@ -67,17 +67,17 @@ int main() {
     /**
 	 * 0 == Set (Default) and 1 == Push/Pop
 	 */
-    INSTRUMENTATION_TASK_MARK_TYPE(0);
+    INSTRUMENTATION_TASK_MARK_INIT(0);
 
     task_running_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_MINT, "task running");
     task_finished_id = INSTRUMENTATION_TASK_ADD(MARK_COLOR_GREEN, "task finished");
 
-    INSTRUMENTATION_MARKER_INIT(0);
+    INSTRUMENTATION_THREAD_MARK_INIT(0);
 
-    thrd_running_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_MINT, "thread running");
-    thrd_finished_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_GREEN, "thread finished");
-    const size_t thrd_join_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_BROWN, "join threads");
-    const size_t thrds_end_id = INSTRUMENTATION_MARKER_ADD(MARK_COLOR_BLACK, "threads end");
+    thrd_running_id = INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_MINT, "thread running");
+    thrd_finished_id = INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_GREEN, "thread finished");
+    const size_t thrd_join_id = INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_BROWN, "join threads");
+    const size_t thrds_end_id = INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_BLACK, "threads end");
 
     std::vector<pthread_t> threads(NRANKS);  // Vector to hold pthreads
     std::vector<int> threadIds(NRANKS);      // Vector to hold thread IDs
@@ -91,14 +91,14 @@ int main() {
         pthread_create(&threads[i], nullptr, threadFunction, &threadIds[i]);
     }
 
-    INSTRUMENTATION_MARKER_SET(thrd_join_id);
+    INSTRUMENTATION_THREAD_MARK_SET(thrd_join_id);
 
     // Wait for all threads to finish
     for (int i = 0; i < NRANKS; ++i) {
         pthread_join(threads[i], nullptr);
     }
 
-    INSTRUMENTATION_MARKER_SET(thrds_end_id);
+    INSTRUMENTATION_THREAD_MARK_SET(thrds_end_id);
 
     std::cout << "All threads have finished." << std::endl;
 

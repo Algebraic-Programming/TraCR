@@ -35,6 +35,7 @@ subdir('src')
 InstrumentationBuildDep = declare_dependency(
     compile_args: InstrumentationBuildCppArgs,
     include_directories: InstrumentationBuildIncludes,
+    sources: ['src/detectr.cpp'],
     dependencies: ovniDep
     )
 
