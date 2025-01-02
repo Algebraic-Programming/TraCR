@@ -51,7 +51,7 @@ foreach args : cpp_args_list
         test_name = test_type + '_' + flag_name
         exe = executable(test_name, test_type + '.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
-        output_dir = meson.build_root() + '/examples/' + test_name + '.p'
+        output_dir = exe.path() + '.p'
 
         if instrumentation_enabled
             test('cleanup_script_' + test_name, cleanup_script, 
@@ -96,7 +96,7 @@ foreach args : cpp_args_list
         test_name = test_type + '_' + flag_name
         exe = executable(test_name, test_type + '.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
-        output_dir = meson.build_root() + '/examples/' + test_name + '.p'
+        output_dir = exe.path() + '.p'
 
         if instrumentation_enabled
             test('cleanup_script_' + test_name, cleanup_script, 
@@ -141,7 +141,7 @@ foreach args : cpp_args_list
         test_name = test_type + '_' + flag_name
         exe = executable(test_name, test_type + '.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
-        output_dir = meson.build_root() + '/examples/' + test_name + '.p'
+        output_dir = exe.path() + '.p'
 
         if instrumentation_enabled
             test('cleanup_script_' + test_name, cleanup_script, 
