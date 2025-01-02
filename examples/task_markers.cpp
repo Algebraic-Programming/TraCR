@@ -28,6 +28,11 @@ main(void)
 
 		printf("task(%d) initialized\n", taskid);
 
+		// same value push (should not fail!)
+		INSTRUMENTATION_TASK_SET(taskid, task_init_idx);
+
+		printf("task(%d) initialized\n", taskid);
+
 		INSTRUMENTATION_TASK_SET(taskid, task_exec_idx);
 
 		printf("task(%d) executed\n", taskid);
