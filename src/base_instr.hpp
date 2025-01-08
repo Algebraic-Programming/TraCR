@@ -26,15 +26,28 @@ instr_taskr_mark_create(uint32_t labelid, const char *label)
 {
 	struct ovni_ev ev = {0};
 	ovni_ev_set_clock(&ev, (uint64_t) ovni_clock_now());
-	ovni_ev_set_mcv(&ev, "tMc");
+	ovni_ev_set_mcv(&ev, "tMc+");
 
-	// Convert uint32_t label to a string and append it to the original string
-	char conc_label[strlen(label) + 32];
+	// Convert uint32_t label to a string and append it to the label string
+	const size_t buf_size = sizeof(labelid) + strlen(label) + 1;
 
-    // Concatenate the label to the original string with the unique char '$'. Should not be used by the user!
-	sprintf(conc_label, "%s$%u", label, labelid);
+	if(buf_size > 512){
+		std::cerr << "label too long: " << label << std::endl;
+        std::exit(EXIT_FAILURE);
+	}
 
-	ovni_ev_jumbo_emit(&ev, (uint8_t *) conc_label, (uint32_t) strlen(conc_label));
+	char buf[buf_size];
+
+	char *p = buf;
+
+	size_t nbytes = 0;
+	memcpy(buf, &labelid, sizeof(labelid));
+	p += sizeof(labelid);
+	nbytes += sizeof(labelid);
+	sprintf(p, "%s", label);
+	nbytes += strlen(p) + 1;
+
+	ovni_ev_jumbo_emit(&ev, (uint8_t *) buf, (uint32_t) nbytes);
 }
 
 #define INSTR_2ARG(name, mcv, ta, a, tb, b)                       \
