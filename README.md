@@ -7,7 +7,7 @@ It can trace task and/or thread traces.
 The folder `examples/` shows examples on how to use this library.
 
 An example trace in task view is show in the snapshot below:
-[TaskR running Fibonacci in task view](images/TaskR_Fibonacci.png)
+![TaskR running Fibonacci in task view](images/TaskR_Fibonacci.png)
 
 We also included some python post-processing scripts for visualizations purposes (see `python_scripts/`).
 
