@@ -4,13 +4,13 @@
  */
 
 /**
- * @file detectr.cpp
+ * @file tracr.hpp
  * @brief instrumentation calls inside #define functionalities
  * @author Noah Baumann
  * @date 17/12/2024
  */
 
-#include "detectr.hpp"
+#include "tracr.hpp"
 
 /**
  * 

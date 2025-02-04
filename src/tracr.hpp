@@ -4,7 +4,7 @@
  */
 
 /**
- * @file detectr.hpp
+ * @file tracr.hpp
  * @brief instrumentation calls inside #define functionalities
  * @author Noah Baumann
  * @date 17/12/2024
@@ -65,7 +65,7 @@ enum mark_color : int64_t {
     // keep track of the main thread as this one has to be free'd when instr_end is called
     extern pid_t main_TID;
 
-    // this boolean is needed if something other than DetectR has to be called.
+    // this boolean is needed if something other than TraCR has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
     // ovni proc methods
@@ -165,7 +165,7 @@ enum mark_color : int64_t {
 
     #define INSTRUMENTATION_THREAD_MARK_INIT(flag)  \
         debug_print("instr_marker_init (TID: %d)", get_tid());   \
-        ovni_mark_type(0, flag, "DetectR Thread Markers")
+        ovni_mark_type(0, flag, "TraCR Thread Markers")
 
     #define INSTRUMENTATION_THREAD_MARK_ADD(labelid, label)  \
         thread_marker_map.add(labelid, label);                    \

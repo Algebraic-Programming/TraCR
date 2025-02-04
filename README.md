@@ -1,16 +1,21 @@
-# DetectR
+# TraCR
 
-DetectR is a user-friendly instrumentation library which can be activated/deactivated via a flag.
+TraCR (pronounced 'tracer') is a user-friendly instrumentation library which can be activated/deactivated via a flag.
 
-The core instrumentation library is currently a modified version of ovni.
+It can trace task and/or thread traces. 
 
 The folder `examples/` shows examples on how to use this library.
+
+An example trace in task view is show in the snapshot below:
+[TaskR running Fibonacci in task view](images/TaskR_Fibonacci.png)
 
 We also included some python post-processing scripts for visualizations purposes (see `python_scripts/`).
 
 ## ovni
 
-To use DetectR one has to first install [ovni](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/ovni) by typing this:
+The core instrumentation library is currently a modified version of ovni.
+
+To use TraCR one has to first install [ovni](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/ovni) by typing this:
 
 ```
 mkdir extern/ovni/build; pushd extern/ovni/build; cmake .. -DCMAKE_INSTALL_PREFIX=$prefix; make -j24; make install; popd

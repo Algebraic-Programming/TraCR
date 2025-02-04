@@ -1,7 +1,7 @@
 /* Copyright (c) 2024 Barcelona Supercomputing Center (BSC)
  * SPDX-License-Identifier: GPL-3.0-or-later */
 
-#include <detectr.hpp>
+#include <tracr.hpp>
 
 int
 main(void)

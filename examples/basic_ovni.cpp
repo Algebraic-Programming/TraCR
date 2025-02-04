@@ -1,5 +1,5 @@
 #include <ovni.h>
-#include <detectr.hpp>
+#include <tracr.hpp>
 
 /*
 Basic test to see if ovni is linked correctly

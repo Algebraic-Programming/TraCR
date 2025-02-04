@@ -1,5 +1,5 @@
 #include <chrono>
-#include <detectr.hpp>
+#include <tracr.hpp>
 
 #define mytype float
 

@@ -1,4 +1,4 @@
-project('DetectR', [ 'cpp', 'c'],
+project('TraCR', [ 'cpp', 'c'],
   subproject_dir : 'extern',
   default_options : [
   'cpp_std=c++11',
@@ -35,7 +35,7 @@ subdir('src')
 InstrumentationBuildDep = declare_dependency(
     compile_args: InstrumentationBuildCppArgs,
     include_directories: InstrumentationBuildIncludes,
-    sources: ['src/detectr.cpp'],
+    sources: ['src/tracr.cpp'],
     dependencies: ovniDep
     )
 

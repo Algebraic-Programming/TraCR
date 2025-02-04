@@ -4,7 +4,7 @@
 #include <unistd.h>      // For getpid()
 #include <vector>
 
-#include <detectr.hpp>
+#include <tracr.hpp>
 
 #define NRANKS 4  // number of threads
 #define NTASKS 3  // number of tasks per thread
