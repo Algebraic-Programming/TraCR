@@ -69,10 +69,12 @@ enum mark_color : int64_t {
     #define INSTRUMENTATION_ACTIVE true    
 
     // ovni proc methods
-    #define INSTRUMENTATION_START()         \
-        debug_print("instr_start (TID: %d)", get_tid());       \
-        main_TID = get_tid();               \
-        instrumentation_init_proc(0, 1);    \
+    #define INSTRUMENTATION_START()                         \
+        debug_print("instr_start (TID: %d)", get_tid());    \
+        main_TID = get_tid();                               \
+        if(!ovni_proc_isready()) {                          \
+            instrumentation_init_proc(0, 1);                \
+        }                                                   \
         ovni_thread_require("taskr", "1.0.0")
     
     #define INSTRUMENTATION_END()                                               \
