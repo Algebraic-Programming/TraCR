@@ -65,6 +65,9 @@ enum mark_color : int64_t {
     // keep track of the main thread as this one has to be free'd when instr_end is called
     extern pid_t main_TID;
 
+    // A flag to check if something else has initialized ovni (like nosv). If so, TraCR with not init/end proc.
+    extern bool external_init;
+
     // this boolean is needed if something other than TraCR has to be called.
     #define INSTRUMENTATION_ACTIVE true    
 
@@ -72,7 +75,8 @@ enum mark_color : int64_t {
     #define INSTRUMENTATION_START()                         \
         debug_print("instr_start (TID: %d)", get_tid());    \
         main_TID = get_tid();                               \
-        if(!ovni_proc_isready()) {                          \
+        external_init = ovni_proc_isready();                \
+        if(!external_init) {                                \
             instrumentation_init_proc(0, 1);                \
         }                                                   \
         ovni_thread_require("taskr", "1.0.0")
@@ -80,7 +84,9 @@ enum mark_color : int64_t {
     #define INSTRUMENTATION_END()                                               \
         debug_print("instr_end (TID: %d)", get_tid());                          \
         ovni_attr_set_double("taskr.ntasks", (double) ntasks_counter.load());   \
-        instrumentation_end()
+        if(!external_init) {                                                    \
+            instrumentation_end();                                              \
+        }
 
     // ovni thread methods
     #define INSTRUMENTATION_THREAD_INIT()                                           \

@@ -21,6 +21,9 @@
 
     // keep track of the main thread as this one has to be free'd when instr_end is called
     pid_t main_TID;
+
+    // A flag to check if something else has initialized ovni (like nosv). If so, TraCR with not init/end proc.
+    bool external_init = false;
 #endif
 
 /**
