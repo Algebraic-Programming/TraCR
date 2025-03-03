@@ -15,6 +15,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <sys/syscall.h> // For syscall(SYS_gettid)
+#include <sched.h>		 // For sched_getcpu()
 #include <unistd.h>		 // For getpid()
 #include <string>
 #include <vector>
@@ -119,7 +120,7 @@ instrumentation_init_proc(int rank, int nranks)
 	for (int i = 0; i < nranks; i++)
 		ovni_add_cpu(i, i);
 
-	thread_execute(rank, -1, 0);
+	thread_execute(-1, get_tid(), 0);
 }
 
 /**
@@ -130,7 +131,7 @@ instrumentation_init_thread()
 {
 	ovni_thread_init(get_tid());
 
-	thread_execute(-1, -1, 0);
+	thread_execute(sched_getcpu(), get_tid(), 0);
 }
 
 /**

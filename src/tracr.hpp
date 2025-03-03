@@ -13,6 +13,7 @@
 #pragma once
 
 #include <atomic>
+#include <sys/sysinfo.h>    // get_nprocs()
 #include <ovni.h>
 #include "base_instr.hpp"
 
@@ -77,7 +78,7 @@ enum mark_color : int64_t {
         main_TID = get_tid();                               \
         external_init = ovni_proc_isready();                \
         if(!external_init) {                                \
-            instrumentation_init_proc(0, 1);                \
+            instrumentation_init_proc(0, get_nprocs());                \
         }                                                   \
         ovni_thread_require("taskr", "1.0.0")
     
