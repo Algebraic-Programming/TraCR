@@ -1,3 +1,3 @@
 [submodule "extern/ovni"]
 	path = extern/ovni
-	url = https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/ovni.git
+	url = https://github.com/bsc-pm/ovni.git

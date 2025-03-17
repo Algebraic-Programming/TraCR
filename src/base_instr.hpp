@@ -22,54 +22,8 @@
 
 #include <ovni.h>
 
-static inline void
-instr_taskr_mark_create(uint32_t labelid, const char *label)
-{
-	struct ovni_ev ev = {0};
-	ovni_ev_set_clock(&ev, (uint64_t) ovni_clock_now());
-	ovni_ev_set_mcv(&ev, "tMc+");
-
-	// Convert uint32_t label to a string and append it to the label string
-	const size_t buf_size = sizeof(labelid) + strlen(label) + 1;
-
-	if(buf_size > 512){
-		std::cerr << "label too long: " << label << std::endl;
-        std::exit(EXIT_FAILURE);
-	}
-
-	char buf[buf_size];
-
-	char *p = buf;
-
-	size_t nbytes = 0;
-	memcpy(buf, &labelid, sizeof(labelid));
-	p += sizeof(labelid);
-	nbytes += sizeof(labelid);
-	sprintf(p, "%s", label);
-	nbytes += strlen(p) + 1;
-
-	ovni_ev_jumbo_emit(&ev, (uint8_t *) buf, (uint32_t) nbytes);
-}
-
-#define INSTR_2ARG(name, mcv, ta, a, tb, b)                       \
-	static inline void name(ta a, tb b)                       \
-	{                                                         \
-		struct ovni_ev ev = {0};                          \
-		ovni_ev_set_clock(&ev, (uint64_t) ovni_clock_now());   \
-		ovni_ev_set_mcv(&ev, mcv);                        \
-		ovni_payload_add(&ev, (uint8_t *) &a, sizeof(a)); \
-		ovni_payload_add(&ev, (uint8_t *) &b, sizeof(b)); \
-		ovni_ev_emit(&ev);                                \
-	}
-
-
-INSTR_2ARG(instr_taskr_mark_set,  "tM=", uint32_t, taskid, uint32_t, labelid)
-INSTR_2ARG(instr_taskr_mark_push, "tM[", uint32_t, taskid, uint32_t, labelid)
-INSTR_2ARG(instr_taskr_mark_pop,  "tM]", uint32_t, taskid, uint32_t, labelid)
-
 /**
- * Function taken from here:
- * https://ovni.readthedocs.io/en/master/user/runtime/#setup_metadata
+ * Function to initialize a ovni thread
  */
 static inline void 
 thread_execute(int32_t cpu, int32_t ctid, uint64_t tag)
@@ -90,6 +44,16 @@ static inline pid_t
 get_tid(void)
 {
 	return (pid_t) syscall(SYS_gettid);
+}
+
+/**
+ * 
+ */
+static inline bool
+ovni_proc_isready(void)
+{
+	// return (atomic_load(&rproc.st) == ST_READY);
+	return false;
 }
 
 
@@ -120,6 +84,8 @@ instrumentation_init_proc(int rank, int nranks)
 	for (int i = 0; i < nranks; i++)
 		ovni_add_cpu(i, i);
 
+	// For visualization convenience the instrumentation proc will be initialized on the CPU ID -1.
+	// One can also initialize it to "rank" if wanted
 	thread_execute(-1, get_tid(), 0);
 }
 
@@ -160,50 +126,6 @@ instrumentation_end(void)
 	ovni_thread_free();
 	ovni_proc_fini();
 }
-
-
-/* Ovni Task Markers */
-
-class TaskMarkerMap {
-public:
-	/**
-	 * Store the ovni mark label color value in the vector.
-	 * NOTE: value (i.e. the color) has to be unique otherwise only will call an error!
-	 */
-    size_t add(uint32_t labelid, const std::string& label) {
-
-		instr_taskr_mark_create(labelid, label.c_str());
-
-		// Insert the corresponding integer value
-		colors.push_back(labelid);
-
-		return colors.size() - 1;
-    }
-
-	/**
-	 * ovni mark set call with the returned idx from the 'add' method
-	 */
-	void set(uint32_t taskid, size_t idx) {
-		instr_taskr_mark_set(taskid, colors[idx]);
-	}
-
-	/**
-	 * ovni mark push call with the returned idx from the 'add' method
-	 */
-	void push(uint32_t taskid, size_t idx) {
-		instr_taskr_mark_push(taskid, colors[idx]);
-	}
-
-	/**
-	 * ovni mark pop call with the returned idx from the 'add' method
-	 */
-	void pop(uint32_t taskid, size_t idx) {
-		instr_taskr_mark_pop(taskid, colors[idx]);
-	}
-
-private:
-	std::vector<uint32_t> colors;
-};
 
 /* Ovni Thread Markers */
 

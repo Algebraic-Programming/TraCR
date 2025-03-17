@@ -6,9 +6,9 @@ Basic test to see if ovni is linked correctly
 */
 int main( int argc, char **argv)
 {
-    printf("%s\n", OVNI_TRACEDIR);
+    printf("OVNI_TRACEDIR: %s\n", OVNI_TRACEDIR);
 
-    printf("%d\n", INSTRUMENTATION_ACTIVE);
+    printf("Instrumentation enabled: %d\n", INSTRUMENTATION_ACTIVE);
 
     ovni_version_check();
 
