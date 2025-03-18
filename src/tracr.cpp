@@ -20,7 +20,7 @@
     pid_t main_TID;
 
     // A flag to check if something else has initialized ovni (like nosv). If so, TraCR with not init/end proc.
-    bool external_init = false;
+    bool external_init;
 
     // thread marker's mapping
     ThreadMarkerMap thread_marker_map;

@@ -71,15 +71,15 @@
  
      // ovni proc methods
      #define INSTRUMENTATION_START(external_init_)                       \
-         debug_print("instr_start (TID: %d)", get_tid());                \
-         main_TID = get_tid();                                           \
-         external_init = external_init_;                                 \
+     main_TID = get_tid();                                           \
+     external_init = external_init_;                                 \
+     debug_print("instr_start (external_init: %d) (TID: %d)", external_init, get_tid());                \
          if(!external_init) {                                            \
              instrumentation_init_proc(sched_getcpu(), get_nprocs());    \
          }
      
      #define INSTRUMENTATION_END()                                               \
-         debug_print("instr_end (TID: %d)", get_tid());                          \
+         debug_print("instr_end (external_init: %d) (TID: %d)", external_init, get_tid());                          \
          if(!external_init) {                                                    \
              instrumentation_end();                                              \
          }
