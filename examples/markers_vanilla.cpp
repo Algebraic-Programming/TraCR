@@ -31,7 +31,7 @@ int main(void)
     const size_t N = 4;
 
     // initialize ovni
-    INSTRUMENTATION_START();
+    INSTRUMENTATION_START(false);
 
     INSTRUMENTATION_VMARKER_TYPE(1, "Simple Marker Example"); // use flag == 1 for push/pop and flag != 1 for set
 

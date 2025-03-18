@@ -30,7 +30,7 @@ int main(void)
     const size_t N = 4;
 
     // initialize ovni
-    INSTRUMENTATION_START();
+    INSTRUMENTATION_START(false);
 
     INSTRUMENTATION_THREAD_MARK_INIT(1);
 

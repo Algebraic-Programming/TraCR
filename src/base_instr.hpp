@@ -46,16 +46,6 @@ get_tid(void)
 	return (pid_t) syscall(SYS_gettid);
 }
 
-/**
- * 
- */
-static inline bool
-ovni_proc_isready(void)
-{
-	// return (atomic_load(&rproc.st) == ST_READY);
-	return false;
-}
-
 
 /**
  * 

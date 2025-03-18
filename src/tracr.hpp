@@ -63,17 +63,17 @@
      // keep track of the main thread as this one has to be free'd when instr_end is called
      extern pid_t main_TID;
  
-     // A flag to check if something else has initialized ovni (like nosv). If so, TraCR with not init/end proc.
+     // A flag to check if something else has initialized ovni (like nOS-V). If so, TraCR with not init/end proc.
      extern bool external_init;
  
      // this boolean is needed if something other than TraCR has to be called.
      #define INSTRUMENTATION_ACTIVE true    
  
      // ovni proc methods
-     #define INSTRUMENTATION_START()                                     \
+     #define INSTRUMENTATION_START(external_init_)                       \
          debug_print("instr_start (TID: %d)", get_tid());                \
          main_TID = get_tid();                                           \
-         external_init = ovni_proc_isready();                            \
+         external_init = external_init_;                                 \
          if(!external_init) {                                            \
              instrumentation_init_proc(sched_getcpu(), get_nprocs());    \
          }
@@ -145,7 +145,7 @@
      #define INSTRUMENTATION_ACTIVE false
  
      // ovni proc methods
-     #define INSTRUMENTATION_START()
+     #define INSTRUMENTATION_START(external_init_) (void)(external_init_)
  
      #define INSTRUMENTATION_END()
  

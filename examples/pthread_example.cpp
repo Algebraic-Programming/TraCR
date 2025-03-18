@@ -54,7 +54,7 @@ void* threadFunction(void* arg) {
 
 int main() {
     // ovni proc init
-    INSTRUMENTATION_START();
+    INSTRUMENTATION_START(false);
 
     /**
 	 * 0 == Set (Default) and 1 == Push/Pop
