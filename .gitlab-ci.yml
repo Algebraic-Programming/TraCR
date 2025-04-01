@@ -1,13 +1,48 @@
-# You can override the included template(s) by including variable overrides
-# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
-# Secret Detection customization: https://docs.gitlab.com/ee/user/application_security/secret_detection/#customizing-settings
-# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
-# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
-# Note that environment variables can be set in several places
-# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
-stages:
-- test
-sast:
-  stage: test
-include:
-- template: Security/SAST.gitlab-ci.yml
+build:
+  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/buildenv-x86_64:latest
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+  - docker
+  - x86
+  script:
+  - export HOME=/home/hicr
+  - source /home/hicr/.hicr-env.sh
+  - echo "Building TraCR..."
+  - mkdir build
+  - meson setup build -DbuildExamples=true -DcompileWarningsAsErrors=true -Dbuildtype=debug -Db_coverage=true
+  - meson compile -C build
+  - echo "Running tests..."
+  - meson test -C build
+  - echo "Creating coverage report..."
+  - ninja -C build coverage
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+  artifacts:
+    name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
+    expire_in: 2 days
+    when: always
+    paths:
+      - build/meson-logs/*
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: build/meson-logs/coverage.xml 
+  only:
+  - main
+  - merge_requests
+  - tags
+
+docs:
+  image: registry.gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/hicr/docs:latest
+  tags:
+  - docker
+  - tiny
+  script:
+  - echo "Checking TraCR source and test formatting..."
+  - .build-tools/style/check-style.sh check src
+  - .build-tools/style/check-style.sh check examples
+  only: 
+  - main
+  - merge_requests
+  - tags
+
