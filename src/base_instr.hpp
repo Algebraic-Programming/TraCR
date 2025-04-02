@@ -36,12 +36,12 @@ static inline void thread_execute(int32_t cpu, int32_t ctid, uint64_t tag) {
 }
 
 /**
- *
+ * Function to return the current TID
  */
 static inline pid_t get_tid(void) { return (pid_t)syscall(SYS_gettid); }
 
 /**
- *
+ * Function to initialize the ovni proc (this has to be done only once)
  */
 static inline void instrumentation_init_proc(int rank, int nranks) {
   char hostname[OVNI_MAX_HOSTNAME];
@@ -71,7 +71,8 @@ static inline void instrumentation_init_proc(int rank, int nranks) {
 }
 
 /**
- *
+ * Initializing a ovni thread. Each new spawned thread has to call this to keep
+ * track of his traces.
  */
 static inline void instrumentation_init_thread() {
   ovni_thread_init(get_tid());
@@ -80,7 +81,8 @@ static inline void instrumentation_init_thread() {
 }
 
 /**
- *
+ * Finalizing the ovni thread livespam. After this no more markers are allowed
+ * on the same thread! Also, one can not re-initialize the same thread.
  */
 static inline void instrumentation_thread_end(void) {
   struct ovni_ev ev = {0};
@@ -94,7 +96,8 @@ static inline void instrumentation_thread_end(void) {
 }
 
 /**
- *
+ * The finalization call of ovni. This one only has to be called by the main
+ * proc.
  */
 static inline void instrumentation_end(void) {
   instrumentation_thread_end();
@@ -109,7 +112,7 @@ static inline void instrumentation_end(void) {
  * (int) This will let the user define their own label id's like this: const
  * size_t free_mem_label_id  = INSTRUMENTATION_MARKER_ADD("Free memory",
  * MARK_COLOR_MINT); This class is build very lightweight for performance. An
- * older version with storing the string exists in the newest 'task_more_states'
+ * older version with storing the string exists in the 'task_more_states'
  * branch
  * https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/tracr/-/tree/task_more_states?ref_type=heads
  */
@@ -117,8 +120,8 @@ class ThreadMarkerMap {
 public:
   /**
    * Store the ovni mark label color value in the vector.
-   * NOTE: labelid (i.e. the color) has to be unique otherwise only will call an
-   * error!
+   * NOTE: labelid (i.e. the color) has to be unique otherwise ovni will call an
+   * error! Also the color can't be black (i.e. labelid == 0)
    */
   size_t add(int64_t labelid, const std::string &label) {
 

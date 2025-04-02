@@ -1,42 +1,52 @@
 # TraCR
 
-TraCR (pronounced 'tracer') is a user-friendly instrumentation library which can be activated/deactivated via a flag.
+TraCR (pronounced 'tracer') is a user-friendly lightweight instrumentation library that can be activated/deactivated by including this flag: `-DENABLE_INSTRUMENTATION`. If this flag is not added, TraCR instrumentation calls will simply be void function calls (i.e., no overhead).
 
-It can trace task and/or thread traces. 
+The flag `-DENABLE_DEBUG` let's you enable the debugging prints of TraCR.
 
-The folder `examples/` shows examples on how to use this library.
+The folder `examples/` contains examples of how to use this library.
 
-An example trace in task view is show in the snapshot below:
-![TaskR running Fibonacci in task view](images/TaskR_Fibonacci.png)
+An example trace is displayed in the snapshot below:
+![TaskR running Fibonacci(15) on 8 workers](images/paraver_view1.png)
 
-We also included some python post-processing scripts for visualizations purposes (see `python_scripts/`).
+We have also included some Python post-processing scripts for visualization purposes (see `python_scripts/`).
 
-## ovni
+## Install TraCR
 
-The core instrumentation library is currently a modified version of ovni.
+The core instrumentation library is currently ovni.
 
-To use TraCR one has to first install [ovni](https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/ovni) by typing this:
+To use TraCR one has to first install [ovni](https://github.com/bsc-pm/ovni) by typing this:
 
 ```
 mkdir extern/ovni/build; pushd extern/ovni/build; cmake .. -DCMAKE_INSTALL_PREFIX=$prefix; make -j24; make install; popd
 ```
 
-with `$prefix` being the wanted install directory for ovni: (e.g. `export prefix=$HOME/src/ovni`)
+with `$prefix` being the wanted install directory for ovni: (e.g. `export prefix=$HOME/library/ovni`)
 
 then add these exports to your `.bashrc` file:
 
 ```
 # ovni library paths
-export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$prefix/lib/pkgconfig
-export PATH=$prefix/bin:$PATH # executables
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$HOME/library/ovni/lib/pkgconfig
+export PATH=$HOME/library/ovni/bin:$PATH # executables
 ```
 
-Test if ovni is installed correctly by going into the build folder (`cd extern/ovni/build`)
+Test if ovni is installed correctly by going into the build folder (`cd tracr/extern/ovni/build`)
 and run `make test`
 
-For more informations on how to use ovni, go to their [documentations](https://ovni.readthedocs.io/en/master/).
+As TraCR is dependent on ovni, please follow the instructions of ovni on their [documentations](https://ovni.readthedocs.io/en/master/).
 
-## Paraver
+
+After ovni has been succesfully installed, install TraCR by doing this:
+
+```
+cd tracr
+mkdir build
+cd build
+meson setup .. -DbuildExamples=false
+```
+
+### Paraver
 
 To visualize the traces, one needs to download and install [Paraver](https://tools.bsc.es/paraver):
 

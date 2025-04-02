@@ -47,29 +47,40 @@ enum mark_color : int64_t {
 };
 
 /**
- *
+ * Using this flag will enable all the instrumentations of TraCR. Otherwise pure
+ * void functions.
  */
 #ifdef ENABLE_INSTRUMENTATION
 
-// debug printing method. Can be enabled with the ENABLE_DEBUG flag included.
+/**
+ * Debug printing method. Can be enabled with the ENABLE_DEBUG flag included.
+ */
 #ifdef ENABLE_DEBUG
 #define debug_print(fmt, ...) printf("[DEBUG] " fmt "\n", ##__VA_ARGS__)
 #else
 #define debug_print(fmt, ...)
 #endif
 
-// keep track of the main thread as this one has to be free'd when instr_end is
-// called
+/**
+ * Keep track of the main thread as this one has to be free'd when instr_end is
+ * called
+ */
 extern pid_t main_TID;
 
-// A flag to check if something else has initialized ovni (like nOS-V). If so,
-// TraCR with not init/end proc.
+/**
+ * A flag to check if something else has initialized ovni (like nOS-V). If so,
+ * TraCR with not init/end proc.
+ */
 extern bool external_init;
 
-// this boolean is needed if something other than TraCR has to be called.
+/**
+ * This boolean is needed if something other than TraCR has to be called.
+ */
 #define INSTRUMENTATION_ACTIVE true
 
-// ovni proc methods
+/**
+ * ovni proc methods
+ */
 #define INSTRUMENTATION_START(external_init_)                                  \
   main_TID = get_tid();                                                        \
   external_init = external_init_;                                              \
@@ -86,7 +97,9 @@ extern bool external_init;
     instrumentation_end();                                                     \
   }
 
-// ovni thread methods
+/**
+ * ovni thread methods
+ */
 #define INSTRUMENTATION_THREAD_INIT()                                          \
   debug_print("instr_thread_init with isready: %d (TID: %d)",                  \
               ovni_thread_isready(), get_tid());                               \
@@ -102,7 +115,9 @@ extern bool external_init;
     ovni_thread_free();                                                        \
   }
 
-// ovni thread marker methods
+/**
+ * ovni thread marker methods
+ */
 extern ThreadMarkerMap thread_marker_map;
 
 #define INSTRUMENTATION_THREAD_MARK_INIT(flag)                                 \
@@ -125,7 +140,9 @@ extern ThreadMarkerMap thread_marker_map;
   debug_print("instr_marker_pop (TID: %d)", get_tid());                        \
   thread_marker_map.pop(idx);
 
-// ovni marker methods (vanilla) (only used for performance comparisons)
+/**
+ * ovni marker methods (vanilla) (only used for performance comparisons)
+ */
 #define INSTRUMENTATION_VMARKER_TYPE(flag, title) ovni_mark_type(0, flag, title)
 
 #define INSTRUMENTATION_VMARKER_LABEL(value, label)                            \
@@ -143,21 +160,27 @@ extern ThreadMarkerMap thread_marker_map;
   debug_print("instr_marker_pop (TID: %d)", get_tid());                        \
   ovni_mark_pop(0, value)
 
-#else /* No instrumentation (void) */
+#else /* No instrumentations (void) */
 
 #define INSTRUMENTATION_ACTIVE false
 
-// ovni proc methods
+/**
+ * ovni proc methods
+ */
 #define INSTRUMENTATION_START(external_init_) (void)(external_init_)
 
 #define INSTRUMENTATION_END()
 
-// ovni thread methods
+/**
+ * ovni thread methods
+ */
 #define INSTRUMENTATION_THREAD_INIT()
 
 #define INSTRUMENTATION_THREAD_END()
 
-// ovni thread marker methods
+/**
+ * ovni thread marker methods
+ */
 #define INSTRUMENTATION_THREAD_MARK_INIT(flag) (void)(flag)
 
 #define INSTRUMENTATION_THREAD_MARK_ADD(value, label)                          \
@@ -171,7 +194,9 @@ extern ThreadMarkerMap thread_marker_map;
 
 #define INSTRUMENTATION_THREAD_MARK_POP(idx) (void)(idx)
 
-// ovni marker methods (vanilla) (only used for performance comparisons)
+/**
+ * ovni marker methods (vanilla) (only used for performance comparisons)
+ */
 #define INSTRUMENTATION_VMARKER_TYPE(flag, title)                              \
   (void)(flag);                                                                \
   (void)(title)
