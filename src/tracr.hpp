@@ -119,9 +119,9 @@ extern bool external_init;
   }
 
 #define INSTRUMENTATION_THREAD_END()                                           \
-  debug_print("external_init %d, instr_thread_end with isready: %d (TID: %d)",                   \
-              external_init, ovni_thread_isready(), get_tid());                               \
-  if (!external_init && ovni_thread_isready() && !(main_TID == get_tid())) {                     \
+  debug_print("external_init %d, instr_thread_end with isready: %d (TID: %d)", \
+              external_init, ovni_thread_isready(), get_tid());                \
+  if (!external_init && ovni_thread_isready() && !(main_TID == get_tid())) {   \
     instrumentation_thread_end();                                              \
     ovni_thread_free();                                                        \
   }
