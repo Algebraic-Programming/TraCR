@@ -18,8 +18,8 @@
 #include <tracr.hpp>
 
 /*
-Basic test to see if ovni is linked correctly
-*/
+ * Basic test to see if TraCR (and ovni) is installed correctly
+ */
 int main(int argc, char **argv) {
   printf("OVNI_TRACEDIR: %s\n", OVNI_TRACEDIR);
 

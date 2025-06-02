@@ -69,14 +69,17 @@ void *threadFunction(void *arg) {
 }
 
 int main() {
-  // ovni proc init
-  INSTRUMENTATION_START(false);
+  // Initialize TraCR
+  // This boolean is a check to see if ovni has been initialize by another
+  // library (e.g. nOS-V)
+  bool externally_init = false;
+  INSTRUMENTATION_START(externally_init);
 
-  /**
-   * 0 == Set (Default) and 1 == Push/Pop
-   */
+  // 0 == Set and 1 == Push/Pop
   INSTRUMENTATION_THREAD_MARK_INIT(0);
 
+  // Each Label creation costs around (~3us)
+  // Should be done at the beginning or at the ending of the code
   thrd_running_id =
       INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_MINT, "thread running");
   thrd_finished_id =

@@ -32,10 +32,10 @@ static void print_matrix(mytype *matrix, const size_t N) {
   printf("\n");
 }
 
-/*
-Basic c code to allocate memory, run mmm, and free memory.
-Ovni trace test included with markers.
-*/
+/**
+ * Basic c code to allocate memory, run mmm, and free memory.
+ * Ovni trace test included with markers.
+ */
 int main(void) {
   std::chrono::time_point<std::chrono::system_clock> start, end,
       after_label_set;
@@ -44,13 +44,17 @@ int main(void) {
 
   const size_t N = 4;
 
-  // initialize ovni
-  INSTRUMENTATION_START(false);
+  // Initialize TraCR
+  // This boolean is a check to see if ovni has been initialize by another
+  // library (e.g. nOS-V)
+  bool externally_init = false;
+  INSTRUMENTATION_START(externally_init);
 
+  // 0 == Set and 1 == Push/Pop
   INSTRUMENTATION_THREAD_MARK_INIT(1);
 
-  // fyi, one of those function costs around ~3us.
-  // It should be done at the beginning or ending.
+  // Each Label creation costs around (~3us)
+  // Should be done at the beginning or at the ending of the code
   const size_t alloc_mem_label_id =
       INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_TEAL, "Allocate Memory");
   const size_t fill_mat_label_id = INSTRUMENTATION_THREAD_MARK_ADD(

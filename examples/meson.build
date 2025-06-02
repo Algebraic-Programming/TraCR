@@ -4,8 +4,6 @@ cleanup_script = find_program('cleanup_script.sh', native: true, required: true)
 
 ovniemu_test_script = find_program('ovniemu_test.sh', native: true, required: true)
 
-# TODO: allow parallelism if possible.
-
 #### TEST: only thread markers or non
 
 test_types = ['pthread_example', 'thread_markers', 'markers_vanilla']

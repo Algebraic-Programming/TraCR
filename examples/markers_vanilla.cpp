@@ -35,7 +35,10 @@ static void print_matrix(mytype *matrix, const size_t N) {
 /**
  * Basic c code to allocate memory, run mmm, and free memory.
  * Ovni trace test included with markers.
- * OUTDATED, will be no longer used, only for speed comparisons
+ *
+ * NOTE: ONLY use the vanilla Markers (VMARKER) if speed is considered (i.e.
+ * creating more than 1000 marker labels...).
+ *
  */
 int main(void) {
   std::chrono::time_point<std::chrono::system_clock> start, end,
@@ -45,17 +48,19 @@ int main(void) {
 
   const size_t N = 4;
 
-  // initialize ovni
-  INSTRUMENTATION_START(false);
+  // Initialize TraCR
+  // This boolean is a check to see if ovni has been initialize by another
+  // library (e.g. nOS-V)
+  bool externally_init = false;
+  INSTRUMENTATION_START(externally_init);
 
-  INSTRUMENTATION_VMARKER_TYPE(
-      1, "Simple Marker Example"); // use flag == 1 for push/pop and flag != 1
-                                   // for set
+  // use flag == 1 for push/pop and flag == 0 for the set method
+  bool flag = 1;
+  INSTRUMENTATION_VMARKER_TYPE(flag, "Simple Marker Example");
 
-  INSTRUMENTATION_VMARKER_LABEL(
-      MARK_COLOR_LIGHT_GREEN,
-      "Allocate Memory"); // fyi it is costly (~3us) could be done at the
-                          // beginning or ending
+  // Each Label creation costs around (~3us)
+  // Should be done at the beginning or at the ending of the code
+  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory");
   INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_LAVENDER,
                                 "Fill matrices with values");
   INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_MAROON, "Print all matrices");
