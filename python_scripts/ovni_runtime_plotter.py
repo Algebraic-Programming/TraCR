@@ -56,12 +56,20 @@ def get_event_values(file_path, event_type):
     return values
 
 def main():
-    """This script is meant for extracting the information of a Paraver plot
-    into a matplotlib bar plot
+    """This script is meant for extracting the information of a ovni trace
+    and creating it into a matplotlib bar plot.
+
+    Before running this script, load the ovni trace (cpu.prv or thread.prv) in Paraver and right click on the trace window -> Save -> Text...
+    and store the CSV file into the ovni folder.
+
+    Run this script with: python3 main.py path/to/ovni/ *optional marker type*
+
+    - path/to/ovni/: is the path to the emulated ovni folder with the stored CSV file in it
+    - *optional marker type*: (optional) you can choose which type of markers to plot (default none)
     """
 
     if len(sys.argv) < 2:
-        raise RuntimeError("Please provide the ovni folder you want to plot")
+        raise RuntimeError("Please provide the ovni folder path you want to plot")
     folder_path = sys.argv[1]
     
     pcf_file = os.path.join(folder_path, 'thread.pcf')
