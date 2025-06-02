@@ -26,9 +26,12 @@ A sample trace generated using TraCR is shown below:
 
 ### Step 1: Install Ovni (Dependency)
 
-TraCR relies on [ovni](https://github.com/bsc-pm/ovni) as its core instrumentation backend. To install ovni:
+Clone this repo recursively as TraCR relies on [ovni](https://github.com/bsc-pm/ovni) as its core instrumentation backend. To install ovni:
 
 ```bash
+git clone --recurse-submodules https://github.com/Algebraic-Programming/TraCR.git
+cd tracr
+
 export prefix=$HOME/library/ovni  # or your preferred installation path
 
 mkdir -p extern/ovni/build
