@@ -45,7 +45,12 @@ if meson.is_subproject() == false
 
   # Build example targets
   if get_option('buildExamples')
-  subdir('examples')
+    subdir('examples')
+  endif
+
+  # Build example targets
+  if get_option('buildTests')
+    subdir('tests')
   endif
 
 endif

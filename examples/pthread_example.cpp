@@ -37,7 +37,7 @@ void *threadFunction(void *arg) {
 
   int id = *(int *)arg;
 
-  // ovni init thread
+  // TraCR init thread
   INSTRUMENTATION_THREAD_INIT();
 
   INSTRUMENTATION_THREAD_MARK_SET(thrd_running_id);
@@ -62,12 +62,15 @@ void *threadFunction(void *arg) {
 
   INSTRUMENTATION_THREAD_MARK_SET(thrd_finished_id);
 
-  // ovni free thread
+  // TraCR free thread
   INSTRUMENTATION_THREAD_END();
 
   return nullptr;
 }
 
+/**
+ * This is an example of using the thread markers combined with e.g. Pthreads
+ */
 int main() {
   // Initialize TraCR
   // This boolean is a check to see if ovni has been initialize by another
@@ -115,7 +118,7 @@ int main() {
   // Destroy the mutex
   pthread_mutex_destroy(&printMutex);
 
-  // ovni free proc
+  // TraCR finished
   INSTRUMENTATION_END();
 
   return 0;

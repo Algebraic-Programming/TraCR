@@ -33,12 +33,17 @@ static void print_matrix(mytype *matrix, const size_t N) {
 }
 
 /**
- * Basic c code to allocate memory, run mmm, and free memory.
- * Ovni trace test included with markers.
+ * Basic c code to demonstrate TraCR's VMAKERS
+ * VMakers (Vanilla Markers) are the type of markers pushing the color ID
+ * directly.
  *
- * NOTE: ONLY use the vanilla Markers (VMARKER) if speed is considered (i.e.
- * creating more than 1000 marker labels...).
+ * This example is the same as the thread_markers.cpp but with VMARKERS
  *
+ * They are useful if you don't wanna have labels and wanna keep track the
+ * number.
+ *
+ * Still, one can use INSTRUMENTATION_VMARKER_LABEL() if labels are of need.
+ * But then you need to remember which color id corresponds to which label.
  */
 int main(void) {
   std::chrono::time_point<std::chrono::system_clock> start, end,
@@ -75,7 +80,6 @@ int main(void) {
   mytype *A = (mytype *)calloc(1, N * N * sizeof(mytype));
   mytype *B = (mytype *)malloc(N * N * sizeof(mytype));
   mytype *C = (mytype *)malloc(N * N * sizeof(mytype));
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LIGHT_GREEN);
 
   // fill matrices
   INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_LAVENDER);
@@ -86,6 +90,7 @@ int main(void) {
     }
   }
   INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LAVENDER);
+  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LIGHT_GREEN);
 
   // print matrices
   INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_MAROON);
@@ -123,7 +128,7 @@ int main(void) {
   free(C);
   INSTRUMENTATION_VMARKER_POP(MARK_COLOR_PINK);
 
-  // ovni fini finish
+  // TraCR finished
   INSTRUMENTATION_END();
 
   end = std::chrono::system_clock::now();

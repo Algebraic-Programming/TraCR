@@ -33,8 +33,7 @@ static void print_matrix(mytype *matrix, const size_t N) {
 }
 
 /**
- * Basic c code to allocate memory, run mmm, and free memory.
- * Ovni trace test included with markers.
+ * This is a basic example of the thread markers of TraCR
  */
 int main(void) {
   std::chrono::time_point<std::chrono::system_clock> start, end,
@@ -53,7 +52,7 @@ int main(void) {
   // 0 == Set and 1 == Push/Pop
   INSTRUMENTATION_THREAD_MARK_INIT(1);
 
-  // Each Label creation costs around (~3us)
+  // Each INSTRUMENTATION_THREAD_MARK_ADD costs around (~3us)
   // Should be done at the beginning or at the ending of the code
   const size_t alloc_mem_label_id =
       INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_TEAL, "Allocate Memory");
@@ -75,7 +74,6 @@ int main(void) {
   mytype *A = (mytype *)calloc(1, N * N * sizeof(mytype));
   mytype *B = (mytype *)malloc(N * N * sizeof(mytype));
   mytype *C = (mytype *)malloc(N * N * sizeof(mytype));
-  INSTRUMENTATION_THREAD_MARK_POP(alloc_mem_label_id);
 
   // fill matrices
   INSTRUMENTATION_THREAD_MARK_PUSH(fill_mat_label_id);
@@ -86,6 +84,7 @@ int main(void) {
     }
   }
   INSTRUMENTATION_THREAD_MARK_POP(fill_mat_label_id);
+  INSTRUMENTATION_THREAD_MARK_POP(alloc_mem_label_id);
 
   // print matrices
   INSTRUMENTATION_THREAD_MARK_PUSH(prt_mat_label_id);
@@ -123,7 +122,7 @@ int main(void) {
   free(C);
   INSTRUMENTATION_THREAD_MARK_POP(free_mem_label_id);
 
-  // ovni fini finish
+  // TraCR finished
   INSTRUMENTATION_END();
 
   end = std::chrono::system_clock::now();

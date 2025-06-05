@@ -59,16 +59,45 @@ make test
 
 ### Step 2: Install TraCR
 
-Once ovni is installed, build TraCR:
+At the moment, there is no standalone installation process for TraCR.  
+However, the recommended way is to use it as a [Meson subproject](https://mesonbuild.com/Subprojects.html).  
+To integrate it, add the following to your `meson.build` file:
 
-```bash
-cd tracr
-mkdir build
-cd build
-meson setup .. -DbuildExamples=false
+```meson
+# Add TraCR as a subproject
+InstrumentationProject = subproject('tracr', required: true)
+InstrumentationBuildDep = InstrumentationProject.get_variable('InstrumentationBuildDep')
+<your_dependencies> += InstrumentationBuildDep
+
+# Enable instrumentation
+add_project_arguments('-DENABLE_INSTRUMENTATION', language: 'cpp')
+
+# Uncomment the following line to enable debug prints from TraCR
+# add_project_arguments('-DENABLE_DEBUG', language: 'cpp')
 ```
 
+or in CMake something like this:
+
+```cmake
+# Add the TraCR subproject
+add_subdirectory(external/tracr)
+
+# Enable instrumentation
+add_definitions(-DENABLE_INSTRUMENTATION)
+
+# Optional: Enable debug prints
+# add_definitions(-DENABLE_DEBUG)
+
+# Link your target against the TraCR library
+target_link_libraries(your_target PRIVATE tracr_instrumentation)
+```
+
+But then you would need to add a `CMakeLists.txt` in TraCR.
+
 ## Trace Visualization with Paraver
+
+The generated traces are stored in a folder called `ovni/`. This one have to be emulated via `ovniemu ovni/`.
+
 To visualize traces produced by TraCR, install [Paraver](https://tools.bsc.es/paraver):
 
 ```bash
