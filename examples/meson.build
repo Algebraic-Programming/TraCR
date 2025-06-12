@@ -44,6 +44,30 @@ foreach args : cpp_args_list
              suite : testSuite,
              is_parallel : false,
              priority : 1)
-            
+
+        if get_option('buildPyTraCR') and instrumentation_enabled
+            test_name = 'pyTraCR_' + test_name
+            message(meson.current_source_dir())
+            test(test_name, 
+                py,
+                args : [ 'pytracr/' + test_type + '.py' ], 
+                env: ['PYTHONPATH=' + meson.current_source_dir() + ':' + meson.project_build_root() + '/include/pytracr/'],
+                suite: testSuite, 
+                workdir: meson.current_source_dir(),
+                is_parallel : false,
+                priority : 1)
+
+            test('cleanup_script_' + test_name, cleanup_script, 
+                    workdir: meson.current_source_dir(),
+                    suite : testSuite,
+                    is_parallel : false,
+                    priority : 2)
+
+            test('ovniemu_' + test_name, ovniemu_test_script, 
+                workdir: meson.current_source_dir(),
+                suite : testSuite,
+                is_parallel : false,
+                priority : 0)
+        endif
     endforeach
 endforeach
