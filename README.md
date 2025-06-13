@@ -9,6 +9,7 @@
 - **Optional debugging output** with `-DENABLE_DEBUG`.
 - **Examples** provided in the `examples/` folder.
 - **Post-processing scripts** for trace visualization in `python_scripts/`.
+- **PyTraCR** for TraCR in python.
 
 ## Instrumentation Control
 
@@ -105,6 +106,12 @@ wget https://ftp.tools.bsc.es/wxparaver/wxparaver-4.11.4-Linux_x86_64.tar.bz2
 ```
 
 Unpack and follow the installation instructions from Paraver’s documentation.
+
+## PyTraCR
+
+PyTraCR is the python version of TraCR. For that, one has to run `meson setup .. -DbuildPyTraCR=true`
+and add `PYTHONPATH=<tracr_repo>/build/include/pytracr/` in his `.bashrc`.
+
 
 ## License
 
