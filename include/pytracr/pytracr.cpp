@@ -59,9 +59,9 @@ static void instrumentation_thread_mark_init(size_t flag)
     INSTRUMENTATION_THREAD_MARK_INIT(flag);
 }
 
-static void instrumentation_thread_mark_add(size_t value, const char* label)
+static size_t instrumentation_thread_mark_add(size_t value, const char* label)
 {
-    INSTRUMENTATION_THREAD_MARK_ADD(value, label);
+    return INSTRUMENTATION_THREAD_MARK_ADD(value, label);
 }
 
 static void instrumentation_thread_mark_set(size_t idx)
@@ -107,7 +107,7 @@ static void instrumentation_vmarker_pop(size_t value)
     INSTRUMENTATION_VMARKER_POP(value);
 }
 
-PYBIND11_MODULE(taskr, m)
+PYBIND11_MODULE(tracr, m)
 {
     m.doc() = "pybind11 plugin for TraCR";
 
@@ -116,7 +116,7 @@ PYBIND11_MODULE(taskr, m)
     /**
      * ovni proc methods
      */
-    m.def("INSTRUMENTATION_START", &instrumentation_start, "");
+    m.def("INSTRUMENTATION_START", &instrumentation_start, py::arg("external_init_") = false, "");
     m.def("INSTRUMENTATION_END", &instrumentation_end_, "");
 
     /**

@@ -16,6 +16,13 @@
 
 import os
 
+import ctypes
+
+# SYS_gettid syscall number is 186 on x86_64
+libc = ctypes.CDLL("libc.so.6")
+libc.sched_getcpu.restype = ctypes.c_int
+SYS_gettid = 186
+
 from multiprocessing import Process, Lock
 
 from tracr import *
@@ -23,24 +30,21 @@ from tracr import *
 NRANKS = 4 # number of threads
 NTASKS = 3 # number of tasks per thread
 
-# globali accessible variables
-global thrd_running_id
-global thrd_finished_id
-
 # Function to be executed by a thread
-def threadFunction(lock, id):
+def threadFunction(lock, id, thrd_running_id, thrd_finished_id):
+
   # TraCR init thread
   INSTRUMENTATION_THREAD_INIT()
 
   INSTRUMENTATION_THREAD_MARK_SET(thrd_running_id)
 
   # Get the process ID (PID) and thread ID (TID)
-  pid = os.getpid()      # Process ID
-  tid = os.gettid() # Thread ID
+  pid = os.getpid() # Process ID
+  CPUid = libc.sched_getcpu()
 
   # Lock for printing
   with lock:
-    print(f"Thread {id} is running. PID: {pid}, TID: {tid}")
+    print(f"Thread {id} is running. CPUid: {CPUid}, PID: {pid}")
 
 
   # running tasks
@@ -82,7 +86,7 @@ def main():
   for i in range(NRANKS):
     threadIds[i] = i # Assign thread ID
 
-    threads[i] = Process(target=threadFunction, args=(lock, i))
+    threads[i] = Process(target=threadFunction, args=(lock, i, thrd_running_id, thrd_finished_id))
 
     threads[i].start()
 
