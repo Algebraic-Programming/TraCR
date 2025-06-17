@@ -62,6 +62,10 @@ void *threadFunction(void *arg) {
 
   INSTRUMENTATION_THREAD_MARK_SET(thrd_finished_id);
 
+  // Optional: This marker pushes the int64_t max value. Can be used to indicate
+  // the ending.
+  INSTRUMENTATION_VMARKER_RESET();
+
   // TraCR free thread
   INSTRUMENTATION_THREAD_END();
 

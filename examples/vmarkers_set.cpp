@@ -38,10 +38,6 @@ int main(void) {
     printf("%d ", i);
   }
 
-  // Optional: This marker pushes the int64_t max value. Can be used to indicate
-  // the ending.
-  INSTRUMENTATION_VMARKER_RESET();
-
   // TraCR finished
   INSTRUMENTATION_END();
 
