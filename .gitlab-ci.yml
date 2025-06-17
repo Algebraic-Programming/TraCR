@@ -10,7 +10,7 @@ build:
   - source /home/hicr/.hicr-env.sh
   - echo "Building TraCR..."
   - mkdir build
-  - meson setup build -DbuildExamples=true -DcompileWarningsAsErrors=true -Dbuildtype=debug -Db_coverage=true
+  - meson setup build -DbuildPyTraCR=true -DbuildTests=true -DbuildExamples=true -DcompileWarningsAsErrors=true -Dbuildtype=debug -Db_coverage=true
   - meson compile -C build
   - echo "Running tests..."
   - meson test -C build

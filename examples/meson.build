@@ -50,7 +50,7 @@ foreach args : cpp_args_list
         if get_option('buildPyTraCR') and instrumentation_enabled and (test_type != 'pthread_example')
 
             test_name = 'pyTraCR_' + test_name
-            workdir = meson.current_source_dir() + '/' + test_name + '_out/'
+            workdir = meson.project_build_root() + '/examples/' + test_name + '_out/'
 
             # Create the output directory before tests
             create_dirs = custom_target('create_pytracr_dirs' + test_name,
@@ -61,7 +61,7 @@ foreach args : cpp_args_list
 
             test(test_name,
                 py,
-                args: ['../pytracr/' + test_type + '.py'],
+                args: [meson.current_source_dir() + '/pytracr/' + test_type + '.py'],
                 env: ['PYTHONPATH=' + meson.project_build_root() + '/include/pytracr/'],
                 suite: testSuite,
                 workdir: workdir,
