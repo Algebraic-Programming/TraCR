@@ -152,7 +152,7 @@ extern ThreadMarkerMap thread_marker_map;
   thread_marker_map.pop(idx);
 
 /**
- * ovni marker methods (vanilla) (only used for performance comparisons)
+ * ovni marker methods (vanilla)
  */
 #define INSTRUMENTATION_VMARKER_TYPE(flag, title) ovni_mark_type(0, flag, title)
 
@@ -162,6 +162,10 @@ extern ThreadMarkerMap thread_marker_map;
 #define INSTRUMENTATION_VMARKER_SET(value)                                     \
   debug_print("instr_marker_set (TID: %d)", get_tid());                        \
   ovni_mark_set(0, value)
+
+#define INSTRUMENTATION_VMARKER_RESET()                                        \
+  debug_print("instr_marker_reset (TID: %d)", get_tid());                      \
+  ovni_mark_set(0, INT64_MAX)
 
 #define INSTRUMENTATION_VMARKER_PUSH(value)                                    \
   debug_print("instr_marker_push (TID: %d)", get_tid());                       \
@@ -217,6 +221,8 @@ extern ThreadMarkerMap thread_marker_map;
   (void)(label)
 
 #define INSTRUMENTATION_VMARKER_SET(value) (void)(value)
+
+#define INSTRUMENTATION_VMARKER_RESET()
 
 #define INSTRUMENTATION_VMARKER_PUSH(value) (void)(value)
 

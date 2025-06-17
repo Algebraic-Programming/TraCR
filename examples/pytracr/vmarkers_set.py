@@ -34,6 +34,9 @@ def main():
     INSTRUMENTATION_VMARKER_SET(i)
     print(i, end=' ')
 
+  # Optional: This marker pushes the int64_t max value. Can be used to indicate the ending.
+  INSTRUMENTATION_VMARKER_RESET()  
+
   # TraCR finished
   INSTRUMENTATION_END()
 

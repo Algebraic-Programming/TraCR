@@ -76,6 +76,8 @@ static void instrumentation_vmarker_set(size_t value) {
   INSTRUMENTATION_VMARKER_SET(value);
 }
 
+static void instrumentation_vmarker_reset() { INSTRUMENTATION_VMARKER_RESET(); }
+
 static void instrumentation_vmarker_push(size_t value) {
   INSTRUMENTATION_VMARKER_PUSH(value);
 }
@@ -122,6 +124,7 @@ PYBIND11_MODULE(tracr, m) {
   m.def("INSTRUMENTATION_VMARKER_TYPE", &instrumentation_vmarker_type, "");
   m.def("INSTRUMENTATION_VMARKER_LABEL", &instrumentation_vmarker_label, "");
   m.def("INSTRUMENTATION_VMARKER_SET", &instrumentation_vmarker_set, "");
+  m.def("INSTRUMENTATION_VMARKER_RESET", &instrumentation_vmarker_reset, "");
   m.def("INSTRUMENTATION_VMARKER_PUSH", &instrumentation_vmarker_push, "");
   m.def("INSTRUMENTATION_VMARKER_POP", &instrumentation_vmarker_pop, "");
 
