@@ -3,5 +3,5 @@
 	url = https://github.com/bsc-pm/ovni.git
 [submodule "extern/pybind11"]
 	path = extern/pybind11
-	url = ../../pybind/pybind11
+	url = https://github.com/pybind/pybind11.git
 	branch = stable
