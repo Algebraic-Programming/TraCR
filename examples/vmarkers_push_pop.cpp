@@ -66,8 +66,7 @@ int main(void) {
   // Each Label creation costs around (~3us)
   // Should be done at the beginning or at the ending of the code
   INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory");
-  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_LAVENDER,
-                                "Fill matrices with values");
+  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_LAVENDER, "Fill matrices with values");
   INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_MAROON, "Print all matrices");
   INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_OLIVE, "MMM");
   INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_NAVY, "Print solution of matrix A");

@@ -47,7 +47,8 @@ bool external_init;
 bool disable_tracr = false;
 
 /**
- * automatic label ID assigning, i.e. doesn't matter which color the label is assigned to
+ * automatic label ID assigning, i.e. doesn't matter which color the label is
+ * assigned to
  */
 std::atomic<int64_t> auto_label{23L};
 
@@ -55,9 +56,10 @@ std::atomic<int64_t> auto_label{23L};
  * A function to check if the env flag DISABLE_TRACR is active or not
  */
 bool get_env_flag() {
-  const char* val = std::getenv("DISABLE_TRACR");
-  if (!val) return false;  // not set -> treat as false
-  
+  const char *val = std::getenv("DISABLE_TRACR");
+  if (!val)
+    return false; // not set -> treat as false
+
   std::string s(val);
   // accept "1", "true", "TRUE", etc.
   return (s == "1" || s == "true" || s == "TRUE" || s == "on" || s == "ON");

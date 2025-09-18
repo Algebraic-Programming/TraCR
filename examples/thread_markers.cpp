@@ -60,8 +60,7 @@ int main(void) {
       MARK_COLOR_LAVENDER, "Fill matrices with values");
   const size_t prt_mat_label_id =
       INSTRUMENTATION_MARK_ADD(MARK_COLOR_RED, "Print all matrices");
-  const size_t mmm_label_id =
-      INSTRUMENTATION_MARK_ADD(MARK_COLOR_PEACH, "MMM");
+  const size_t mmm_label_id = INSTRUMENTATION_MARK_ADD(MARK_COLOR_PEACH, "MMM");
   const size_t prt_A_label_id = INSTRUMENTATION_MARK_ADD(
       MARK_COLOR_LIGHT_GRAY, "Print solution of matrix A");
   const size_t free_mem_label_id =

@@ -107,16 +107,11 @@ PYBIND11_MODULE(tracr, m) {
   /**
    * ovni thread marker methods
    */
-  m.def("INSTRUMENTATION_MARK_INIT", &instrumentation_mark_init,
-        "");
-  m.def("INSTRUMENTATION_MARK_ADD", &instrumentation_mark_add,
-        "");
-  m.def("INSTRUMENTATION_MARK_SET", &instrumentation_mark_set,
-        "");
-  m.def("INSTRUMENTATION_MARK_PUSH", &instrumentation_mark_push,
-        "");
-  m.def("INSTRUMENTATION_MARK_POP", &instrumentation_mark_pop,
-        "");
+  m.def("INSTRUMENTATION_MARK_INIT", &instrumentation_mark_init, "");
+  m.def("INSTRUMENTATION_MARK_ADD", &instrumentation_mark_add, "");
+  m.def("INSTRUMENTATION_MARK_SET", &instrumentation_mark_set, "");
+  m.def("INSTRUMENTATION_MARK_PUSH", &instrumentation_mark_push, "");
+  m.def("INSTRUMENTATION_MARK_POP", &instrumentation_mark_pop, "");
   m.def("INSTRUMENTATION_MARK_RESET", &instrumentation_mark_reset, "");
 
   /**

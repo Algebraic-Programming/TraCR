@@ -87,8 +87,7 @@ int main() {
 
   // Each Label creation costs around (~3us)
   // Should be done at the beginning or at the ending of the code
-  thrd_running_id =
-      INSTRUMENTATION_MARK_ADD(MARK_COLOR_MINT, "thread running");
+  thrd_running_id = INSTRUMENTATION_MARK_ADD(MARK_COLOR_MINT, "thread running");
   thrd_finished_id =
       INSTRUMENTATION_MARK_ADD(MARK_COLOR_GREEN, "thread finished");
   const size_t thrd_join_id =
