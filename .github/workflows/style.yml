@@ -24,5 +24,6 @@ jobs:
     - name: Checking style
       run: |
         echo "Checking source and test formatting..."
-        .build-tools/style/check-style.sh check src
+        .build-tools/style/check-style.sh check include
+        .build-tools/style/check-style.sh check tests
         .build-tools/style/check-style.sh check examples
