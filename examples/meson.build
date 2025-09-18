@@ -23,7 +23,7 @@ foreach args : cpp_args_list
 
     foreach test_type : test_types
         test_name = test_type + '_' + flag_name
-        exe = executable(test_name, test_type + '.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
+        exe = executable(test_name, 'tracr/' + test_type + '.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
         output_dir = exe.path() + '.p'
 
