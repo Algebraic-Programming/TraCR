@@ -14,12 +14,12 @@ Be sure all the tests are passing!
 Now, inside the `build` folder it will create another folder called `mock_install/share/pkgconfig` and this pkg-config file `pybind11.pc` type this:
 
 ```
-prefix=<location of tracr>/tracr/extern/pybind11/
+prefix=<location of tracr>/tracr/extern/pybind11
 includedir=${prefix}/include
 
 Name: pybind11
 Description: Seamless operability between C++11 and Python
-Version: 2.13.6
+Version: <current-pybind11-version>
 Cflags: -I${includedir}
 ```
 

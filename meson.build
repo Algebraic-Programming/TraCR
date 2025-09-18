@@ -22,20 +22,20 @@ InstrumentationBuildCppArgs = [
  ]
 
  InstrumentationBuildIncludes = include_directories([
-   'src'
+   'include'
   ])
   
 
 ####### Build ovni
 
-subdir('src')
+subdir('include/tracr')
 
 ####### Collect the dependencies
 
 InstrumentationBuildDep = declare_dependency(
     compile_args: InstrumentationBuildCppArgs,
     include_directories: InstrumentationBuildIncludes,
-    sources: ['src/tracr.cpp'],
+    sources: ['include/tracr/tracr.cpp'],
     dependencies: ovniDep
     )
 

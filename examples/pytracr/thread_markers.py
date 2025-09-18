@@ -30,49 +30,49 @@ def main():
   INSTRUMENTATION_START()
 
   # 0 == Set and 1 == Push/Pop
-  INSTRUMENTATION_THREAD_MARK_INIT(1)
+  INSTRUMENTATION_MARK_INIT(1)
 
-  # Each INSTRUMENTATION_THREAD_MARK_ADD costs around (~3us)
+  # Each INSTRUMENTATION_MARK_ADD costs around (~3us)
   # Should be done at the beginning or at the ending of the code
-  alloc_mem_label_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_TEAL, "Allocate Memory")
-  fill_mat_label_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_LAVENDER, "Fill matrices with values")
-  prt_mat_label_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_RED, "Print all matrices")
-  mmm_label_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_PEACH, "MMM")
-  prt_A_label_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_LIGHT_GRAY, "Print solution of matrix A")
+  alloc_mem_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_TEAL, "Allocate Memory")
+  fill_mat_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_LAVENDER, "Fill matrices with values")
+  prt_mat_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_RED, "Print all matrices")
+  mmm_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_PEACH, "MMM")
+  prt_A_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_LIGHT_GRAY, "Print solution of matrix A")
 
   t_after_label_set = time.time()
 
   # allocate memory
-  INSTRUMENTATION_THREAD_MARK_PUSH(alloc_mem_label_id)
+  INSTRUMENTATION_MARK_PUSH(alloc_mem_label_id)
   A = np.empty((N,N))
   B = np.empty((N,N))
   C = np.empty((N,N))
 
   # fill matrices
-  INSTRUMENTATION_THREAD_MARK_PUSH(fill_mat_label_id)
+  INSTRUMENTATION_MARK_PUSH(fill_mat_label_id)
   for i in range(N):
     for j in range(N):
       B[i,j] = i
       C[i,j] = j
-  INSTRUMENTATION_THREAD_MARK_POP(fill_mat_label_id)
-  INSTRUMENTATION_THREAD_MARK_POP(alloc_mem_label_id)
+  INSTRUMENTATION_MARK_POP(fill_mat_label_id)
+  INSTRUMENTATION_MARK_POP(alloc_mem_label_id)
 
   # print matrices
-  INSTRUMENTATION_THREAD_MARK_PUSH(prt_mat_label_id)
+  INSTRUMENTATION_MARK_PUSH(prt_mat_label_id)
   print(f"A: {A}")
   print(f"B: {B}")
   print(f"C: {C}")
-  INSTRUMENTATION_THREAD_MARK_POP(prt_mat_label_id)
+  INSTRUMENTATION_MARK_POP(prt_mat_label_id)
 
   # mmm
-  INSTRUMENTATION_THREAD_MARK_PUSH(mmm_label_id)
+  INSTRUMENTATION_MARK_PUSH(mmm_label_id)
   A = B @ C
-  INSTRUMENTATION_THREAD_MARK_POP(mmm_label_id)
+  INSTRUMENTATION_MARK_POP(mmm_label_id)
 
   # last print
-  INSTRUMENTATION_THREAD_MARK_PUSH(prt_A_label_id)
+  INSTRUMENTATION_MARK_PUSH(prt_A_label_id)
   print(f"A: {A}")
-  INSTRUMENTATION_THREAD_MARK_POP(prt_A_label_id)
+  INSTRUMENTATION_MARK_POP(prt_A_label_id)
 
   # TraCR finished
   INSTRUMENTATION_END()

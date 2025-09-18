@@ -15,7 +15,7 @@
  */
 
 #include <chrono>
-#include <tracr.hpp>
+#include <tracr/tracr.hpp>
 
 #define mytype float
 
@@ -50,44 +50,44 @@ int main(void) {
   INSTRUMENTATION_START(externally_init);
 
   // 0 == Set and 1 == Push/Pop
-  INSTRUMENTATION_THREAD_MARK_INIT(1);
+  INSTRUMENTATION_MARK_INIT(1);
 
-  // Each INSTRUMENTATION_THREAD_MARK_ADD costs around (~3us)
+  // Each INSTRUMENTATION_MARK_ADD costs around (~3us)
   // Should be done at the beginning or at the ending of the code
   const size_t alloc_mem_label_id =
-      INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_TEAL, "Allocate Memory");
-  const size_t fill_mat_label_id = INSTRUMENTATION_THREAD_MARK_ADD(
+      INSTRUMENTATION_MARK_ADD(MARK_COLOR_TEAL, "Allocate Memory");
+  const size_t fill_mat_label_id = INSTRUMENTATION_MARK_ADD(
       MARK_COLOR_LAVENDER, "Fill matrices with values");
   const size_t prt_mat_label_id =
-      INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_RED, "Print all matrices");
+      INSTRUMENTATION_MARK_ADD(MARK_COLOR_RED, "Print all matrices");
   const size_t mmm_label_id =
-      INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_PEACH, "MMM");
-  const size_t prt_A_label_id = INSTRUMENTATION_THREAD_MARK_ADD(
+      INSTRUMENTATION_MARK_ADD(MARK_COLOR_PEACH, "MMM");
+  const size_t prt_A_label_id = INSTRUMENTATION_MARK_ADD(
       MARK_COLOR_LIGHT_GRAY, "Print solution of matrix A");
   const size_t free_mem_label_id =
-      INSTRUMENTATION_THREAD_MARK_ADD(MARK_COLOR_MINT, "Free memory");
+      INSTRUMENTATION_MARK_ADD(MARK_COLOR_MINT, "Free memory");
 
   after_label_set = std::chrono::system_clock::now();
 
   // allocate memory
-  INSTRUMENTATION_THREAD_MARK_PUSH(alloc_mem_label_id);
+  INSTRUMENTATION_MARK_PUSH(alloc_mem_label_id);
   mytype *A = (mytype *)calloc(1, N * N * sizeof(mytype));
   mytype *B = (mytype *)malloc(N * N * sizeof(mytype));
   mytype *C = (mytype *)malloc(N * N * sizeof(mytype));
 
   // fill matrices
-  INSTRUMENTATION_THREAD_MARK_PUSH(fill_mat_label_id);
+  INSTRUMENTATION_MARK_PUSH(fill_mat_label_id);
   for (size_t i = 0; i < N; ++i) {
     for (size_t j = 0; j < N; ++j) {
       B[i * N + j] = (mytype)i;
       C[i * N + j] = (mytype)j;
     }
   }
-  INSTRUMENTATION_THREAD_MARK_POP(fill_mat_label_id);
-  INSTRUMENTATION_THREAD_MARK_POP(alloc_mem_label_id);
+  INSTRUMENTATION_MARK_POP(fill_mat_label_id);
+  INSTRUMENTATION_MARK_POP(alloc_mem_label_id);
 
   // print matrices
-  INSTRUMENTATION_THREAD_MARK_PUSH(prt_mat_label_id);
+  INSTRUMENTATION_MARK_PUSH(prt_mat_label_id);
   printf("A:\n");
   print_matrix(A, N);
 
@@ -96,10 +96,10 @@ int main(void) {
 
   printf("C:\n");
   print_matrix(C, N);
-  INSTRUMENTATION_THREAD_MARK_POP(prt_mat_label_id);
+  INSTRUMENTATION_MARK_POP(prt_mat_label_id);
 
   // mmm
-  INSTRUMENTATION_THREAD_MARK_PUSH(mmm_label_id);
+  INSTRUMENTATION_MARK_PUSH(mmm_label_id);
   for (size_t i = 0; i < N; ++i) {
     for (size_t j = 0; j < N; ++j) {
       for (size_t k = 0; k < N; ++k) {
@@ -107,20 +107,20 @@ int main(void) {
       }
     }
   }
-  INSTRUMENTATION_THREAD_MARK_POP(mmm_label_id);
+  INSTRUMENTATION_MARK_POP(mmm_label_id);
 
   // last print
-  INSTRUMENTATION_THREAD_MARK_PUSH(prt_A_label_id);
+  INSTRUMENTATION_MARK_PUSH(prt_A_label_id);
   printf("A (after mmm):\n");
   print_matrix(A, N);
-  INSTRUMENTATION_THREAD_MARK_POP(prt_A_label_id);
+  INSTRUMENTATION_MARK_POP(prt_A_label_id);
 
   // free memory
-  INSTRUMENTATION_THREAD_MARK_PUSH(free_mem_label_id);
+  INSTRUMENTATION_MARK_PUSH(free_mem_label_id);
   free(A);
   free(B);
   free(C);
-  INSTRUMENTATION_THREAD_MARK_POP(free_mem_label_id);
+  INSTRUMENTATION_MARK_POP(free_mem_label_id);
 
   // TraCR finished
   INSTRUMENTATION_END();
