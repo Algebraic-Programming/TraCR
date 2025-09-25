@@ -36,7 +36,7 @@ def threadFunction(lock, id, thrd_running_id, thrd_finished_id):
   # TraCR init thread
   INSTRUMENTATION_THREAD_INIT()
 
-  INSTRUMENTATION_THREAD_MARK_SET(thrd_running_id)
+  INSTRUMENTATION_MARK_SET(thrd_running_id)
 
   # Get the process ID (PID) and thread ID (TID)
   pid = os.getpid() # Process ID
@@ -53,7 +53,7 @@ def threadFunction(lock, id, thrd_running_id, thrd_finished_id):
 
     print(f"Thread {id} is running task: {taskid}")
 
-  INSTRUMENTATION_THREAD_MARK_SET(thrd_finished_id)
+  INSTRUMENTATION_MARK_SET(thrd_finished_id)
 
   # TraCR free thread
   INSTRUMENTATION_THREAD_END()
@@ -67,14 +67,14 @@ def main():
   INSTRUMENTATION_START()
 
   # 0 == Set and 1 == Push/Pop
-  INSTRUMENTATION_THREAD_MARK_INIT(0)
+  INSTRUMENTATION_MARK_INIT(0)
 
   # Each Label creation costs around (~3us)
   # Should be done at the beginning or at the ending of the code
-  thrd_running_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_MINT, "thread running")
-  thrd_finished_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_GREEN, "thread finished")
-  thrd_join_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_BROWN, "join threads")
-  thrds_end_id = INSTRUMENTATION_THREAD_MARK_ADD(mark_color.MARK_COLOR_RED, "threads end")
+  thrd_running_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_MINT, "thread running")
+  thrd_finished_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_GREEN, "thread finished")
+  thrd_join_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_BROWN, "join threads")
+  thrds_end_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_RED, "threads end")
 
   threads = [None] * NRANKS   # Vector to hold pthreads
   threadIds = [None] * NRANKS # Vector to hold thread IDs
@@ -90,13 +90,13 @@ def main():
 
     threads[i].start()
 
-  INSTRUMENTATION_THREAD_MARK_SET(thrd_join_id)
+  INSTRUMENTATION_MARK_SET(thrd_join_id)
 
   # Wait for all threads to finish
   for thread in threads:
     thread.join()
 
-  INSTRUMENTATION_THREAD_MARK_SET(thrds_end_id)
+  INSTRUMENTATION_MARK_SET(thrds_end_id)
 
   print("All threads have finished.")
 

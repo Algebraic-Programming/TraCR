@@ -18,7 +18,7 @@ from tracr import *
 
 """
  Basic c code to demonstrate TraCR's VMAKERS
- This example uses the VMARKER SET method
+ This example uses the VMARK SET method
  you can create a nice gradient plot in Paraver with it
 """
 def main():
@@ -27,11 +27,11 @@ def main():
 
   # use flag == 1 for push/pop and flag == 0 for the set method
   flag = 0
-  INSTRUMENTATION_VMARKER_TYPE(flag, "Simple VMarker Example")
+  INSTRUMENTATION_VMARK_TYPE(flag, "Simple VMarker Example")
 
   n = 150
   for i in range(1, n+1):
-    INSTRUMENTATION_VMARKER_SET(i)
+    INSTRUMENTATION_VMARK_SET(i)
     print(i, end=' ')
 
   # TraCR finished

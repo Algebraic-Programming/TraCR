@@ -23,11 +23,11 @@ from tracr import *
  VMakers (Vanilla Markers) are the type of markers pushing the color ID
  directly.
  
- This example is the same as the thread_markers.cpp but with VMARKERS
+ This example is the same as the thread_markers.cpp but with VMARKS
  They are useful if you don't wanna have labels and wanna keep track the
  number.
  
- Still, one can use INSTRUMENTATION_VMARKER_LABEL() if labels are of need.
+ Still, one can use INSTRUMENTATION_VMARK_LABEL() if labels are of need.
  But then you need to remember which color id corresponds to which label.
 """
 def main():
@@ -40,50 +40,50 @@ def main():
 
   # 0 == Set and 1 == Push/Pop
   flag = 1
-  INSTRUMENTATION_VMARKER_TYPE(flag, "Simple Marker Example")
+  INSTRUMENTATION_VMARK_TYPE(flag, "Simple Marker Example")
 
-  # Each INSTRUMENTATION_THREAD_MARK_ADD costs around (~3us)
+  # Each INSTRUMENTATION_MARK_ADD costs around (~3us)
   # Should be done at the beginning or at the ending of the code
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory")
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_LAVENDER,
+  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory")
+  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_LAVENDER,
                                 "Fill matrices with values")
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_MAROON, "Print all matrices")
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_OLIVE, "MMM")
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_NAVY, "Print solution of matrix A")
+  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_MAROON, "Print all matrices")
+  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_OLIVE, "MMM")
+  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_NAVY, "Print solution of matrix A")
 
   t_after_label_set = time.time()
 
   # allocate memory
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_LIGHT_GREEN)
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_LIGHT_GREEN)
   A = np.empty((N,N))
   B = np.empty((N,N))
   C = np.empty((N,N))
 
   # fill matrices
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_LAVENDER)
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_LAVENDER)
   for i in range(N):
     for j in range(N):
       B[i, j] = i
       C[i, j] = j
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LAVENDER)
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LIGHT_GREEN)
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_LAVENDER)
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_LIGHT_GREEN)
 
   # print matrices
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_MAROON)
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_MAROON)
   print(f"A: {A}")
   print(f"B: {B}")
   print(f"C: {C}")
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_MAROON)
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_MAROON)
 
   # mmm
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_OLIVE)
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_OLIVE)
   A = B @ C
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_OLIVE)
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_OLIVE)
 
   # last print
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_NAVY)
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_NAVY)
   print(f"A: {A}")
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_NAVY)
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_NAVY)
 
   # TraCR finished
   INSTRUMENTATION_END()

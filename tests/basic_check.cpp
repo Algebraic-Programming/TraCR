@@ -15,7 +15,7 @@
  */
 
 #include <ovni.h>
-#include <tracr.hpp>
+#include <tracr/tracr.hpp>
 
 /*
  * Basic test to see if TraCR (and ovni) is installed correctly

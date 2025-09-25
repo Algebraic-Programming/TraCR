@@ -15,7 +15,7 @@
  */
 
 #include <chrono>
-#include <tracr.hpp>
+#include <tracr/tracr.hpp>
 
 #define mytype float
 
@@ -33,17 +33,7 @@ static void print_matrix(mytype *matrix, const size_t N) {
 }
 
 /**
- * Basic c code to demonstrate TraCR's VMAKERS
- * VMakers (Vanilla Markers) are the type of markers pushing the color ID
- * directly.
- *
- * This example is the same as the thread_markers.cpp but with VMARKERS
- *
- * They are useful if you don't wanna have labels and wanna keep track the
- * number.
- *
- * Still, one can use INSTRUMENTATION_VMARKER_LABEL() if labels are of need.
- * But then you need to remember which color id corresponds to which label.
+ * This is a basic example of the thread markers of TraCR
  */
 int main(void) {
   std::chrono::time_point<std::chrono::system_clock> start, end,
@@ -59,41 +49,44 @@ int main(void) {
   bool externally_init = false;
   INSTRUMENTATION_START(externally_init);
 
-  // use flag == 1 for push/pop and flag == 0 for the set method
-  bool flag = 1;
-  INSTRUMENTATION_VMARKER_TYPE(flag, "Simple Marker Example");
+  // 0 == Set and 1 == Push/Pop
+  INSTRUMENTATION_MARK_INIT(1);
 
-  // Each Label creation costs around (~3us)
+  // Each INSTRUMENTATION_MARK_ADD costs around (~3us)
   // Should be done at the beginning or at the ending of the code
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory");
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_LAVENDER,
-                                "Fill matrices with values");
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_MAROON, "Print all matrices");
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_OLIVE, "MMM");
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_NAVY, "Print solution of matrix A");
-  INSTRUMENTATION_VMARKER_LABEL(MARK_COLOR_PINK, "Free memory");
+  const size_t alloc_mem_label_id =
+      INSTRUMENTATION_MARK_ADD(MARK_COLOR_TEAL, "Allocate Memory");
+  const size_t fill_mat_label_id = INSTRUMENTATION_MARK_ADD(
+      MARK_COLOR_LAVENDER, "Fill matrices with values");
+  const size_t prt_mat_label_id =
+      INSTRUMENTATION_MARK_ADD(MARK_COLOR_RED, "Print all matrices");
+  const size_t mmm_label_id = INSTRUMENTATION_MARK_ADD(MARK_COLOR_PEACH, "MMM");
+  const size_t prt_A_label_id = INSTRUMENTATION_MARK_ADD(
+      MARK_COLOR_LIGHT_GRAY, "Print solution of matrix A");
+  const size_t free_mem_label_id =
+      INSTRUMENTATION_MARK_ADD(MARK_COLOR_MINT, "Free memory");
 
   after_label_set = std::chrono::system_clock::now();
 
   // allocate memory
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_LIGHT_GREEN);
+  INSTRUMENTATION_MARK_PUSH(alloc_mem_label_id);
   mytype *A = (mytype *)calloc(1, N * N * sizeof(mytype));
   mytype *B = (mytype *)malloc(N * N * sizeof(mytype));
   mytype *C = (mytype *)malloc(N * N * sizeof(mytype));
 
   // fill matrices
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_LAVENDER);
+  INSTRUMENTATION_MARK_PUSH(fill_mat_label_id);
   for (size_t i = 0; i < N; ++i) {
     for (size_t j = 0; j < N; ++j) {
       B[i * N + j] = (mytype)i;
       C[i * N + j] = (mytype)j;
     }
   }
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LAVENDER);
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_LIGHT_GREEN);
+  INSTRUMENTATION_MARK_POP(fill_mat_label_id);
+  INSTRUMENTATION_MARK_POP(alloc_mem_label_id);
 
   // print matrices
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_MAROON);
+  INSTRUMENTATION_MARK_PUSH(prt_mat_label_id);
   printf("A:\n");
   print_matrix(A, N);
 
@@ -102,10 +95,10 @@ int main(void) {
 
   printf("C:\n");
   print_matrix(C, N);
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_MAROON);
+  INSTRUMENTATION_MARK_POP(prt_mat_label_id);
 
   // mmm
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_OLIVE);
+  INSTRUMENTATION_MARK_PUSH(mmm_label_id);
   for (size_t i = 0; i < N; ++i) {
     for (size_t j = 0; j < N; ++j) {
       for (size_t k = 0; k < N; ++k) {
@@ -113,20 +106,20 @@ int main(void) {
       }
     }
   }
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_OLIVE);
+  INSTRUMENTATION_MARK_POP(mmm_label_id);
 
   // last print
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_NAVY);
+  INSTRUMENTATION_MARK_PUSH(prt_A_label_id);
   printf("A (after mmm):\n");
   print_matrix(A, N);
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_NAVY);
+  INSTRUMENTATION_MARK_POP(prt_A_label_id);
 
   // free memory
-  INSTRUMENTATION_VMARKER_PUSH(MARK_COLOR_PINK);
+  INSTRUMENTATION_MARK_PUSH(free_mem_label_id);
   free(A);
   free(B);
   free(C);
-  INSTRUMENTATION_VMARKER_POP(MARK_COLOR_PINK);
+  INSTRUMENTATION_MARK_POP(free_mem_label_id);
 
   // TraCR finished
   INSTRUMENTATION_END();

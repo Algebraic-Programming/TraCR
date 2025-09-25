@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include <tracr.hpp>
+#include <tracr/tracr.hpp>
 
 /**
  * Basic c code to demonstrate TraCR's VMAKERS
- * This example uses the VMARKER SET method
+ * This example uses the VMARK SET method
  * you can create a nice gradient plot in Paraver with it
  */
 int main(void) {
@@ -30,11 +30,11 @@ int main(void) {
 
   // use flag == 1 for push/pop and flag == 0 for the set method
   bool flag = 0;
-  INSTRUMENTATION_VMARKER_TYPE(flag, "Simple Marker Example");
+  INSTRUMENTATION_VMARK_TYPE(flag, "Simple Marker Example");
 
   const int n = 150;
   for (int i = 1; i <= n; ++i) {
-    INSTRUMENTATION_VMARKER_SET(i);
+    INSTRUMENTATION_VMARK_SET(i);
     printf("%d ", i);
   }
 
