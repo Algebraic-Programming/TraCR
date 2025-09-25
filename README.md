@@ -10,6 +10,7 @@
 - **Examples** provided in the `examples/` folder.
 - **Post-processing scripts** for trace visualization in `python_scripts/`.
 - **PyTraCR** for TraCR in python.
+- **env flag** use `export DISABLE_TRACR=1` to disable the traces.
 
 ## Instrumentation Control
 
