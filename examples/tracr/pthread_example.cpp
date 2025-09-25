@@ -26,6 +26,8 @@
 #define NTASKS 3 // number of tasks per thread
 
 // globali accessible variables
+size_t task_running_id;
+size_t task_finished_id;
 size_t thrd_running_id;
 size_t thrd_finished_id;
 
@@ -57,13 +59,19 @@ void *threadFunction(void *arg) {
   for (int i = 0; i < NTASKS; ++i) {
     uint32_t taskid = id * NTASKS + i;
 
+    INSTRUMENTATION_TASK_INIT();  // always init first
+
+    INSTRUMENTATION_TMARK_SET(taskid, task_running_id);
+
     std::cout << "Thread " << id << " is running task: " << taskid << std::endl;
+
+    INSTRUMENTATION_TMARK_SET(taskid, task_finished_id);
   }
 
   INSTRUMENTATION_MARK_SET(thrd_finished_id);
 
   // Optional: This marker pushes the int64_t max value. Can be used to indicate
-  // the ending.
+  // the ending (which also makes it in Paraver by default invinsible).
   INSTRUMENTATION_MARK_RESET();
 
   // TraCR free thread
@@ -83,11 +91,16 @@ int main() {
   INSTRUMENTATION_START(externally_init);
 
   // 0 == Set and 1 == Push/Pop
+  INSTRUMENTATION_TMARK_INIT(0);
+
+  task_running_id = INSTRUMENTATION_TMARK_ADD(MARK_COLOR_MINT, "task running");
+  task_finished_id = INSTRUMENTATION_TMARK_LAZY_ADD("task finished");
+
   INSTRUMENTATION_MARK_INIT(0);
 
   // Each Label creation costs around (~3us)
   // Should be done at the beginning or at the ending of the code
-  thrd_running_id = INSTRUMENTATION_MARK_ADD(MARK_COLOR_MINT, "thread running");
+  thrd_running_id = INSTRUMENTATION_MARK_LAZY_ADD("thread running");
   thrd_finished_id =
       INSTRUMENTATION_MARK_ADD(MARK_COLOR_GREEN, "thread finished");
   const size_t thrd_join_id =

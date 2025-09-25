@@ -17,7 +17,7 @@
 from tracr import *
 
 """
- Basic c code to demonstrate TraCR's VMAKERS
+ Basic python code to demonstrate pyTraCR's VMAKERS
  This example uses the VMARK SET method
  you can create a nice gradient plot in Paraver with it
 """

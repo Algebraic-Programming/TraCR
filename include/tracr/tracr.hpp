@@ -63,7 +63,7 @@ enum mark_color : int64_t {
  * Using this flag will enable all the instrumentations of TraCR. Otherwise pure
  * void functions.
  */
-#ifdef ENABLE_INSTRUMENTATION
+#if defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS)
 
 /**
  * Debug printing method. Can be enabled with the ENABLE_DEBUG flag included.
@@ -153,10 +153,74 @@ extern bool get_env_flag();
       ovni_thread_free();                                                      \
     }                                                                          \
   }
+endif /* defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS) */
+
+/**
+ *  task marker methods
+ */
+#ifdef INSTRUMENTATION_TASKS
+
+    extern TaskMarkerMap task_marker_map;
+    
+    #define INSTRUMENTATION_TASK_INIT()                         \
+      if (!disable_tracr) {                                     \ 
+        debug_print("instr_task_init: (TID: %d)", get_tid());   \
+        ntasks_counter++;                                       \
+      }
+
+    #define INSTRUMENTATION_TMARK_INIT(chan_type)                     \
+      if (!disable_tracr) {                                           \ 
+        debug_print("instr_task_type_set: (TID: %d)", get_tid());     \
+        ovni_attr_set_double("taskr.chan_type", (double) chan_type);  \
+      }
+    
+    #define INSTRUMENTATION_TMARK_ADD(labelid, label)             \
+      (!disable_tracr ? task_marker_map.add(labelid, label) : 0)
+
+    #define INSTRUMENTATION_TMARK_LAZY_ADD(label)             \
+      (!disable_tracr ? task_marker_map.add(auto_label++, label) : 0)
+
+    #define INSTRUMENTATION_TMARK_SET(taskid, idx)                                                   \
+      if (!disable_tracr) {                                                                          \ 
+        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
+        task_marker_map.set(taskid, idx);                                                            \
+      }
+
+    #define INSTRUMENTATION_TMARK_PUSH(taskid, idx)                                                  \
+      if (!disable_tracr) {                                                                          \
+        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
+        task_marker_map.push(taskid, idx);                                                           \
+      }
+
+    #define INSTRUMENTATION_TMARK_POP(taskid, idx)                                                   \
+      if (!disable_tracr) {                                                                          \
+        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
+        task_marker_map.pop(taskid, idx);                                                            \
+      }
+
+#else /* No thread instrumentations (void) */
+
+#define INSTRUMENTATION_TASK_INIT()
+
+#define INSTRUMENTATION_TMARK_INIT(chan_type) (void)(chan_type)
+
+    #define INSTRUMENTATION_TMARK_ADD(labelid, label) -1; (void)(labelid); (void)(label)
+
+    #define INSTRUMENTATION_TMARK_LAZY_ADD(labelid, label) -1; (void)(label)
+
+    #define INSTRUMENTATION_TMARK_SET(taskid, idx) (void)(taskid); (void)(idx)
+
+    #define INSTRUMENTATION_TMARK_PUSH(taskid, idx) (void)(taskid); (void)(idx)
+
+    #define INSTRUMENTATION_TMARK_POP(taskid, idx) (void)(taskid); (void)(idx)
+
+#endif /* INSTRUMENTATION_TASKS */
 
 /**
  * ovni thread marker methods
  */
+#ifdef INSTRUMENTATION_THREADS
+
 extern ThreadMarkerMap thread_marker_map;
 
 #define INSTRUMENTATION_MARK_INIT(flag)                                        \
@@ -227,7 +291,7 @@ extern ThreadMarkerMap thread_marker_map;
     ovni_mark_pop(0, value);                                                   \
   }
 
-#else /* No instrumentations (void) */
+#else /* No thread instrumentations (void) */
 
 #define INSTRUMENTATION_ACTIVE false
 
@@ -284,4 +348,4 @@ extern ThreadMarkerMap thread_marker_map;
 
 #define INSTRUMENTATION_VMARK_POP(value) (void)(value)
 
-#endif /* ENABLE_INSTRUMENTATION */
+#endif /* INSTRUMENTATION_THREADS */

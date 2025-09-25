@@ -27,7 +27,7 @@
  * Using this flag will enable all the instrumentations of TraCR. Otherwise pure
  * void functions.
  */
-#ifdef ENABLE_INSTRUMENTATION
+#if defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS)
 
 /**
  * Keep track of the main thread as this one has to be free'd when instr_end is
@@ -65,9 +65,18 @@ bool get_env_flag() {
   return (s == "1" || s == "true" || s == "TRUE" || s == "on" || s == "ON");
 }
 
+#endif /* defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS) */
+
+/**
+ * ovni task marker methods
+ */
+#ifdef INSTRUMENTATION_TASKS
+  TaskMarkerMap task_marker_map;
+#endif
+
 /**
  * ovni thread marker methods
  */
-ThreadMarkerMap thread_marker_map;
-
-#endif /* ENABLE_INSTRUMENTATION */
+#ifdef INSTRUMENTATION_THREADS
+  ThreadMarkerMap thread_marker_map;
+#endif

@@ -39,6 +39,38 @@ static void instrumentation_thread_init() { INSTRUMENTATION_THREAD_INIT(); }
 static void instrumentation_thread_end_() { INSTRUMENTATION_THREAD_END(); }
 
 /**
+ * ovni task marker methods
+ */
+static void instrumentation_task_init(size_t flag) {
+  INSTRUMENTATION_TASK_INIT(flag);
+}
+
+static void instrumentation_tmark_init(size_t flag) {
+  INSTRUMENTATION_TMARK_INIT(flag);
+}
+
+static size_t instrumentation_tmark_add(size_t value, const char *label) {
+  return INSTRUMENTATION_TMARK_ADD(value, label);
+}
+
+static size_t instrumentation_tmark_lazy_add(const char *label) {
+  return INSTRUMENTATION_TMARK_LAZY_ADD(label);
+}
+
+
+static void instrumentation_tmark_set(size_t idx) {
+  INSTRUMENTATION_TMARK_SET(idx);
+}
+
+static void instrumentation_tmark_push(size_t idx) {
+  INSTRUMENTATION_TMARK_PUSH(idx);
+}
+
+static void instrumentation_tmark_pop(size_t idx) {
+  INSTRUMENTATION_TMARK_POP(idx);
+}
+
+/**
  * ovni thread marker methods
  */
 static void instrumentation_mark_init(size_t flag) {
@@ -47,6 +79,10 @@ static void instrumentation_mark_init(size_t flag) {
 
 static size_t instrumentation_mark_add(size_t value, const char *label) {
   return INSTRUMENTATION_MARK_ADD(value, label);
+}
+
+static size_t instrumentation_mark_lazy_add(const char *label) {
+  return INSTRUMENTATION_MARK_LAZY_ADD(label);
 }
 
 static void instrumentation_mark_set(size_t idx) {
@@ -105,9 +141,21 @@ PYBIND11_MODULE(tracr, m) {
   m.def("INSTRUMENTATION_THREAD_END", &instrumentation_thread_end_, "");
 
   /**
+   * ovni task marker methods
+   */
+  m.def("INSTRUMENTATION_TASK_INIT", &instrumentation_task_init, "");
+  m.def("INSTRUMENTATION_TMARK_INIT", &instrumentation_tmark_init, "");
+  m.def("INSTRUMENTATION_TMARK_LAZY_ADD", &instrumentation_tmark_lazy_add, "");
+  m.def("INSTRUMENTATION_TMARK_ADD", &instrumentation_tmark_add, "");
+  m.def("INSTRUMENTATION_TMARK_SET", &instrumentation_tmark_set, "");
+  m.def("INSTRUMENTATION_TMARK_PUSH", &instrumentation_tmark_push, "");
+  m.def("INSTRUMENTATION_TMARK_POP", &instrumentation_tmark_pop, "");
+
+  /**
    * ovni thread marker methods
    */
   m.def("INSTRUMENTATION_MARK_INIT", &instrumentation_mark_init, "");
+  m.def("INSTRUMENTATION_MARK_LAZY_ADD", &instrumentation_mark_lazy_add, "");
   m.def("INSTRUMENTATION_MARK_ADD", &instrumentation_mark_add, "");
   m.def("INSTRUMENTATION_MARK_SET", &instrumentation_mark_set, "");
   m.def("INSTRUMENTATION_MARK_PUSH", &instrumentation_mark_push, "");

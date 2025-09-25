@@ -31,7 +31,7 @@ NRANKS = 4 # number of threads
 NTASKS = 3 # number of tasks per thread
 
 # Function to be executed by a thread
-def threadFunction(lock, id, thrd_running_id, thrd_finished_id):
+def threadFunction(lock, id, task_running_id, task_finished_id, thrd_running_id, thrd_finished_id):
 
   # TraCR init thread
   INSTRUMENTATION_THREAD_INIT()
@@ -51,7 +51,13 @@ def threadFunction(lock, id, thrd_running_id, thrd_finished_id):
   for i in range(NTASKS):
     taskid = id * NTASKS + i
 
+    INSTRUMENTATION_TASK_INIT()  # always init first
+
+    INSTRUMENTATION_TMARK_SET(taskid, task_running_id)
+
     print(f"Thread {id} is running task: {taskid}")
+
+    INSTRUMENTATION_TMARK_SET(taskid, task_finished_id)
 
   INSTRUMENTATION_MARK_SET(thrd_finished_id)
 
@@ -67,6 +73,11 @@ def main():
   INSTRUMENTATION_START()
 
   # 0 == Set and 1 == Push/Pop
+  INSTRUMENTATION_TMARK_INIT(0)
+
+  task_running_id = INSTRUMENTATION_TMARK_ADD(mark_color.MARK_COLOR_MINT, "task running")
+  task_finished_id = INSTRUMENTATION_TMARK_LAZY_ADD("task finished")
+
   INSTRUMENTATION_MARK_INIT(0)
 
   # Each Label creation costs around (~3us)
@@ -86,7 +97,7 @@ def main():
   for i in range(NRANKS):
     threadIds[i] = i # Assign thread ID
 
-    threads[i] = Process(target=threadFunction, args=(lock, i, thrd_running_id, thrd_finished_id))
+    threads[i] = Process(target=threadFunction, args=(lock, i, task_running_id, task_finished_id, thrd_running_id, thrd_finished_id))
 
     threads[i].start()
 
