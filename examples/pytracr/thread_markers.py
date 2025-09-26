@@ -36,7 +36,7 @@ def main():
   # Should be done at the beginning or at the ending of the code
   alloc_mem_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_TEAL, "Allocate Memory")
   fill_mat_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_LAVENDER, "Fill matrices with values")
-  prt_mat_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_RED, "Print all matrices")
+  prt_mat_label_id = INSTRUMENTATION_MARK_LAZY_ADD("Print all matrices")
   mmm_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_PEACH, "MMM")
   prt_A_label_id = INSTRUMENTATION_MARK_ADD(mark_color.MARK_COLOR_LIGHT_GRAY, "Print solution of matrix A")
 

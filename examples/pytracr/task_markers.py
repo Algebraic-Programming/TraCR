@@ -33,7 +33,7 @@ def main():
 
 	task_init_idx = INSTRUMENTATION_TMARK_ADD(mark_color.MARK_COLOR_GRAY, "task initialized")
 	task_exec_idx = INSTRUMENTATION_TMARK_ADD(mark_color.MARK_COLOR_LIGHT_GREEN, "task executed")
-	task_susp_idx = INSTRUMENTATION_TMARK_ADD(mark_color.MARK_COLOR_LIGHT_GRAY, "task suspended")
+	task_susp_idx = INSTRUMENTATION_TMARK_LAZY_ADD("task suspended")
 	task_fini_idx = INSTRUMENTATION_TMARK_ADD(mark_color.MARK_COLOR_BLACK, "task finished")
 	
 	for taskid in range(ntasks):
