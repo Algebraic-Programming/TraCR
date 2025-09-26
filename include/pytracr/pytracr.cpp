@@ -41,9 +41,7 @@ static void instrumentation_thread_end_() { INSTRUMENTATION_THREAD_END(); }
 /**
  * ovni task marker methods
  */
-static void instrumentation_task_init(size_t flag) {
-  INSTRUMENTATION_TASK_INIT(flag);
-}
+static void instrumentation_task_init() { INSTRUMENTATION_TASK_INIT(); }
 
 static void instrumentation_tmark_init(size_t flag) {
   INSTRUMENTATION_TMARK_INIT(flag);
@@ -57,17 +55,16 @@ static size_t instrumentation_tmark_lazy_add(const char *label) {
   return INSTRUMENTATION_TMARK_LAZY_ADD(label);
 }
 
-
-static void instrumentation_tmark_set(size_t idx) {
-  INSTRUMENTATION_TMARK_SET(idx);
+static void instrumentation_tmark_set(uint32_t taskid, size_t idx) {
+  INSTRUMENTATION_TMARK_SET(taskid, idx);
 }
 
-static void instrumentation_tmark_push(size_t idx) {
-  INSTRUMENTATION_TMARK_PUSH(idx);
+static void instrumentation_tmark_push(uint32_t taskid, size_t idx) {
+  INSTRUMENTATION_TMARK_PUSH(taskid, idx);
 }
 
-static void instrumentation_tmark_pop(size_t idx) {
-  INSTRUMENTATION_TMARK_POP(idx);
+static void instrumentation_tmark_pop(uint32_t taskid, size_t idx) {
+  INSTRUMENTATION_TMARK_POP(taskid, idx);
 }
 
 /**
@@ -172,6 +169,7 @@ PYBIND11_MODULE(tracr, m) {
   m.def("INSTRUMENTATION_VMARK_POP", &instrumentation_vmark_pop, "");
 
   py::enum_<mark_color>(m, "mark_color", py::arithmetic())
+      .value("MARK_COLOR_BLACK", MARK_COLOR_BLACK)
       .value("MARK_COLOR_BLUE", MARK_COLOR_BLUE)
       .value("MARK_COLOR_LIGHT_GRAY", MARK_COLOR_LIGHT_GRAY)
       .value("MARK_COLOR_RED", MARK_COLOR_RED)

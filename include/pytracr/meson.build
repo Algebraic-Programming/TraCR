@@ -7,5 +7,5 @@ py.extension_module('tracr',
     'pytracr.cpp',
     install: true,
     dependencies : [InstrumentationBuildDep, pybind11_dep],
-    cpp_args: ['-DENABLE_INSTRUMENTATION'],
+    cpp_args: ['-DINSTRUMENTATION_TASKS', '-DINSTRUMENTATION_THREADS',],
 )

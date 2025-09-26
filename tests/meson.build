@@ -2,8 +2,10 @@
 testSuite = ['tests']
 
 cpp_args_list = [
-    ['-DENABLE_INSTRUMENTATION', '-DENABLE_DEBUG'],  # With thread instrumentation
-    []                                               # No instrumentation
+    ['-DINSTRUMENTATION_TASKS', '-DINSTRUMENTATION_THREADS', '-DENABLE_DEBUG'], # With task and thread instrumentation
+    ['-DINSTRUMENTATION_TASKS', '-DENABLE_DEBUG'],                              # With task instrumentation
+    ['-DINSTRUMENTATION_THREADS', '-DENABLE_DEBUG'],                            # With thread instrumentation
+    []                                                                          # No instrumentation
 ]
 
 # TEST 0: Basic ovni test
@@ -29,7 +31,7 @@ foreach args : cpp_args_list
         # TEST 0: Basic ovni test (instrumentation disabled)
         basic_check_exe = executable('basic_check_' + flag_name, 'basic_check.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
-      test('basic_check_' + flag_name, basic_check_exe, args : [], suite : testSuite)
+        test('basic_check_' + flag_name, basic_check_exe, args : [], suite : testSuite)
 
     else
         error('RuntimeError: Unknown args: ', args)

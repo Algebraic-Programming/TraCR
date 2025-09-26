@@ -10,6 +10,14 @@ create_dir_script = find_program('bash_scripts/create_dirs.py', native: true, re
 
 test_types = ['pthread_example', 'thread_markers', 'vmarkers_push_pop', 'vmarkers_set', 'task_markers']
 
+valid_flags = {
+  'pthread_example'   : ['both_instrumentation', 'thread_instrumentation', 'task_instrumentation', 'no_instrumentation'],
+  'thread_markers'    : ['thread_instrumentation', 'no_instrumentation'],
+  'vmarkers_push_pop' : ['thread_instrumentation', 'no_instrumentation'],
+  'vmarkers_set'      : ['thread_instrumentation', 'no_instrumentation'],
+  'task_markers'      : ['task_instrumentation', 'no_instrumentation'],
+}
+
 cpp_args_list = [
     ['-DINSTRUMENTATION_TASKS', '-DINSTRUMENTATION_THREADS', '-DENABLE_DEBUG'], # With task and thread instrumentation
     ['-DINSTRUMENTATION_TASKS', '-DENABLE_DEBUG'],                              # With task instrumentation
@@ -34,11 +42,7 @@ foreach args : cpp_args_list
     
 
     foreach test_type : test_types
-        if (test_type in ['pthread_example'] and flag_name == 'both_instrumentation') or
-            (test_type in ['thread_markers', 'vmarkers_push_pop', 'vmarkers_set'] and flag_name == 'thread_instrumentation') or
-            (test_type in ['task_markers'] and flag_name == 'task_instrumentation')
-
-
+        if flag_name in valid_flags.get(test_type, '')
 
             test_name = test_type + '_' + flag_name
             exe = executable(test_name, 'tracr/' + test_type + '.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)

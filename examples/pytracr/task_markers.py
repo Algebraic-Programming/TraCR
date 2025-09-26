@@ -29,7 +29,7 @@ def main():
 	"""
 	0 == Set and 1 == Push/Pop
 	"""
-	INSTRUMENTATION_TMARK_MARK_INIT(0)
+	INSTRUMENTATION_TMARK_INIT(0)
 
 	task_init_idx = INSTRUMENTATION_TMARK_ADD(mark_color.MARK_COLOR_GRAY, "task initialized")
 	task_exec_idx = INSTRUMENTATION_TMARK_ADD(mark_color.MARK_COLOR_LIGHT_GREEN, "task executed")

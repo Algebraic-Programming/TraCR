@@ -30,6 +30,11 @@
 #if defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS)
 
 /**
+ * Atomic counter of how many tasks got created
+ */
+std::atomic<int> ntasks_counter(0);
+
+/**
  * Keep track of the main thread as this one has to be free'd when instr_end is
  * called
  */
@@ -65,18 +70,19 @@ bool get_env_flag() {
   return (s == "1" || s == "true" || s == "TRUE" || s == "on" || s == "ON");
 }
 
-#endif /* defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS) */
+#endif /* defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS)   \
+        */
 
 /**
  * ovni task marker methods
  */
 #ifdef INSTRUMENTATION_TASKS
-  TaskMarkerMap task_marker_map;
+TaskMarkerMap task_marker_map;
 #endif
 
 /**
  * ovni thread marker methods
  */
 #ifdef INSTRUMENTATION_THREADS
-  ThreadMarkerMap thread_marker_map;
+ThreadMarkerMap thread_marker_map;
 #endif

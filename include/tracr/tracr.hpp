@@ -32,10 +32,12 @@
 
 /**
  * Marker colors values of the default Paraver color palette
- * NOTE: Black would be 0 but in ovni it is illegal!
+ * NOTE: normally Black would be illegal in ovni (But not in our modified
+ * version of ovni ;P)!
  */
 enum mark_color : int64_t {
-  MARK_COLOR_BLUE = 1,
+  MARK_COLOR_BLACK = 0,
+  MARK_COLOR_BLUE,
   MARK_COLOR_LIGHT_GRAY,
   MARK_COLOR_RED,
   MARK_COLOR_GREEN,
@@ -73,6 +75,11 @@ enum mark_color : int64_t {
 #else
 #define debug_print(fmt, ...)
 #endif
+
+/**
+ * Atomic counter of how many tasks got created
+ */
+extern std::atomic<int> ntasks_counter;
 
 /**
  * Keep track of the main thread as this one has to be free'd when instr_end is
@@ -120,6 +127,7 @@ extern bool get_env_flag();
     if (!external_init) {                                                      \
       instrumentation_init_proc(sched_getcpu(), get_nprocs());                 \
     }                                                                          \
+    ovni_thread_require("taskr", "1.0.0");                                     \
   }
 
 #define INSTRUMENTATION_END()                                                  \
@@ -153,66 +161,99 @@ extern bool get_env_flag();
       ovni_thread_free();                                                      \
     }                                                                          \
   }
-endif /* defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS) */
+#else
+
+#define INSTRUMENTATION_ACTIVE false
+
+/**
+ * ovni proc methods
+ */
+#define INSTRUMENTATION_START(external_init_) (void)(external_init_)
+
+#define INSTRUMENTATION_END()
+
+/**
+ * ovni thread methods
+ */
+#define INSTRUMENTATION_THREAD_INIT()
+
+#define INSTRUMENTATION_THREAD_END()
+
+#endif /* defined(INSTRUMENTATION_TASKS) || defined(INSTRUMENTATION_THREADS)   \
+        */
 
 /**
  *  task marker methods
  */
 #ifdef INSTRUMENTATION_TASKS
 
-    extern TaskMarkerMap task_marker_map;
-    
-    #define INSTRUMENTATION_TASK_INIT()                         \
-      if (!disable_tracr) {                                     \ 
-        debug_print("instr_task_init: (TID: %d)", get_tid());   \
-        ntasks_counter++;                                       \
-      }
+extern TaskMarkerMap task_marker_map;
 
-    #define INSTRUMENTATION_TMARK_INIT(chan_type)                     \
-      if (!disable_tracr) {                                           \ 
-        debug_print("instr_task_type_set: (TID: %d)", get_tid());     \
-        ovni_attr_set_double("taskr.chan_type", (double) chan_type);  \
-      }
-    
-    #define INSTRUMENTATION_TMARK_ADD(labelid, label)             \
-      (!disable_tracr ? task_marker_map.add(labelid, label) : 0)
+#define INSTRUMENTATION_TASK_INIT()                                            \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_task_init: (TID: %d)", get_tid());                      \
+    ntasks_counter++;                                                          \
+  }
 
-    #define INSTRUMENTATION_TMARK_LAZY_ADD(label)             \
-      (!disable_tracr ? task_marker_map.add(auto_label++, label) : 0)
+#define INSTRUMENTATION_TMARK_INIT(chan_type)                                  \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_task_type_set: (TID: %d)", get_tid());                  \
+    ovni_attr_set_double("taskr.chan_type", (double)chan_type);                \
+  }
 
-    #define INSTRUMENTATION_TMARK_SET(taskid, idx)                                                   \
-      if (!disable_tracr) {                                                                          \ 
-        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
-        task_marker_map.set(taskid, idx);                                                            \
-      }
+#define INSTRUMENTATION_TMARK_ADD(labelid, label)                              \
+  (!disable_tracr ? task_marker_map.add(labelid, label) : 0)
 
-    #define INSTRUMENTATION_TMARK_PUSH(taskid, idx)                                                  \
-      if (!disable_tracr) {                                                                          \
-        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
-        task_marker_map.push(taskid, idx);                                                           \
-      }
+#define INSTRUMENTATION_TMARK_LAZY_ADD(label)                                  \
+  (!disable_tracr ? task_marker_map.add(auto_label++, label) : 0)
 
-    #define INSTRUMENTATION_TMARK_POP(taskid, idx)                                                   \
-      if (!disable_tracr) {                                                                          \
-        debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int) taskid, (int) idx, get_tid());   \
-        task_marker_map.pop(taskid, idx);                                                            \
-      }
+#define INSTRUMENTATION_TMARK_SET(taskid, idx)                                 \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int)taskid,         \
+                (int)idx, get_tid());                                          \
+    task_marker_map.set(taskid, idx);                                          \
+  }
 
-#else /* No thread instrumentations (void) */
+#define INSTRUMENTATION_TMARK_PUSH(taskid, idx)                                \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int)taskid,         \
+                (int)idx, get_tid());                                          \
+    task_marker_map.push(taskid, idx);                                         \
+  }
+
+#define INSTRUMENTATION_TMARK_POP(taskid, idx)                                 \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_taskr_mark_set: %d, %d (TID: %d)", (int)taskid,         \
+                (int)idx, get_tid());                                          \
+    task_marker_map.pop(taskid, idx);                                          \
+  }
+
+#else /* No task instrumentations (void) */
 
 #define INSTRUMENTATION_TASK_INIT()
 
 #define INSTRUMENTATION_TMARK_INIT(chan_type) (void)(chan_type)
 
-    #define INSTRUMENTATION_TMARK_ADD(labelid, label) -1; (void)(labelid); (void)(label)
+#define INSTRUMENTATION_TMARK_ADD(labelid, label)                              \
+  -1;                                                                          \
+  (void)(labelid);                                                             \
+  (void)(label)
 
-    #define INSTRUMENTATION_TMARK_LAZY_ADD(labelid, label) -1; (void)(label)
+#define INSTRUMENTATION_TMARK_LAZY_ADD(label)                                  \
+  -1;                                                                          \
+  (void)(label)
 
-    #define INSTRUMENTATION_TMARK_SET(taskid, idx) (void)(taskid); (void)(idx)
+#define INSTRUMENTATION_TMARK_SET(taskid, idx)                                 \
+  (void)(taskid);                                                              \
+  (void)(idx)
 
-    #define INSTRUMENTATION_TMARK_PUSH(taskid, idx) (void)(taskid); (void)(idx)
+#define INSTRUMENTATION_TMARK_PUSH(taskid, idx)                                \
+  (void)(taskid);                                                              \
+  (void)(idx)
 
-    #define INSTRUMENTATION_TMARK_POP(taskid, idx) (void)(taskid); (void)(idx)
+#define INSTRUMENTATION_TMARK_POP(taskid, idx)                                 \
+  (void)(taskid);                                                              \
+  (void)(idx)
 
 #endif /* INSTRUMENTATION_TASKS */
 
@@ -292,22 +333,6 @@ extern ThreadMarkerMap thread_marker_map;
   }
 
 #else /* No thread instrumentations (void) */
-
-#define INSTRUMENTATION_ACTIVE false
-
-/**
- * ovni proc methods
- */
-#define INSTRUMENTATION_START(external_init_) (void)(external_init_)
-
-#define INSTRUMENTATION_END()
-
-/**
- * ovni thread methods
- */
-#define INSTRUMENTATION_THREAD_INIT()
-
-#define INSTRUMENTATION_THREAD_END()
 
 /**
  * ovni thread marker methods

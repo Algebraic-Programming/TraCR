@@ -12,54 +12,60 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
-*/
+ */
 
-#include <tracr.hpp>
+#include <tracr/tracr.hpp>
 
-int
-main(void)
-{
-	const uint32_t ntasks = 2;
+int main(void) {
+  const uint32_t ntasks = 2;
 
-	INSTRUMENTATION_START();
+  // Initialize TraCR
+  // This boolean is a check to see if ovni has been initialize by another
+  // library (e.g. nOS-V)
+  bool externally_init = false;
+  INSTRUMENTATION_START(externally_init);
 
-	/**
-	 * 0 == Set and 1 == Push/Pop
-	 */
-	INSTRUMENTATION_TMARK_MARK_INIT(0);
+  /**
+   * 0 == Set and 1 == Push/Pop
+   */
+  INSTRUMENTATION_TMARK_INIT(0);
 
-	const size_t task_init_idx = INSTRUMENTATION_TMARK_ADD(MARK_COLOR_GRAY, "task initialized");
-	const size_t task_exec_idx = INSTRUMENTATION_TMARK_ADD(MARK_COLOR_LIGHT_GREEN, "task executed");
-	const size_t task_susp_idx = INSTRUMENTATION_TMARK_ADD(MARK_COLOR_LIGHT_GRAY, "task suspended");
-	const size_t task_fini_idx = INSTRUMENTATION_TMARK_ADD(MARK_COLOR_BLACK, "task finished");
-	
-	for(uint32_t taskid = 0; taskid < ntasks; taskid++) {
+  const size_t task_init_idx =
+      INSTRUMENTATION_TMARK_ADD(MARK_COLOR_GRAY, "task initialized");
+  const size_t task_exec_idx =
+      INSTRUMENTATION_TMARK_ADD(MARK_COLOR_LIGHT_GREEN, "task executed");
+  const size_t task_susp_idx =
+      INSTRUMENTATION_TMARK_ADD(MARK_COLOR_LIGHT_GRAY, "task suspended");
+  const size_t task_fini_idx =
+      INSTRUMENTATION_TMARK_ADD(MARK_COLOR_BLACK, "task finished");
 
-		INSTRUMENTATION_TASK_INIT();
+  for (uint32_t taskid = 0; taskid < ntasks; taskid++) {
 
-		INSTRUMENTATION_TMARK_SET(taskid, task_init_idx);
+    INSTRUMENTATION_TASK_INIT();
 
-		printf("task(%d) initialized\n", taskid);
+    INSTRUMENTATION_TMARK_SET(taskid, task_init_idx);
 
-		// same value push (should not fail!)
-		INSTRUMENTATION_TMARK_SET(taskid, task_init_idx);
+    printf("task(%d) initialized\n", taskid);
 
-		printf("task(%d) initialized\n", taskid);
+    // same value push (should not fail!)
+    INSTRUMENTATION_TMARK_SET(taskid, task_init_idx);
 
-		INSTRUMENTATION_TMARK_SET(taskid, task_exec_idx);
+    printf("task(%d) initialized\n", taskid);
 
-		printf("task(%d) executed\n", taskid);
+    INSTRUMENTATION_TMARK_SET(taskid, task_exec_idx);
 
-		INSTRUMENTATION_TMARK_SET(taskid, task_susp_idx);
+    printf("task(%d) executed\n", taskid);
 
-		printf("task(%d) suspended\n", taskid);
+    INSTRUMENTATION_TMARK_SET(taskid, task_susp_idx);
 
-		INSTRUMENTATION_TMARK_SET(taskid, task_fini_idx);
+    printf("task(%d) suspended\n", taskid);
 
-		printf("task(%d) finishing\n", taskid);
-	}
+    INSTRUMENTATION_TMARK_SET(taskid, task_fini_idx);
 
-	INSTRUMENTATION_END();
+    printf("task(%d) finishing\n", taskid);
+  }
 
-	return 0;
+  INSTRUMENTATION_END();
+
+  return 0;
 }

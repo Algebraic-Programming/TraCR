@@ -59,7 +59,7 @@ void *threadFunction(void *arg) {
   for (int i = 0; i < NTASKS; ++i) {
     uint32_t taskid = id * NTASKS + i;
 
-    INSTRUMENTATION_TASK_INIT();  // always init first
+    INSTRUMENTATION_TASK_INIT(); // always init first
 
     INSTRUMENTATION_TMARK_SET(taskid, task_running_id);
 
