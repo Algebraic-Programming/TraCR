@@ -39,7 +39,7 @@ InstrumentationBuildDep = declare_dependency(
     dependencies: ovniDep
     )
 
-####### Build PyTaskR
+####### Build PyTraCR
 if get_option('buildPyTraCR')
   subdir('include/pytracr')
 endif
