@@ -1,6 +1,6 @@
 # pybind11 stuff with the compiler flags
 
-py = import('python').find_installation('/usr/bin/python3', pure: false)
+py = import('python').find_installation('python3', pure: false)
 pybind11_dep = dependency('pybind11', required: true)
 
 py.extension_module('tracr',
