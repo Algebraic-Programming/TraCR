@@ -134,6 +134,7 @@ extern bool get_env_flag();
   if (!disable_tracr) {                                                        \
     debug_print("instr_end (external_init: %d) (TID: %d)", external_init,      \
                 get_tid());                                                    \
+    ovni_attr_set_double("taskr.ntasks", (double) ntasks_counter.load());      \
     if (!external_init) {                                                      \
       instrumentation_end();                                                   \
     }                                                                          \
