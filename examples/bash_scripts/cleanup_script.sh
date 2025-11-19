@@ -1,6 +1,6 @@
 #!/bin/bash
 # cleanup_script.sh
 
-# This script is to delete the generated ovni file
+# This script is to delete the generated tracr file
 
-rm -rf ovni
+rm -rf tracr

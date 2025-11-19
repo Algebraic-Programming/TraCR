@@ -23,18 +23,16 @@
  */
 int main(void) {
   // Initialize TraCR
-  // This boolean is a check to see if ovni has been initialize by another
-  // library (e.g. nOS-V)
-  bool externally_init = false;
-  INSTRUMENTATION_START(externally_init);
+  INSTRUMENTATION_START();
 
   // use flag == 1 for push/pop and flag == 0 for the set method
   bool flag = 0;
-  INSTRUMENTATION_VMARK_TYPE(flag, "Simple Marker Example");
+  int32_t type = 0;
+  INSTRUMENTATION_VMARK_INIT(type, flag, "Simple Marker Example");
 
   const int n = 150;
   for (int i = 1; i <= n; ++i) {
-    INSTRUMENTATION_VMARK_SET(i);
+    INSTRUMENTATION_VMARK_SET(type, i);
     printf("%d ", i);
   }
 

@@ -27,7 +27,7 @@ def main():
 
   # use flag == 1 for push/pop and flag == 0 for the set method
   flag = 0
-  INSTRUMENTATION_VMARK_TYPE(flag, "Simple VMarker Example")
+  INSTRUMENTATION_VMARK_INIT(flag, "Simple VMarker Example")
 
   n = 150
   for i in range(1, n+1):

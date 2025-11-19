@@ -40,7 +40,7 @@ def main():
 
   # 0 == Set and 1 == Push/Pop
   flag = 1
-  INSTRUMENTATION_VMARK_TYPE(flag, "Simple Marker Example")
+  INSTRUMENTATION_VMARK_INIT(flag, "Simple Marker Example")
 
   # Each INSTRUMENTATION_MARK_ADD costs around (~3us)
   # Should be done at the beginning or at the ending of the code

@@ -72,7 +72,7 @@ void *threadFunction(void *arg) {
 
   // Optional: This marker pushes the int64_t max value. Can be used to indicate
   // the ending (which also makes it in Paraver by default invinsible).
-  INSTRUMENTATION_MARK_RESET();
+  INSTRUMENTATION_MARK_RESET(0);
 
   // TraCR free thread
   INSTRUMENTATION_THREAD_END();
@@ -85,10 +85,7 @@ void *threadFunction(void *arg) {
  */
 int main() {
   // Initialize TraCR
-  // This boolean is a check to see if ovni has been initialize by another
-  // library (e.g. nOS-V)
-  bool externally_init = false;
-  INSTRUMENTATION_START(externally_init);
+  INSTRUMENTATION_START();
 
   // 0 == Set and 1 == Push/Pop
   INSTRUMENTATION_TMARK_INIT(0);

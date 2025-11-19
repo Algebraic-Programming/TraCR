@@ -1,6 +1,6 @@
 #!/bin/bash
 # ovniemu_test.sh
 
-# This command is to run the ovni emulator on the generated ovni file
+# This command is to run the ovni emulator on the generated tracr file
 
-ovniemu ovni
+ovniemu tracr

@@ -117,11 +117,11 @@ extern bool get_env_flag();
 /**
  * ovni proc methods
  */
-#define INSTRUMENTATION_START(external_init_)                                  \
+#define INSTRUMENTATION_START()                                                \
   disable_tracr = get_env_flag();                                              \
   if (!disable_tracr) {                                                        \
     main_TID = get_tid();                                                      \
-    external_init = external_init_;                                            \
+    external_init = ovni_proc_isready();                                       \
     debug_print("instr_start (external_init: %d) (TID: %d)", external_init,    \
                 get_tid());                                                    \
     if (!external_init) {                                                      \
@@ -134,7 +134,7 @@ extern bool get_env_flag();
   if (!disable_tracr) {                                                        \
     debug_print("instr_end (external_init: %d) (TID: %d)", external_init,      \
                 get_tid());                                                    \
-    ovni_attr_set_double("taskr.ntasks", (double) ntasks_counter.load());      \
+    ovni_attr_set_double("taskr.ntasks", (double)ntasks_counter.load());       \
     if (!external_init) {                                                      \
       instrumentation_end();                                                   \
     }                                                                          \
@@ -169,7 +169,7 @@ extern bool get_env_flag();
 /**
  * ovni proc methods
  */
-#define INSTRUMENTATION_START(external_init_) (void)(external_init_)
+#define INSTRUMENTATION_START()
 
 #define INSTRUMENTATION_END()
 
@@ -296,41 +296,41 @@ extern ThreadMarkerMap thread_marker_map;
   }
 
 // Resets the color to none
-#define INSTRUMENTATION_MARK_RESET()                                           \
+#define INSTRUMENTATION_MARK_RESET(type)                                       \
   if (!disable_tracr) {                                                        \
     debug_print("instr_marker_reset (TID: %d)", get_tid());                    \
-    ovni_mark_set(0, INT64_MAX);                                               \
+    ovni_mark_set(type, INT64_MAX);                                            \
   }
 
 /**
  * ovni marker methods (vanilla)
  */
-#define INSTRUMENTATION_VMARK_TYPE(flag, title)                                \
+#define INSTRUMENTATION_VMARK_INIT(type, flag, title)                          \
   if (!disable_tracr) {                                                        \
-    ovni_mark_type(0, flag, title);                                            \
+    ovni_mark_type(type, flag, title);                                         \
   }
 
-#define INSTRUMENTATION_VMARK_LABEL(value, label)                              \
+#define INSTRUMENTATION_VMARK_LABEL(type, value, label)                        \
   if (!disable_tracr) {                                                        \
-    ovni_mark_label(0, value, label);                                          \
+    ovni_mark_label(type, value, label);                                       \
   }
 
-#define INSTRUMENTATION_VMARK_SET(value)                                       \
+#define INSTRUMENTATION_VMARK_SET(type, value)                                 \
   if (!disable_tracr) {                                                        \
     debug_print("instr_marker_set (TID: %d)", get_tid());                      \
-    ovni_mark_set(0, value);                                                   \
+    ovni_mark_set(type, value);                                                \
   }
 
-#define INSTRUMENTATION_VMARK_PUSH(value)                                      \
+#define INSTRUMENTATION_VMARK_PUSH(type, value)                                \
   if (!disable_tracr) {                                                        \
     debug_print("instr_marker_push (TID: %d)", get_tid());                     \
-    ovni_mark_push(0, value);                                                  \
+    ovni_mark_push(type, value);                                               \
   }
 
-#define INSTRUMENTATION_VMARK_POP(value)                                       \
+#define INSTRUMENTATION_VMARK_POP(type, value)                                 \
   if (!disable_tracr) {                                                        \
     debug_print("instr_marker_pop (TID: %d)", get_tid());                      \
-    ovni_mark_pop(0, value);                                                   \
+    ovni_mark_pop(type, value);                                                \
   }
 
 #else /* No thread instrumentations (void) */
@@ -355,23 +355,31 @@ extern ThreadMarkerMap thread_marker_map;
 
 #define INSTRUMENTATION_MARK_POP(idx) (void)(idx)
 
-#define INSTRUMENTATION_MARK_RESET()
+#define INSTRUMENTATION_MARK_RESET(type) (void)(type)
 
 /**
  * ovni marker methods (vanilla)
  */
-#define INSTRUMENTATION_VMARK_TYPE(flag, title)                                \
+#define INSTRUMENTATION_VMARK_INIT(type, flag, title)                          \
+  (void)(type);                                                                \
   (void)(flag);                                                                \
   (void)(title)
 
-#define INSTRUMENTATION_VMARK_LABEL(value, label)                              \
+#define INSTRUMENTATION_VMARK_LABEL(type, value, label)                        \
+  (void)(type);                                                                \
   (void)(value);                                                               \
   (void)(label)
 
-#define INSTRUMENTATION_VMARK_SET(value) (void)(value)
+#define INSTRUMENTATION_VMARK_SET(type, value)                                 \
+  (void)(type);                                                                \
+  (void)(value)
 
-#define INSTRUMENTATION_VMARK_PUSH(value) (void)(value)
+#define INSTRUMENTATION_VMARK_PUSH(type, value)                                \
+  (void)(type);                                                                \
+  (void)(value)
 
-#define INSTRUMENTATION_VMARK_POP(value) (void)(value)
+#define INSTRUMENTATION_VMARK_POP(type, value)                                 \
+  (void)(type);                                                                \
+  (void)(value)
 
 #endif /* INSTRUMENTATION_THREADS */

@@ -44,10 +44,7 @@ int main(void) {
   const size_t N = 4;
 
   // Initialize TraCR
-  // This boolean is a check to see if ovni has been initialize by another
-  // library (e.g. nOS-V)
-  bool externally_init = false;
-  INSTRUMENTATION_START(externally_init);
+  INSTRUMENTATION_START();
 
   // 0 == Set and 1 == Push/Pop
   INSTRUMENTATION_MARK_INIT(1);

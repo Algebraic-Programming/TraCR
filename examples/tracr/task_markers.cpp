@@ -20,10 +20,7 @@ int main(void) {
   const uint32_t ntasks = 2;
 
   // Initialize TraCR
-  // This boolean is a check to see if ovni has been initialize by another
-  // library (e.g. nOS-V)
-  bool externally_init = false;
-  INSTRUMENTATION_START(externally_init);
+  INSTRUMENTATION_START();
 
   /**
    * 0 == Set and 1 == Push/Pop

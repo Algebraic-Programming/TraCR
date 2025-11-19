@@ -25,9 +25,7 @@ static bool instrumentation_active() { return INSTRUMENTATION_ACTIVE; }
 /**
  * ovni proc methods
  */
-static void instrumentation_start(bool external_init_ = false) {
-  INSTRUMENTATION_START(external_init_);
-}
+static void instrumentation_start() { INSTRUMENTATION_START(); }
 
 static void instrumentation_end_() { INSTRUMENTATION_END(); }
 
@@ -94,29 +92,33 @@ static void instrumentation_mark_pop(size_t idx) {
   INSTRUMENTATION_MARK_POP(idx);
 }
 
-static void instrumentation_mark_reset() { INSTRUMENTATION_MARK_RESET(); }
+static void instrumentation_mark_reset(int32_t type = 0) {
+  INSTRUMENTATION_MARK_RESET(type);
+}
 
 /**
  * ovni marker methods (vanilla)
  */
-static void instrumentation_vmark_type(size_t flag, const char *title) {
-  INSTRUMENTATION_VMARK_TYPE(flag, title);
+static void instrumentation_vmark_init(size_t flag, const char *title,
+                                       int32_t type = 0) {
+  INSTRUMENTATION_VMARK_INIT(type, flag, title);
 }
 
-static void instrumentation_vmark_label(size_t value, const char *label) {
-  INSTRUMENTATION_VMARK_LABEL(value, label);
+static void instrumentation_vmark_label(size_t value, const char *label,
+                                        int32_t type = 0) {
+  INSTRUMENTATION_VMARK_LABEL(type, value, label);
 }
 
-static void instrumentation_vmark_set(size_t value) {
-  INSTRUMENTATION_VMARK_SET(value);
+static void instrumentation_vmark_set(size_t value, int32_t type = 0) {
+  INSTRUMENTATION_VMARK_SET(type, value);
 }
 
-static void instrumentation_vmark_push(size_t value) {
-  INSTRUMENTATION_VMARK_PUSH(value);
+static void instrumentation_vmark_push(size_t value, int32_t type = 0) {
+  INSTRUMENTATION_VMARK_PUSH(type, value);
 }
 
-static void instrumentation_vmark_pop(size_t value) {
-  INSTRUMENTATION_VMARK_POP(value);
+static void instrumentation_vmark_pop(size_t value, int32_t type = 0) {
+  INSTRUMENTATION_VMARK_POP(type, value);
 }
 
 PYBIND11_MODULE(tracr, m) {
@@ -127,8 +129,7 @@ PYBIND11_MODULE(tracr, m) {
   /**
    * ovni proc methods
    */
-  m.def("INSTRUMENTATION_START", &instrumentation_start,
-        py::arg("external_init_") = false, "");
+  m.def("INSTRUMENTATION_START", &instrumentation_start, "");
   m.def("INSTRUMENTATION_END", &instrumentation_end_, "");
 
   /**
@@ -162,11 +163,16 @@ PYBIND11_MODULE(tracr, m) {
   /**
    * ovni marker methods (vanilla)
    */
-  m.def("INSTRUMENTATION_VMARK_TYPE", &instrumentation_vmark_type, "");
-  m.def("INSTRUMENTATION_VMARK_LABEL", &instrumentation_vmark_label, "");
-  m.def("INSTRUMENTATION_VMARK_SET", &instrumentation_vmark_set, "");
-  m.def("INSTRUMENTATION_VMARK_PUSH", &instrumentation_vmark_push, "");
-  m.def("INSTRUMENTATION_VMARK_POP", &instrumentation_vmark_pop, "");
+  m.def("INSTRUMENTATION_VMARK_INIT", &instrumentation_vmark_init,
+        py::arg("flag"), py::arg("title"), py::arg("type") = 0, "");
+  m.def("INSTRUMENTATION_VMARK_LABEL", &instrumentation_vmark_label,
+        py::arg("value"), py::arg("label"), py::arg("type") = 0, "");
+  m.def("INSTRUMENTATION_VMARK_SET", &instrumentation_vmark_set,
+        py::arg("value"), py::arg("type") = 0, "");
+  m.def("INSTRUMENTATION_VMARK_PUSH", &instrumentation_vmark_push,
+        py::arg("value"), py::arg("type") = 0, "");
+  m.def("INSTRUMENTATION_VMARK_POP", &instrumentation_vmark_pop,
+        py::arg("value"), py::arg("type") = 0, "");
 
   py::enum_<mark_color>(m, "mark_color", py::arithmetic())
       .value("MARK_COLOR_BLACK", MARK_COLOR_BLACK)
