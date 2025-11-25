@@ -27,7 +27,7 @@ from tracr import *
  They are useful if you don't wanna have labels and wanna keep track the
  number.
  
- Still, one can use INSTRUMENTATION_VMARK_LABEL() if labels are of need.
+ Still, one can use INSTRUMENTATION_VMARK_ADD() if labels are of need.
  But then you need to remember which color id corresponds to which label.
 """
 def main():
@@ -40,16 +40,16 @@ def main():
 
   # 0 == Set and 1 == Push/Pop
   flag = 1
-  INSTRUMENTATION_VMARK_INIT(flag, "Simple Marker Example")
+  INSTRUMENTATION_VMARK_INIT(flag)
 
   # Each INSTRUMENTATION_MARK_ADD costs around (~3us)
   # Should be done at the beginning or at the ending of the code
-  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_LIGHT_GREEN, "Allocate Memory")
-  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_LAVENDER,
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_LIGHT_GREEN, "Allocate Memory")
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_LAVENDER,
                                 "Fill matrices with values")
-  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_MAROON, "Print all matrices")
-  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_OLIVE, "MMM")
-  INSTRUMENTATION_VMARK_LABEL(MARK_COLOR_NAVY, "Print solution of matrix A")
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_MAROON, "Print all matrices")
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_OLIVE, "MMM")
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_NAVY, "Print solution of matrix A")
 
   t_after_label_set = time.time()
 

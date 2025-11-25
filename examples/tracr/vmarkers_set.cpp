@@ -27,13 +27,12 @@ int main(void) {
 
   // use flag == 1 for push/pop and flag == 0 for the set method
   bool flag = 0;
-  int32_t type = 0;
-  INSTRUMENTATION_VMARK_INIT(type, flag, "Simple Marker Example");
+  INSTRUMENTATION_VMARK_INIT(flag);
 
-  const int n = 150;
-  for (int i = 1; i <= n; ++i) {
-    INSTRUMENTATION_VMARK_SET(type, i);
-    printf("%d ", i);
+  const size_t n = 150;
+  for (size_t i = 1; i <= n; ++i) {
+    INSTRUMENTATION_VMARK_SET(i);
+    printf("%ld ", i);
   }
 
   // TraCR finished

@@ -65,6 +65,37 @@ static void instrumentation_tmark_pop(uint32_t taskid, size_t idx) {
   INSTRUMENTATION_TMARK_POP(taskid, idx);
 }
 
+static void instrumentation_tmark_reset(uint32_t taskid) {
+  INSTRUMENTATION_TMARK_RESET(taskid);
+}
+
+static void instrumentation_tmark_names(const char *task_map_str) {
+  INSTRUMENTATION_TMARK_NAMES(task_map_str);
+}
+
+/**
+ * vanilla task markers (VTMARK)
+ */
+static void instrumentation_vtmark_init(size_t chan_type) {
+  INSTRUMENTATION_VTMARK_INIT(chan_type);
+}
+
+static void instrumentation_vtmark_add(int64_t color, const char *label) {
+  INSTRUMENTATION_VTMARK_ADD(color, label);
+}
+
+static void instrumentation_vtmark_set(uint32_t taskid, int64_t color) {
+  INSTRUMENTATION_VTMARK_SET(taskid, color);
+}
+
+static void instrumentation_vtmark_push(uint32_t taskid, int64_t color) {
+  INSTRUMENTATION_VTMARK_PUSH(taskid, color);
+}
+
+static void instrumentation_vtmark_pop(uint32_t taskid, int64_t color) {
+  INSTRUMENTATION_VTMARK_POP(taskid, color);
+}
+
 /**
  * ovni thread marker methods
  */
@@ -92,33 +123,29 @@ static void instrumentation_mark_pop(size_t idx) {
   INSTRUMENTATION_MARK_POP(idx);
 }
 
-static void instrumentation_mark_reset(int32_t type = 0) {
-  INSTRUMENTATION_MARK_RESET(type);
-}
+static void instrumentation_mark_reset() { INSTRUMENTATION_MARK_RESET(); }
 
 /**
  * ovni marker methods (vanilla)
  */
-static void instrumentation_vmark_init(size_t flag, const char *title,
-                                       int32_t type = 0) {
-  INSTRUMENTATION_VMARK_INIT(type, flag, title);
+static void instrumentation_vmark_init(size_t flag) {
+  INSTRUMENTATION_VMARK_INIT(flag);
 }
 
-static void instrumentation_vmark_label(size_t value, const char *label,
-                                        int32_t type = 0) {
-  INSTRUMENTATION_VMARK_LABEL(type, value, label);
+static void instrumentation_vmark_add(int64_t color, const char *label) {
+  INSTRUMENTATION_VMARK_ADD(color, label);
 }
 
-static void instrumentation_vmark_set(size_t value, int32_t type = 0) {
-  INSTRUMENTATION_VMARK_SET(type, value);
+static void instrumentation_vmark_set(int64_t color) {
+  INSTRUMENTATION_VMARK_SET(color);
 }
 
-static void instrumentation_vmark_push(size_t value, int32_t type = 0) {
-  INSTRUMENTATION_VMARK_PUSH(type, value);
+static void instrumentation_vmark_push(int64_t color) {
+  INSTRUMENTATION_VMARK_PUSH(color);
 }
 
-static void instrumentation_vmark_pop(size_t value, int32_t type = 0) {
-  INSTRUMENTATION_VMARK_POP(type, value);
+static void instrumentation_vmark_pop(int64_t color) {
+  INSTRUMENTATION_VMARK_POP(color);
 }
 
 PYBIND11_MODULE(tracr, m) {
@@ -148,6 +175,17 @@ PYBIND11_MODULE(tracr, m) {
   m.def("INSTRUMENTATION_TMARK_SET", &instrumentation_tmark_set, "");
   m.def("INSTRUMENTATION_TMARK_PUSH", &instrumentation_tmark_push, "");
   m.def("INSTRUMENTATION_TMARK_POP", &instrumentation_tmark_pop, "");
+  m.def("INSTRUMENTATION_TMARK_RESET", &instrumentation_tmark_reset, "");
+  m.def("INSTRUMENTATION_TMARK_NAMES", &instrumentation_tmark_names, "");
+
+  /**
+   * vanilla task markers (VTMARK)
+   */
+  m.def("INSTRUMENTATION_VTMARK_INIT", &instrumentation_vtmark_init, "");
+  m.def("INSTRUMENTATION_VTMARK_ADD", &instrumentation_vtmark_add, "");
+  m.def("INSTRUMENTATION_VTMARK_SET", &instrumentation_vtmark_set, "");
+  m.def("INSTRUMENTATION_VTMARK_PUSH", &instrumentation_vtmark_push, "");
+  m.def("INSTRUMENTATION_VTMARK_POP", &instrumentation_vtmark_pop, "");
 
   /**
    * ovni thread marker methods
@@ -164,15 +202,15 @@ PYBIND11_MODULE(tracr, m) {
    * ovni marker methods (vanilla)
    */
   m.def("INSTRUMENTATION_VMARK_INIT", &instrumentation_vmark_init,
-        py::arg("flag"), py::arg("title"), py::arg("type") = 0, "");
-  m.def("INSTRUMENTATION_VMARK_LABEL", &instrumentation_vmark_label,
-        py::arg("value"), py::arg("label"), py::arg("type") = 0, "");
+        py::arg("flag"), "");
+  m.def("INSTRUMENTATION_VMARK_ADD", &instrumentation_vmark_add,
+        py::arg("color"), py::arg("label"), "");
   m.def("INSTRUMENTATION_VMARK_SET", &instrumentation_vmark_set,
-        py::arg("value"), py::arg("type") = 0, "");
+        py::arg("color"), "");
   m.def("INSTRUMENTATION_VMARK_PUSH", &instrumentation_vmark_push,
-        py::arg("value"), py::arg("type") = 0, "");
+        py::arg("color"), "");
   m.def("INSTRUMENTATION_VMARK_POP", &instrumentation_vmark_pop,
-        py::arg("value"), py::arg("type") = 0, "");
+        py::arg("color"), "");
 
   py::enum_<mark_color>(m, "mark_color", py::arithmetic())
       .value("MARK_COLOR_BLACK", MARK_COLOR_BLACK)

@@ -34,6 +34,7 @@
  * Marker colors values of the default Paraver color palette
  * NOTE: normally Black would be illegal in ovni (But not in our modified
  * version of ovni ;P)!
+ * Black means no color
  */
 enum mark_color : int64_t {
   MARK_COLOR_BLACK = 0,
@@ -229,6 +230,57 @@ extern TaskMarkerMap task_marker_map;
     task_marker_map.pop(taskid, idx);                                          \
   }
 
+// Resets the color to none
+#define INSTRUMENTATION_TMARK_RESET(taskid)                                    \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_marker_reset (TID: %d)", get_tid());                    \
+    instr_taskr_mark_set(taskid, MARK_COLOR_BLACK);                            \
+  }
+
+// A method for storing the user-defined labels of the taskid
+// Please provide it as a JSON file in string format
+#define INSTRUMENTATION_TMARK_NAMES(task_map_str)                              \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_tmark_names (TID: %d)", get_tid());                     \
+    ovni_attr_set_json("taskr.tmark_names", task_map_str);                     \
+  }
+
+/**
+ * vanilla task markers (VTMARK)
+ */
+
+#define INSTRUMENTATION_VTMARK_INIT(chan_type)                                 \
+  INSTRUMENTATION_TMARK_INIT(chan_type)
+
+#define INSTRUMENTATION_VTMARK_ADD(color, label)                               \
+  if (!disable_tracr) {                                                        \
+    debug_print(                                                               \
+        "ovni_taskr_vmark_add (TID: %d) with color: %ld and label: %s",        \
+        get_tid(), color, label);                                              \
+    instr_taskr_mark_create(color, label);                                     \
+  }
+
+#define INSTRUMENTATION_VTMARK_SET(taskid, color)                              \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_taskr_vmark_set: taskid: %d, color: %ld (TID: %d)",     \
+                taskid, color, get_tid());                                     \
+    instr_taskr_mark_set(taskid, color);                                       \
+  }
+
+#define INSTRUMENTATION_VTMARK_PUSH(taskid, color)                             \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_taskr_vmark_push: taskid: %d, color: %ld (TID: %d)",    \
+                taskid, color, get_tid());                                     \
+    instr_taskr_mark_push(taskid, color);                                      \
+  }
+
+#define INSTRUMENTATION_VTMARK_POP(taskid, color)                              \
+  if (!disable_tracr) {                                                        \
+    debug_print("instr_taskr_vmark_pop: taskid: %d, color: %ld (TID: %d)",     \
+                taskid, color, get_tid());                                     \
+    instr_taskr_mark_pop(taskid, color);                                       \
+  }
+
 #else /* No task instrumentations (void) */
 
 #define INSTRUMENTATION_TASK_INIT()
@@ -255,6 +307,31 @@ extern TaskMarkerMap task_marker_map;
 #define INSTRUMENTATION_TMARK_POP(taskid, idx)                                 \
   (void)(taskid);                                                              \
   (void)(idx)
+
+#define INSTRUMENTATION_TMARK_RESET(taskid) (void)(taskid)
+
+#define INSTRUMENTATION_TMARK_NAMES(task_map_str) (void)(task_map_str)
+
+/**
+ * vanilla task markers (VTMARK)
+ */
+#define INSTRUMENTATION_VTMARK_INIT(chan_type) (void)(chan_type)
+
+#define INSTRUMENTATION_VTMARK_ADD(color, label)                               \
+  (void)(color);                                                               \
+  (void)(label)
+
+#define INSTRUMENTATION_VTMARK_SET(taskid, color)                              \
+  (void)(taskid);                                                              \
+  (void)(color)
+
+#define INSTRUMENTATION_VTMARK_PUSH(taskid, color)                             \
+  (void)(taskid);                                                              \
+  (void)(color)
+
+#define INSTRUMENTATION_VTMARK_POP(taskid, color)                              \
+  (void)(taskid);                                                              \
+  (void)(color)
 
 #endif /* INSTRUMENTATION_TASKS */
 
@@ -296,41 +373,49 @@ extern ThreadMarkerMap thread_marker_map;
   }
 
 // Resets the color to none
-#define INSTRUMENTATION_MARK_RESET(type)                                       \
+#define INSTRUMENTATION_MARK_RESET()                                           \
   if (!disable_tracr) {                                                        \
     debug_print("instr_marker_reset (TID: %d)", get_tid());                    \
-    ovni_mark_set(type, INT64_MAX);                                            \
+    ovni_mark_set(0, INT64_MAX);                                               \
   }
 
 /**
  * ovni marker methods (vanilla)
  */
-#define INSTRUMENTATION_VMARK_INIT(type, flag, title)                          \
+
+// Same as INSTRUMENTATION_MARK_INIT but with a different title
+#define INSTRUMENTATION_VMARK_INIT(flag)                                       \
   if (!disable_tracr) {                                                        \
-    ovni_mark_type(type, flag, title);                                         \
+    debug_print("instr_vmarker_init (TID: %d)", get_tid());                    \
+    ovni_mark_type(0, flag, "TraCR Thread VMarkers");                          \
   }
 
-#define INSTRUMENTATION_VMARK_LABEL(type, value, label)                        \
+#define INSTRUMENTATION_VMARK_ADD(color, label)                                \
   if (!disable_tracr) {                                                        \
-    ovni_mark_label(type, value, label);                                       \
+    debug_print("ovni_mark_label (TID: %d) with color: %ld and label: %s",     \
+                get_tid(), color, label);                                      \
+    ovni_mark_label(0, color, label);                                          \
   }
 
-#define INSTRUMENTATION_VMARK_SET(type, value)                                 \
+#define INSTRUMENTATION_VMARK_SET(color)                                       \
   if (!disable_tracr) {                                                        \
-    debug_print("instr_marker_set (TID: %d)", get_tid());                      \
-    ovni_mark_set(type, value);                                                \
+    debug_print("instr_marker_set (TID: %d) with color %ld", get_tid(),        \
+                color);                                                        \
+    ovni_mark_set(0, color);                                                   \
   }
 
-#define INSTRUMENTATION_VMARK_PUSH(type, value)                                \
+#define INSTRUMENTATION_VMARK_PUSH(color)                                      \
   if (!disable_tracr) {                                                        \
-    debug_print("instr_marker_push (TID: %d)", get_tid());                     \
-    ovni_mark_push(type, value);                                               \
+    debug_print("instr_marker_push (TID: %d) with color %ld", get_tid(),       \
+                color);                                                        \
+    ovni_mark_push(0, color);                                                  \
   }
 
-#define INSTRUMENTATION_VMARK_POP(type, value)                                 \
+#define INSTRUMENTATION_VMARK_POP(color)                                       \
   if (!disable_tracr) {                                                        \
-    debug_print("instr_marker_pop (TID: %d)", get_tid());                      \
-    ovni_mark_pop(type, value);                                                \
+    debug_print("instr_marker_pop (TID: %d) with color %ld", get_tid(),        \
+                color);                                                        \
+    ovni_mark_pop(0, color);                                                   \
   }
 
 #else /* No thread instrumentations (void) */
@@ -355,31 +440,21 @@ extern ThreadMarkerMap thread_marker_map;
 
 #define INSTRUMENTATION_MARK_POP(idx) (void)(idx)
 
-#define INSTRUMENTATION_MARK_RESET(type) (void)(type)
+#define INSTRUMENTATION_MARK_RESET()
 
 /**
  * ovni marker methods (vanilla)
  */
-#define INSTRUMENTATION_VMARK_INIT(type, flag, title)                          \
-  (void)(type);                                                                \
-  (void)(flag);                                                                \
-  (void)(title)
+#define INSTRUMENTATION_VMARK_INIT(flag) (void)(flag)
 
-#define INSTRUMENTATION_VMARK_LABEL(type, value, label)                        \
-  (void)(type);                                                                \
-  (void)(value);                                                               \
+#define INSTRUMENTATION_VMARK_ADD(color, label)                                \
+  (void)(color);                                                               \
   (void)(label)
 
-#define INSTRUMENTATION_VMARK_SET(type, value)                                 \
-  (void)(type);                                                                \
-  (void)(value)
+#define INSTRUMENTATION_VMARK_SET(color) (void)(color)
 
-#define INSTRUMENTATION_VMARK_PUSH(type, value)                                \
-  (void)(type);                                                                \
-  (void)(value)
+#define INSTRUMENTATION_VMARK_PUSH(color) (void)(color)
 
-#define INSTRUMENTATION_VMARK_POP(type, value)                                 \
-  (void)(type);                                                                \
-  (void)(value)
+#define INSTRUMENTATION_VMARK_POP(color) (void)(color)
 
 #endif /* INSTRUMENTATION_THREADS */

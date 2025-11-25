@@ -42,7 +42,7 @@ static void print_matrix(mytype *matrix, const size_t N) {
  * They are useful if you don't wanna have labels and wanna keep track the
  * number.
  *
- * Still, one can use INSTRUMENTATION_VMARK_LABEL() if labels are of need.
+ * Still, one can use INSTRUMENTATION_VMARK_ADD() if labels are of need.
  * But then you need to remember which color id corresponds to which label.
  */
 int main(void) {
@@ -58,59 +58,38 @@ int main(void) {
 
   // use flag == 1 for push/pop and flag == 0 for the set method
   bool flag = 1;
-  int32_t type = 0;
-  INSTRUMENTATION_VMARK_INIT(type, flag, "Simple Push/Pop Marker Example");
+  INSTRUMENTATION_VMARK_INIT(flag);
 
   // Each Label creation costs around (~3us)
   // Should be done at the beginning or at the ending of the code
-  INSTRUMENTATION_VMARK_LABEL(type, MARK_COLOR_LIGHT_GREEN, "Allocate Memory");
-  INSTRUMENTATION_VMARK_LABEL(type, MARK_COLOR_LAVENDER,
-                              "Fill matrices with values");
-  INSTRUMENTATION_VMARK_LABEL(type, MARK_COLOR_MAROON, "Print all matrices");
-  INSTRUMENTATION_VMARK_LABEL(type, MARK_COLOR_OLIVE, "MMM");
-  INSTRUMENTATION_VMARK_LABEL(type, MARK_COLOR_NAVY,
-                              "Print solution of matrix A");
-  INSTRUMENTATION_VMARK_LABEL(type, MARK_COLOR_PINK, "Free memory");
-
-  // now the other marker type (this is a test)
-  flag = 0;
-  type = 1;
-  INSTRUMENTATION_VMARK_INIT(type, flag,
-                             "Simple Set Marker Example (other type)");
-
-  // Each Label creation costs around (~3us)
-  // Should be done at the beginning or at the ending of the code
-  INSTRUMENTATION_VMARK_LABEL(type, 23, "Hello1");
-  INSTRUMENTATION_VMARK_LABEL(type, 24, "Hello1");
-  INSTRUMENTATION_VMARK_LABEL(type, 25, "Hello2");
-  INSTRUMENTATION_VMARK_LABEL(type, 26, "Hello3");
-  INSTRUMENTATION_VMARK_LABEL(type, 27, "Hello4");
-  INSTRUMENTATION_VMARK_LABEL(type, 28, "Hello5");
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_LIGHT_GREEN, "Allocate Memory");
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_LAVENDER, "Fill matrices with values");
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_MAROON, "Print all matrices");
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_OLIVE, "MMM");
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_NAVY, "Print solution of matrix A");
+  INSTRUMENTATION_VMARK_ADD(MARK_COLOR_PINK, "Free memory");
 
   after_label_set = std::chrono::system_clock::now();
 
   // allocate memory
-  INSTRUMENTATION_VMARK_SET(1, 23);
-  INSTRUMENTATION_VMARK_PUSH(0, MARK_COLOR_LIGHT_GREEN);
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_LIGHT_GREEN);
   mytype *A = (mytype *)calloc(1, N * N * sizeof(mytype));
   mytype *B = (mytype *)malloc(N * N * sizeof(mytype));
   mytype *C = (mytype *)malloc(N * N * sizeof(mytype));
 
   // fill matrices
-  INSTRUMENTATION_VMARK_SET(1, 24);
-  INSTRUMENTATION_VMARK_PUSH(0, MARK_COLOR_LAVENDER);
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_LAVENDER);
   for (size_t i = 0; i < N; ++i) {
     for (size_t j = 0; j < N; ++j) {
       B[i * N + j] = (mytype)i;
       C[i * N + j] = (mytype)j;
     }
   }
-  INSTRUMENTATION_VMARK_POP(0, MARK_COLOR_LAVENDER);
-  INSTRUMENTATION_VMARK_POP(0, MARK_COLOR_LIGHT_GREEN);
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_LAVENDER);
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_LIGHT_GREEN);
 
   // print matrices
-  INSTRUMENTATION_VMARK_SET(1, 25);
-  INSTRUMENTATION_VMARK_PUSH(0, MARK_COLOR_MAROON);
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_MAROON);
   printf("A:\n");
   print_matrix(A, N);
 
@@ -119,11 +98,10 @@ int main(void) {
 
   printf("C:\n");
   print_matrix(C, N);
-  INSTRUMENTATION_VMARK_POP(0, MARK_COLOR_MAROON);
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_MAROON);
 
   // mmm
-  INSTRUMENTATION_VMARK_SET(1, 26);
-  INSTRUMENTATION_VMARK_PUSH(0, MARK_COLOR_OLIVE);
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_OLIVE);
   for (size_t i = 0; i < N; ++i) {
     for (size_t j = 0; j < N; ++j) {
       for (size_t k = 0; k < N; ++k) {
@@ -131,24 +109,20 @@ int main(void) {
       }
     }
   }
-  INSTRUMENTATION_VMARK_POP(0, MARK_COLOR_OLIVE);
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_OLIVE);
 
   // last print
-  INSTRUMENTATION_VMARK_SET(1, 27);
-  INSTRUMENTATION_VMARK_PUSH(0, MARK_COLOR_NAVY);
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_NAVY);
   printf("A (after mmm):\n");
   print_matrix(A, N);
-  INSTRUMENTATION_VMARK_POP(0, MARK_COLOR_NAVY);
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_NAVY);
 
   // free memory
-  INSTRUMENTATION_VMARK_SET(1, 28);
-  INSTRUMENTATION_VMARK_PUSH(0, MARK_COLOR_PINK);
+  INSTRUMENTATION_VMARK_PUSH(MARK_COLOR_PINK);
   free(A);
   free(B);
   free(C);
-  INSTRUMENTATION_VMARK_POP(0, MARK_COLOR_PINK);
-
-  INSTRUMENTATION_MARK_RESET(1);
+  INSTRUMENTATION_VMARK_POP(MARK_COLOR_PINK);
 
   // TraCR finished
   INSTRUMENTATION_END();

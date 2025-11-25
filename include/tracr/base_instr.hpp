@@ -153,10 +153,10 @@ class TaskMarkerMap {
 public:
   /**
    * Store the ovni mark label color value in the vector.
-   * NOTE: value (i.e. the color) has to be unique otherwise only will call an
+   * NOTE: labelid (i.e. the color) has to be unique otherwise ovni will call an
    * error!
    */
-  size_t add(uint32_t labelid, const std::string &label) {
+  size_t add(int64_t labelid, const std::string &label) {
 
     instr_taskr_mark_create(labelid, label.c_str());
 

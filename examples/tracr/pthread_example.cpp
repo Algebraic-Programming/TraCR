@@ -72,7 +72,7 @@ void *threadFunction(void *arg) {
 
   // Optional: This marker pushes the int64_t max value. Can be used to indicate
   // the ending (which also makes it in Paraver by default invinsible).
-  INSTRUMENTATION_MARK_RESET(0);
+  INSTRUMENTATION_MARK_RESET();
 
   // TraCR free thread
   INSTRUMENTATION_THREAD_END();

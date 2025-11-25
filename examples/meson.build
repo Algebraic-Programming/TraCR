@@ -8,7 +8,7 @@ create_dir_script = find_program('bash_scripts/create_dirs.py', native: true, re
 
 #### TEST: only thread markers or non
 
-test_types = ['pthread_example', 'thread_markers', 'vmarkers_push_pop', 'vmarkers_set', 'task_markers']
+test_types = ['pthread_example', 'thread_markers', 'vmarkers_push_pop', 'vmarkers_set', 'task_markers', 'task_vmarkers']
 
 valid_flags = {
   'pthread_example'   : ['both_instrumentation', 'thread_instrumentation', 'task_instrumentation', 'no_instrumentation'],
@@ -16,6 +16,7 @@ valid_flags = {
   'vmarkers_push_pop' : ['thread_instrumentation', 'no_instrumentation'],
   'vmarkers_set'      : ['thread_instrumentation', 'no_instrumentation'],
   'task_markers'      : ['task_instrumentation', 'no_instrumentation'],
+  'task_vmarkers'     : ['task_instrumentation', 'no_instrumentation'],
 }
 
 cpp_args_list = [
