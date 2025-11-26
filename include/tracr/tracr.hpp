@@ -80,35 +80,43 @@ enum mark_color : int64_t {
 /**
  * Atomic counter of how many tasks got created
  */
-extern std::atomic<int> ntasks_counter;
+inline std::atomic<int> ntasks_counter{0};
 
 /**
  * Keep track of the main thread as this one has to be free'd when instr_end is
  * called
  */
-extern pid_t main_TID;
+inline pid_t main_TID;
 
 /**
  * A flag to check if something else has initialized ovni (like nOS-V). If so,
  * TraCR with not init/end proc.
  */
-extern bool external_init;
+inline bool external_init = false;
 
 /**
  * An env variable disable the traces
  */
-extern bool disable_tracr;
+inline bool disable_tracr = false;
 
 /**
  * automatic label ID assigning, i.e. doesn't matter which color the label is
  * assigned to
  */
-extern std::atomic<int64_t> auto_label;
+inline std::atomic<int64_t> auto_label{23L};
 
 /**
  * A function to check if the env flag is active or not
  */
-extern bool get_env_flag();
+inline bool get_env_flag() {
+  const char *val = std::getenv("DISABLE_TRACR");
+  if (!val)
+    return false; // not set -> treat as false
+
+  std::string s(val);
+  // accept "1", "true", "TRUE", etc.
+  return (s == "1" || s == "true" || s == "TRUE" || s == "on" || s == "ON");
+}
 
 /**
  * This boolean is needed if something other than TraCR has to be called.
@@ -189,7 +197,7 @@ extern bool get_env_flag();
  */
 #ifdef INSTRUMENTATION_TASKS
 
-extern TaskMarkerMap task_marker_map;
+inline TaskMarkerMap task_marker_map;
 
 #define INSTRUMENTATION_TASK_INIT()                                            \
   if (!disable_tracr) {                                                        \
@@ -340,7 +348,7 @@ extern TaskMarkerMap task_marker_map;
  */
 #ifdef INSTRUMENTATION_THREADS
 
-extern ThreadMarkerMap thread_marker_map;
+inline ThreadMarkerMap thread_marker_map;
 
 #define INSTRUMENTATION_MARK_INIT(flag)                                        \
   if (!disable_tracr) {                                                        \

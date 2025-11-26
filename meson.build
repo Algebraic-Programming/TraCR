@@ -1,7 +1,7 @@
 project('TraCR', [ 'cpp', 'c'],
   subproject_dir : 'extern',
   default_options : [
-  'cpp_std=c++11',
+  'cpp_std=c++17',
   'buildtype=release',
   ]
 )
@@ -35,7 +35,6 @@ subdir('include/tracr')
 InstrumentationBuildDep = declare_dependency(
     compile_args: InstrumentationBuildCppArgs,
     include_directories: InstrumentationBuildIncludes,
-    sources: ['include/tracr/tracr.cpp'],
     dependencies: ovniDep
     )
 
