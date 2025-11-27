@@ -28,14 +28,25 @@ InstrumentationBuildCppArgs = [
 
 ####### Build ovni
 
-subdir('include/tracr')
+cmake = import('cmake')
+
+ovni_proj = cmake.subproject('ovni')
+ovniDep = ovni_proj.dependency('ovni-static')  # or the actual target name
+
+parson_dep = ovni_proj.dependency('parson-static')
+common_dep = ovni_proj.dependency('common-static')
+
+# add_project_arguments('-fPIC', language : 'cpp') # This is needed if ovni is build with the SHARED method
+# add_project_arguments('-fPIC', language: 'c')
+
+# message(ovni_proj.targets)
 
 ####### Collect the dependencies
 
 InstrumentationBuildDep = declare_dependency(
     compile_args: InstrumentationBuildCppArgs,
     include_directories: InstrumentationBuildIncludes,
-    dependencies: ovniDep
+    dependencies: [ovniDep, parson_dep, common_dep]
     )
 
 ####### Build PyTraCR
