@@ -6,7 +6,7 @@
 /**
  * @file base_instr.hpp
  * @brief Common ovni base functions
- * @author Noah Baumann
+ * @author Noah Andres Baumann
  * @date 11/11/2024
  */
 
@@ -146,94 +146,3 @@ static inline void instrumentation_end(void) {
   ovni_thread_free();
   ovni_proc_fini();
 }
-
-/* Ovni Task Markers */
-
-class TaskMarkerMap {
-public:
-  /**
-   * Store the ovni mark label color value in the vector.
-   * NOTE: labelid (i.e. the color) has to be unique otherwise ovni will call an
-   * error!
-   */
-  size_t add(int64_t labelid, const std::string &label) {
-
-    instr_taskr_mark_create(labelid, label.c_str());
-
-    // Insert the corresponding integer value
-    colors.push_back(labelid);
-
-    return colors.size() - 1;
-  }
-
-  /**
-   * ovni mark set call with the returned idx from the 'add' method
-   */
-  void set(uint32_t taskid, size_t idx) {
-    instr_taskr_mark_set(taskid, colors[idx]);
-  }
-
-  /**
-   * ovni mark push call with the returned idx from the 'add' method
-   */
-  void push(uint32_t taskid, size_t idx) {
-    instr_taskr_mark_push(taskid, colors[idx]);
-  }
-
-  /**
-   * ovni mark pop call with the returned idx from the 'add' method
-   */
-  void pop(uint32_t taskid, size_t idx) {
-    instr_taskr_mark_pop(taskid, colors[idx]);
-  }
-
-private:
-  std::vector<uint32_t> colors;
-};
-
-/* Ovni Thread Markers */
-
-/**
- * The class we use to store the colors in a vector the keep track the label
- * (int) This will let the user define their own label id's like this: const
- * size_t free_mem_label_id  = INSTRUMENTATION_MARKER_ADD("Free memory",
- * MARK_COLOR_MINT); This class is build very lightweight for performance. An
- * older version with storing the string exists in the 'task_more_states'
- * branch
- * https://gitlab.huaweirc.ch/zrc-von-neumann-lab/runtime-system-innovations/tracr/-/tree/task_more_states?ref_type=heads
- */
-class ThreadMarkerMap {
-public:
-  /**
-   * Store the ovni mark label color value in the vector.
-   * NOTE: labelid (i.e. the color) has to be unique otherwise ovni will call an
-   * error! Also the color can't be black (i.e. labelid == 0)
-   */
-  size_t add(int64_t labelid, const std::string &label) {
-
-    ovni_mark_label(0, labelid, label.c_str());
-
-    // Insert the corresponding integer labelid
-    colors.push_back(labelid);
-
-    return colors.size() - 1;
-  }
-
-  /**
-   * ovni mark set call with the returned idx from the 'add' method
-   */
-  void set(size_t idx) { ovni_mark_set(0, colors[idx]); }
-
-  /**
-   * ovni mark push call with the returned idx from the 'add' method
-   */
-  void push(size_t idx) { ovni_mark_push(0, colors[idx]); }
-
-  /**
-   * ovni mark pop call with the returned idx from the 'add' method
-   */
-  void pop(size_t idx) { ovni_mark_pop(0, colors[idx]); }
-
-private:
-  std::vector<int64_t> colors;
-};
