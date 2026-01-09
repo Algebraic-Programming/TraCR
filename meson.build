@@ -1,4 +1,4 @@
-project('TraCR', [ 'cpp', 'c'],
+project('TraCR', [ 'cpp' ],
   subproject_dir : 'extern',
   default_options : [
   'cpp_std=c++17',
@@ -7,8 +7,6 @@ project('TraCR', [ 'cpp', 'c'],
 )
 
 ####### Storage for Instrumentation dependencies
-
-
 
 # Warning handling option
 warningAsErrorFlags=[]
@@ -24,24 +22,13 @@ InstrumentationBuildCppArgs = [
  InstrumentationBuildIncludes = include_directories([
    'include'
   ])
-  
-
-####### Build ovni
-
-subdir('include/tracr')
 
 ####### Collect the dependencies
 
 InstrumentationBuildDep = declare_dependency(
     compile_args: InstrumentationBuildCppArgs,
-    include_directories: InstrumentationBuildIncludes,
-    dependencies: ovniDep
+    include_directories: InstrumentationBuildIncludes
     )
-
-####### Build PyTraCR
-if get_option('buildPyTraCR')
-  subdir('include/pytracr')
-endif
 
 ####### Build test / example targets only if this repo is being loaded not as a subproject
 

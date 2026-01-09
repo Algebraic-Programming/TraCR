@@ -23,10 +23,6 @@
 
 #pragma once
 
-#include <atomic>
-#include <cstdlib>       // std::getenv
-#include <sys/sysinfo.h> // get_nprocs()
-
 #include "tracr_core.hpp"
 
 /**

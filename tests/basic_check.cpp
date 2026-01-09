@@ -14,18 +14,13 @@
  * limitations under the License.
  */
 
-#include <ovni.h>
 #include <tracr/tracr.hpp>
 
 /*
  * Basic test to see if TraCR (and ovni) is installed correctly
  */
 int main(int argc, char **argv) {
-  printf("OVNI_TRACEDIR: %s\n", OVNI_TRACEDIR);
-
-  printf("Instrumentation enabled: %d\n", INSTRUMENTATION_ACTIVE);
-
-  ovni_version_check();
+  printf("Instrumentation enabled: %d,%d\n", ENABLE_TRACR, INSTRUMENTATION_ACTIVE);
 
   return 0;
 }
