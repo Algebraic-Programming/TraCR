@@ -20,8 +20,11 @@ InstrumentationBuildCppArgs = [
  ]
 
  InstrumentationBuildIncludes = include_directories([
-   'include'
+   'include', 'extern'
   ])
+
+# TODO: Add extern subdir
+# subdir('extern')
 
 ####### Collect the dependencies
 

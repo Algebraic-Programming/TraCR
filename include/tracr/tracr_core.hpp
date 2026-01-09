@@ -112,11 +112,6 @@ static inline void instrumentation_end(const nlohmann::json& channel_names = jso
     // Destroys the TraCR Thread pointer and calls the destructor
     tracrThread.reset();
 
-    // Dump Custom channel names OR number of channels to visualize (NOT BOTH)
-    if(!channel_names.empty()){
-        tracrProc.addCustomChannelNames(channel_names);
-    }
-
     // Dump TraCR Proc JSON file
     tracrProc.dump_JSON();
     

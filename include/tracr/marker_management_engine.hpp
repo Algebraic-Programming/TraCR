@@ -46,11 +46,11 @@
  * The maximum capacity of one tracr thread for capturing the traces.
  * Currently, we fix it here. Might be definable by the user.
  * 
- * capatity = 2**16 -> 1MB tracr thread size
- * capacity = 2**20 -> 17MB tracr thread size
- * capacity = 2**24 -> 268MB tracr thread size
+ * capatity = 2**16 = 65'536     -> 1MB tracr thread size
+ * capacity = 2**20 = 1'048'576  -> 17MB tracr thread size
+ * capacity = 2**24 = 16'777'216 -> 268MB tracr thread size
  */
-constexpr size_t CAPACITY 1<<16;
+constexpr size_t CAPACITY = 1 << 16;
 
 /**
  * A way to check if the TraCRProc has been initialized, if not, throw at runtime.
@@ -66,14 +66,6 @@ inline std::atomic<bool> enable_tracr{true};
  * 
  */
 inline std::atomic<uint16_t> lazy_colorId{23};
-
-/**
- * Struct to capture the time stamp of the system
- */
-struct timespec {
-    time_t tv_sec;   // seconds (usually signed)
-    long   tv_nsec;  // nanoseconds (0..999,999,999)
-};
 
 /**
  * 
@@ -121,8 +113,8 @@ class TraCRThread {
     /**
      * Default Destructor as we obey RAII 
      */
-    TraCRThread = delete;
-    ~TraCRThread = default;
+    TraCRThread() = delete;
+    ~TraCRThread() = default;
 
     /**
      * Store a given trace in Payload format
@@ -158,12 +150,12 @@ class TraCRThread {
         std::ofstream ofs(filepath, std::ios::binary);
         if (!ofs) {
             std::cerr << "Failed to open file: " << filepath << "\n";
-            return false;
+            std::exit(EXIT_FAILURE);
         }
 
         // Write raw memory
         ofs.write(reinterpret_cast<const char*>(_traces.data()), sizeof(Payload) * _traceIdx);
-        return ofs.good();
+        // return ofs.good();
     }
 
     /**
@@ -227,7 +219,8 @@ class TraCRProc {
     /**
      * Default Destructor as we obey RAII 
      */
-    ~TraCRProc = default;
+    TraCRProc() = delete;
+    ~TraCRProc() = default;
 
     /**
      * 
