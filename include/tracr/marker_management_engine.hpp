@@ -28,17 +28,18 @@
 #include <atomic>
 #include <mutex>
 #include <chrono>
-#include <ctime>            //
+#include <ctime>                //
 #include <sstream>
-#include <fstream>          // To store files
+#include <fstream>              // To store files
 #include <iomanip>
-#include <unistd.h>         // SYS_gettid
-#include <sys/syscall.h>    // syscall()
-#include <sys/stat.h>       // mkdir()
-#include <sys/types.h>      // chmod type
-#include <sched.h>          // sched_getcpu()
+#include <unistd.h>             // SYS_gettid
+#include <sys/syscall.h>        // syscall()
+#include <sys/stat.h>           // mkdir()
+#include <sys/types.h>          // chmod type
+#include <sched.h>              // sched_getcpu()
+#include <nlohmann/json.hpp>
 
-#include <iostream>         // Debugging purposes
+#include <iostream>             // Debugging purposes
 
 /**
  * The maximum capacity of one tracr thread for capturing the traces.
@@ -103,11 +104,13 @@ class TraCRThread {
     /**
      * Constructor
      */
-    TraCRThread() : _tid(syscall(SYS_gettid)) {};
+    TraCRThread(pid_t tid) : _tid(tid) {};
+
 
     /**
      * Default Destructor as we obey RAII 
      */
+    TraCRThread = delete;
     ~TraCRThread = default;
 
     /**
@@ -152,6 +155,13 @@ class TraCRThread {
         return ofs.good();
     }
 
+    /**
+     * 
+     */
+    inline pid_t getTID() {
+        return _tid;
+    }
+
     private:
 
     // The array to keep track of the traces
@@ -176,7 +186,7 @@ class TraCRProc {
     /**
      * Constructor
      */
-    TraCRProc : _tracr_init_time(NanoTimer::now()), _tid(syscall(SYS_gettid)), _lCPUid(sched_getcpu()) {
+    TraCRProc(pid_t tid) : _tracr_init_time(NanoTimer::now()), _tid(tid), _lCPUid(sched_getcpu()) {
 
         tracr_proc_init = true;
 
@@ -242,10 +252,19 @@ class TraCRProc {
     /**
      * 
      */
-    inline void addTraCRThread(std::unique_ptr<TraCRThread> t) {
+    inline std::string getFolderPath() {
+        return _proc_folder_name;
+    }
+
+    /**
+     * Adding a new tracr thread
+     * 
+     * This is thread save.
+     */
+    inline void addTraCRThread(std::shared_ptr<TraCRThread> t) {
         // We have to lock this as this method can be called from multiple threads
         std::lock_guard<std::mutex> lock(mtx);
-        threads.push_back(std::move(t));
+        threads.push_back(t);
     }
 
     /**
@@ -254,6 +273,26 @@ class TraCRProc {
     inline pid_t getTID() {
         return _tid;
     }
+
+    /**
+     * 
+     */
+    inline void addCustomChannelNames(const nlohmann::json& channel_names) {
+
+    }
+
+    /**
+     * 
+     */
+    inline void addNumberOfChannels(const u_int16_t num_channels) {
+
+    }
+    
+    // A list of all the created _tracrThreads
+    // Publicly available as the list has to be checked
+    // The first tracr Thread represents the one for the proc. 
+    // Every other is extra.
+    std::vector<pid_t> _tracrThreadIDs;
 
     private:
 
@@ -265,10 +304,6 @@ class TraCRProc {
     
     // logical CPU ID
     int _lCPUid;
-
-    // A list of all the created _tracrThreads
-    // Warning this might grow dynamically which could be not practical for a Ascend device.
-    std::vector<std::unique_ptr<TraCRThread>> _tracrThreads;
 
     // A way to keep the tracrThreads save when adding to this class
     std::mutex mtx;
