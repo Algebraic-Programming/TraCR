@@ -26,9 +26,20 @@
 #include <unistd.h>             // SYS_gettid
 #include <sys/syscall.h>        // syscall()
 #include <string>
+#include <unordered_map>
 #include <nlohmann/json.hpp>
 
 #include "marker_management_engine.hpp"
+
+/**
+ * Debug printing method. Can be enabled with the ENABLE_DEBUG flag included.
+ */
+#ifdef ENABLE_DEBUG
+#define debug_print(fmt, ...) printf("[TraCR DEBUG] " fmt "\n", ##__VA_ARGS__)
+#else
+#define debug_print(fmt, ...)
+#endif
+
 
 /**
  * Global TraCR proc place holder
@@ -36,7 +47,7 @@
 static inline std::unique_ptr<TraCRProc> tracrProc;
 
 /**
- * Global TraCR thread place holder
+ * Global TraCR thread place holder (on the level of threads)
  */
 static inline thread_local std::unique_ptr<TraCRThread> tracrThread;
 
@@ -76,7 +87,7 @@ static inline void instrumentation_start(const std::string& path = "") {
 /**
  * 
  */
-static inline void instrumentation_end(const uint16_t& num_channels = 0, const nlohmann::json& channel_names = json{}) {
+static inline void instrumentation_end(const nlohmann::json& channel_names = json{}) {
     if(!tracr_proc_init.load()){
         std::cerr << "TraCR Proc has not been initialized by the thread: " << tracrProc.getTID() << "\n";
         std::exit(EXIT_FAILURE);
@@ -104,12 +115,10 @@ static inline void instrumentation_end(const uint16_t& num_channels = 0, const n
     // Dump Custom channel names OR number of channels to visualize (NOT BOTH)
     if(!channel_names.empty()){
         tracrProc.addCustomChannelNames(channel_names);
-    }else if(num_channels > 0){
-        tracrProc.addNumberOfChannels(num_channels)
-    }else{
-        std::cerr << "TraCR needs either the custom channel names or the number of channels to visualize\n";
-        std::exit(EXIT_FAILURE);
     }
+
+    // Dump TraCR Proc JSON file
+    tracrProc.dump_JSON();
     
     // Destroys the TraCR Proc pointer and calls the destructor
     tracrProc.reset();
@@ -176,41 +185,80 @@ static inline void instrumentation_thread_finalize() {
     // Flushing the trace of this TraCR thread now
     tracrThread.flush_traces(tracrProc.getFolderPath());
 
-    // Finalize the thread now
+    // Finalize the thread now (destructor of it is also called)
     tracrThread.reset();
 }
 
 /**
+ * Marker add method
  * 
+ * NOTE: This is note thread safe! Should be called by one thread.
+ * 
+ * \param[in] colorId
+ * \param[in] label
+ * 
+ * @return the eventId of this marker
  */
-static inline void instrumentation_mark_add() {
+static inline uint16_t instrumentation_mark_add(const uint16_t& colorId, const std::string& label) {
+    if(tracrProc.markerTypes.count(colorId)) {
+        std::cerr << "This color has already been used. Choose another one.\n";
+        std::exit(EXIT_FAILURE);
+    }
+    
+    tracrProc.markerTypes[colorId] = label;
+    
+    return tracrProc.markerTypes.size() - 1;
+}
 
+/**
+ * Lazy marker add method. I.e. one doesn't have to provide the color idx
+ * 
+ * NOTE: This is note thread safe! Should be called by one thread.
+ * 
+ * \param[in] label
+ * 
+ * @return the eventId of this marker
+ */
+static inline uint16_t instrumentation_mark_lazy_add(const std::string& label) {
+    uint16_t colorId = lazy_colorId.fetch_add(1);
+    if(tracrProc.markerTypes.count(colorId)) {
+        std::cerr << "This color has already been used. Choose another one.\n";
+        std::exit(EXIT_FAILURE);
+    }
+    
+    tracrProc.markerTypes[colorId] = label;
+    
+    return tracrProc.markerTypes.size() - 1;
 }
 
 /**
  * 
  */
-static inline void instrumentation_mark_set() {
+static inline void instrumentation_mark_set(const uint16_t& channelId, const uint16_t& eventId, const uint32_t& extraId = UINT32_MAX) {
+    Payload payload{channelId, eventId, extraId, NanoTimer::now()};
 
+    tracrThread.store_trace(payload);
 }
 
 /**
  * 
  */
-static inline void instrumentation_mark_reset() {
+static inline void instrumentation_mark_reset(const uint16_t& channelId) {
+    Payload payload{channelId, UINT16_MAX, 0, NanoTimer::now()};
 
+    tracrThread.store_trace(payload);
 }
 
 /**
  * 
  */
 static inline void instrumentation_on() {
-
+    enable_tracr = true;
 }
 
 /**
  * 
  */
 static inline void instrumentation_off() {
-
+    enable_tracr = false;
 }

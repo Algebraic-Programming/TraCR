@@ -32,6 +32,7 @@
 #include <sstream>
 #include <fstream>              // To store files
 #include <iomanip>
+#include <unordered_map>
 #include <unistd.h>             // SYS_gettid
 #include <sys/syscall.h>        // syscall()
 #include <sys/stat.h>           // mkdir()
@@ -55,6 +56,16 @@ constexpr size_t CAPACITY 1<<16;
  * A way to check if the TraCRProc has been initialized, if not, throw at runtime.
  */
 inline std::atomic<bool> tracr_proc_init{false};
+
+/**
+ * A way to enable/disable tracr at runtime
+ */
+inline std::atomic<bool> enable_tracr{true};
+
+/**
+ * 
+ */
+inline std::atomic<uint16_t> lazy_colorId{23};
 
 /**
  * Struct to capture the time stamp of the system
@@ -116,7 +127,7 @@ class TraCRThread {
     /**
      * Store a given trace in Payload format
      */
-    inline void store_trace(Payload payload) {
+    inline void store_trace(const Payload& payload) {
         _traces[_traceIdx % CAPACITY] = payload;
         ++_traceIdx;
 
@@ -278,14 +289,42 @@ class TraCRProc {
      * 
      */
     inline void addCustomChannelNames(const nlohmann::json& channel_names) {
-
+        _json_file["channel_names"] = channel_names;
+        _json_file["num_channels"] = channel_names.size();
     }
 
     /**
      * 
      */
     inline void addNumberOfChannels(const u_int16_t num_channels) {
+        _json_file["num_channels"] = num_channels;
+    }
 
+    /**
+     * 
+     */
+    inline void dump_JSON() {
+        // Before dumping, we have to fill in the metadata in the _json_file
+        _json_file["pid"] = _lCPUid;
+        _json_file["tid"] = _tid;
+        _json_file["start_time"] = _tracr_init_time;
+
+        // Create and open the metadata.json file
+        std::string filename = _proc_folder_name + "metadata.json";
+        std::ofstream file(filename);
+
+        if (!file.is_open()) {
+            std::cerr << "Failed to open file: " << filename << " for writing!\n";
+            std::exit(EXIT_FAILURE);
+        }
+
+        // Dump JSON into file (pretty-printed with 4 spaces)
+        file << _json_file.dump(4);
+
+        // Close the file
+        file.close();
+
+        std::cout << filename <<" successfully written!\n";
     }
     
     // A list of all the created _tracrThreads
@@ -293,6 +332,9 @@ class TraCRProc {
     // The first tracr Thread represents the one for the proc. 
     // Every other is extra.
     std::vector<pid_t> _tracrThreadIDs;
+
+    // The dynamic list to store all the marker types created
+    std::unordered_map<uint16_t, std::string> markerTypes;
 
     private:
 
@@ -310,4 +352,7 @@ class TraCRProc {
     
     // The name of the proc folder
     std::string _proc_folder_name;
+
+    // Metadata and channel informations of this system
+    nlohmann::json _json_file;
 };
