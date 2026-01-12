@@ -68,7 +68,7 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_ACTIVE true
 
 /**
- * main proc methods
+ * Proc methods
  */
 #define INSTRUMENTATION_START(path) instrumentation_start(path)
 
@@ -76,7 +76,7 @@ enum mark_color : uint16_t {
 
 
 /**
- * thread methods
+ * Thread methods
  */
 #define INSTRUMENTATION_THREAD_INIT() instrumentation_thread_init()
 
@@ -112,7 +112,7 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_ACTIVE false
 
 /**
- * main proc methods
+ * Main proc methods
  */
 #define INSTRUMENTATION_START(path) (void)(path)
   
@@ -120,7 +120,7 @@ enum mark_color : uint16_t {
 
 
 /**
- * thread methods
+ * Thread methods
  */
 #define INSTRUMENTATION_THREAD_INIT()
 
@@ -142,7 +142,7 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_ADD_NUM_CHANNELS(num_channels) (void)(num_channels)
 
 /**
- * Other methods
+ * Runtime-level enabling/disabling methods (NOT YET IMPLEMENTED)
  */
 #define INSTRUMENTATION_ON()
 

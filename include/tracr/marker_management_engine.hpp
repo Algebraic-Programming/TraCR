@@ -49,7 +49,7 @@
  * capacity = 2**20 = 1'048'576  -> 17MB tracr thread size
  * capacity = 2**24 = 16'777'216 -> 268MB tracr thread size
  */
-constexpr size_t CAPACITY = 1 << 16;
+constexpr size_t CAPACITY = 1 << 20;
 
 /**
  * A way to check if the TraCRProc has been initialized, if not, throw at runtime.
