@@ -131,7 +131,7 @@ enum mark_color : uint16_t {
  */
 #define INSTRUMENTATION_MARK_ADD(colorId, label) 0; (void)(label)
 
-#define INSTRUMENTATION_MARK_LAZY_ADD(label) (void)(label)
+#define INSTRUMENTATION_MARK_LAZY_ADD(label) 0
 
 #define INSTRUMENTATION_MARK_SET(channelId, eventId, extraId) (void)(channelId); (void)(eventId); (void)(extraId)
 

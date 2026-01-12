@@ -111,7 +111,7 @@ int main(void) {
 
   INSTRUMENTATION_MARK_RESET(0);
 
-  // Not sure if this is needed
+  // User-defined number of channels to visualize
   INSTRUMENTATION_ADD_NUM_CHANNELS(1);
 
   // TraCR finished

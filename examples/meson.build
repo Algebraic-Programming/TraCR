@@ -4,7 +4,7 @@ cleanup_script = find_program('bash_scripts/cleanup_script.sh', native: true, re
 
 # create_dir_script = find_program('bash_scripts/create_dirs.py', native: true, required: true)
 
-test_types = ['simple_example']
+test_types = ['simple_example', 'pthread_example']
 
 cpp_args_list = [
     ['-DENABLE_TRACR', '-DENABLE_DEBUG'], # Enable TraCR
