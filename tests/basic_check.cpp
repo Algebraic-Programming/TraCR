@@ -20,7 +20,7 @@
  * Basic test to see if TraCR (and ovni) is installed correctly
  */
 int main(int argc, char **argv) {
-  printf("Instrumentation enabled: %d,%d\n", ENABLE_TRACR, INSTRUMENTATION_ACTIVE);
+  printf("Instrumentation enabled: %d\n", INSTRUMENTATION_ACTIVE);
 
   return 0;
 }

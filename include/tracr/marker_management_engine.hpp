@@ -27,10 +27,9 @@
 #include <string>
 #include <atomic>
 #include <mutex>
-#include <chrono>
 #include <ctime>                //
-#include <sstream>
 #include <fstream>              // To store files
+#include <filesystem>
 #include <iomanip>
 #include <unordered_map>
 #include <unistd.h>             // SYS_gettid
@@ -136,11 +135,9 @@ class TraCRThread {
         _thread_folder_name = path + "thread." + std::to_string(_tid) + "/";
         
         // create the last thread ID folder
-        if (mkdir(_thread_folder_name.c_str(), 755) != 0) {
-            if (errno != EEXIST) {
-                std::cerr << "mkdir failed for: " << _thread_folder_name << "\n";
-                std::exit(EXIT_FAILURE);
-            }
+        if (std::filesystem::create_directories(_thread_folder_name) == 0) {
+            std::cerr << "mkdir failed for: " << _thread_folder_name << "\n";
+            std::exit(EXIT_FAILURE);
         }
         
         std::string filepath = _thread_folder_name + "traces.bts";
@@ -192,32 +189,14 @@ class TraCRProc {
     TraCRProc(pid_t tid) : _tracr_init_time(NanoTimer::now()), _tid(tid), _lCPUid(sched_getcpu()) {
 
         tracr_proc_init = true;
-
-        auto now = std::chrono::system_clock::now();
-        std::time_t t = std::chrono::system_clock::to_time_t(now);
-        std::tm tm_now;
-
-        #ifdef _WIN32
-        localtime_s(&tm_now, &t);   // Windows
-        #else
-        localtime_r(&t, &tm_now);   // Linux/Unix
-        #endif
-
-        std::ostringstream oss;
-        oss << std::setw(4) << std::setfill('0') << tm_now.tm_year + 1900
-            << std::setw(2) << std::setfill('0') << tm_now.tm_mon + 1
-            << std::setw(2) << std::setfill('0') << tm_now.tm_mday
-            << std::setw(2) << std::setfill('0') << tm_now.tm_hour;
-
-        std::string date = oss.str();
-
-        _proc_folder_name = date + "/proc." + std::to_string(_lCPUid) + "/";
+        
+        _proc_folder_name = "proc." + std::to_string(_lCPUid) + "/";
 
         std::cout << "_proc_folder_name: " << _proc_folder_name << "\n";
     };
 
     /**
-     * Default Destructor as we obey RAII 
+     * Default Con-/Destructor as we obey RAII 
      */
     TraCRProc() = delete;
     ~TraCRProc() = default;
@@ -226,31 +205,9 @@ class TraCRProc {
      * 
      */
     inline bool create_folder_recursive(const std::string& path = "", mode_t mode = 0755) {
-        size_t pos = 0;
-        bool success = true;
-
+        
         _proc_folder_name = path + "tracr/" + _proc_folder_name;
-
-        std::cout << "creating a folder of the name: " << _proc_folder_name << "\n";
-
-        while (true) {
-            pos = _proc_folder_name.find('/', pos + 1);
-            std::string subdir = _proc_folder_name.substr(0, pos);
-
-            if (!subdir.empty()) {
-                if (mkdir(subdir.c_str(), mode) != 0) {
-                    if (errno != EEXIST) {
-                        std::cerr << "mkdir failed: " << subdir << "\n";
-                        success = false;
-                        break;
-                    }
-                }
-            }
-
-            if (pos == std::string::npos) break; // done
-        }
-
-        return success;
+        return std::filesystem::create_directories(_proc_folder_name);
     }
 
     /**
@@ -265,10 +222,10 @@ class TraCRProc {
      * 
      * This is thread save.
      */
-    inline void addTraCRThread(std::shared_ptr<TraCRThread> t) {
+    inline void addTraCRThread(pid_t tid) {
         // We have to lock this as this method can be called from multiple threads
         std::lock_guard<std::mutex> lock(mtx);
-        threads.push_back(t);
+        _tracrThreadIDs.push_back(tid);
     }
 
     /**
@@ -320,7 +277,7 @@ class TraCRProc {
         std::cout << filename <<" successfully written!\n";
     }
     
-    // A list of all the created _tracrThreads
+    // A list of all the created _tracrThreadIDs
     // Publicly available as the list has to be checked
     // The first tracr Thread represents the one for the proc. 
     // Every other is extra.

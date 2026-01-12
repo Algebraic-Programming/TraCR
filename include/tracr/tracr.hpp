@@ -93,9 +93,9 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_MARK_RESET(channelId) instrumentation_mark_reset(channelId)
 
-#define INSTRUMENTATION_ADD_CHANNEL_NAMES(channel_names)  tracrProc.addCustomChannelNames(channel_names)
+#define INSTRUMENTATION_ADD_CHANNEL_NAMES(channel_names)  tracrProc->addCustomChannelNames(channel_names)
 
-#define INSTRUMENTATION_ADD_NUM_CHANNELS(num_channels) tracrProc.addNumberOfChannels(num_channels)
+#define INSTRUMENTATION_ADD_NUM_CHANNELS(num_channels) tracrProc->addNumberOfChannels(num_channels)
 
 /**
  * Other methods
@@ -116,7 +116,7 @@ enum mark_color : uint16_t {
  */
 #define INSTRUMENTATION_START(path) (void)(path)
   
-#define INSTRUMENTATION_END(channel_names) (void)(channel_names)
+#define INSTRUMENTATION_END()
 
 
 /**
@@ -129,7 +129,7 @@ enum mark_color : uint16_t {
 /**
  * Marker methods
  */
-#define INSTRUMENTATION_MARK_ADD(colorId, label) (void)(colorId); (void)(label)
+#define INSTRUMENTATION_MARK_ADD(colorId, label) 0; (void)(label)
 
 #define INSTRUMENTATION_MARK_LAZY_ADD(label) (void)(label)
 
