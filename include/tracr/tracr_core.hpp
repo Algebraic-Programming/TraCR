@@ -32,16 +32,6 @@
 #include "marker_management_engine.hpp"
 
 /**
- * Debug printing method. Can be enabled with the ENABLE_DEBUG flag included.
- */
-#ifdef ENABLE_DEBUG
-#define debug_print(fmt, ...) printf("[TraCR DEBUG] " fmt "\n", ##__VA_ARGS__)
-#else
-#define debug_print(fmt, ...)
-#endif
-
-
-/**
  * Global TraCR proc place holder
  */
 static inline std::unique_ptr<TraCRProc> tracrProc;

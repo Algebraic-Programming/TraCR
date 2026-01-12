@@ -79,7 +79,7 @@ int main(void) {
 
   std::chrono::duration<double> perf_time = (perf_test_stop - perf_test_start);
 
-  printf("Setting %d markers costs: %f[ms] and on average: %f[ns]", n_sets, perf_time.count()*1e6, perf_time.count()*1e9/double(n_sets));
+  printf("Setting %d markers costs: %f[ms] and on average: %f[ns]\n", n_sets, perf_time.count()*1e6, perf_time.count()*1e9/double(n_sets));
 
   // fill matrices
   INSTRUMENTATION_MARK_SET(0, fill_mat_label_id, 0);

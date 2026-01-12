@@ -26,30 +26,42 @@
 #include <array>
 #include <string>
 #include <atomic>
+#include <iostream>
 #include <mutex>
 #include <ctime>                //
+// #include <chrono>
 #include <fstream>              // To store files
 #include <filesystem>
 #include <iomanip>
 #include <unordered_map>
 #include <unistd.h>             // SYS_gettid
-#include <sys/syscall.h>        // syscall()
 #include <sys/stat.h>           // mkdir()
 #include <sys/types.h>          // chmod type
 #include <sched.h>              // sched_getcpu()
 #include <nlohmann/json.hpp>
 
-#include <iostream>             // Debugging purposes
-
 /**
  * The maximum capacity of one tracr thread for capturing the traces.
  * Currently, we fix it here. Might be definable by the user.
  * 
- * capatity = 2**16 = 65'536     -> 1MB tracr thread size
- * capacity = 2**20 = 1'048'576  -> 17MB tracr thread size
- * capacity = 2**24 = 16'777'216 -> 268MB tracr thread size
+ * capatity = 2**16 = 65'536     -> ~1MB tracr thread size
+ * capacity = 2**20 = 1'048'576  -> ~17MB tracr thread size (default)
+ * capacity = 2**24 = 16'777'216 -> ~268MB tracr thread size
  */
+#ifndef TRACR_CAPACITY
 constexpr size_t CAPACITY = 1 << 20;
+#else
+constexpr size_t CAPACITY = TRACR_CAPACITY;
+#endif
+
+/**
+ * Debug printing method. Can be enabled with the ENABLE_DEBUG flag included.
+ */
+#ifdef ENABLE_DEBUG
+#define debug_print(fmt, ...) printf("[TraCR DEBUG] " fmt "\n", ##__VA_ARGS__)
+#else
+#define debug_print(fmt, ...)
+#endif
 
 /**
  * A way to check if the TraCRProc has been initialized, if not, throw at runtime.
@@ -67,7 +79,9 @@ inline std::atomic<bool> enable_tracr{true};
 inline std::atomic<uint16_t> lazy_colorId{23};
 
 /**
+ * Our nanosecond timer
  * 
+ * This timer can also be changed by the chrono (or PyPTO get_cycle()) method
  */
 class NanoTimer {
 public:
@@ -78,6 +92,12 @@ public:
         return static_cast<uint64_t>(ts.tv_sec) * 1'000'000'000ULL
              + static_cast<uint64_t>(ts.tv_nsec);
     }
+
+    // The chrono timer version about ~2ns slower than the above one
+    // static uint64_t now() {
+    //     return std::chrono::duration_cast<std::chrono::nanoseconds>(
+    //         std::chrono::steady_clock::now().time_since_epoch()).count();
+    // }
 };
 
 /**
@@ -98,7 +118,7 @@ struct Payload {
 };
 
 /**
- * 
+ * TraCR Thread class. One MPI instance chas atleast 1
  */
 class TraCRThread {
     public:
@@ -106,25 +126,47 @@ class TraCRThread {
     /**
      * Constructor
      */
-    TraCRThread(pid_t tid) : _tid(tid) {};
+    TraCRThread(const pid_t& tid) : _tid(tid) {};
 
+
+    /**
+     * No default constructor allowed.
+     */
+    TraCRThread() = delete;
 
     /**
      * Default Destructor as we obey RAII 
      */
-    TraCRThread() = delete;
     ~TraCRThread() = default;
 
     /**
-     * Store a given trace in Payload format
+     * 
      */
     inline void store_trace(const Payload& payload) {
-        _traces[_traceIdx % CAPACITY] = payload;
-        ++_traceIdx;
+#ifdef TRACR_POLICY_PERIODIC
+    if(_traceIdx == CAPACITY) {
+        debug_print("WARNING: TID[%d] is full, this thread will now overwrite from the beginning.", _tid);
+    }
 
-        if(_traceIdx >= CAPACITY) {
-            std::cerr << "Warning: TID[]" << _tid << " already overflowed the capacatity of available traces to store. It now overwrites from the beginning\n";
-        }
+    _traces[_traceIdx % CAPACITY] = payload;
+    ++_traceIdx;
+
+#elif defined(TRACR_POLICY_STOP_IF_FULL)
+    if(_traceIdx >= CAPACITY) {
+        debug_print("WARNING: TID[%d] is full, this thread will now ignore incoming traces.", _tid);
+    } else {
+        _traces[_traceIdx] = payload;
+        ++_traceIdx;
+    }
+#else   /* Abort if full */
+    if(_traceIdx >= CAPACITY) {
+        std::cerr << "Warning: TID[]" << _tid << " is full, terminating with a Runtime Error.\n";
+        std::exit(EXIT_FAILURE);
+    }
+
+    _traces[_traceIdx] = payload;
+    ++_traceIdx;
+#endif
     }
 
     /**
@@ -142,7 +184,7 @@ class TraCRThread {
         
         std::string filepath = _thread_folder_name + "traces.bts";
 
-        std::cout << "The filepath of this TraCR thread[" << _tid << "] is: " << filepath << "\n";
+        debug_print("The filepath of this TraCR thread[%d] is: %s", _tid, filepath.c_str());
 
         std::ofstream ofs(filepath, std::ios::binary);
         if (!ofs) {
@@ -178,7 +220,7 @@ class TraCRThread {
 };
 
 /**
- * 
+ * TraCR Proc class, each MPI instance can how one.
  */
 class TraCRProc {
     public:
@@ -186,27 +228,31 @@ class TraCRProc {
     /**
      * Constructor
      */
-    TraCRProc(pid_t tid) : _tracr_init_time(NanoTimer::now()), _tid(tid), _lCPUid(sched_getcpu()) {
+    TraCRProc(const pid_t& tid) : _tracr_init_time(NanoTimer::now()), _tid(tid), _lCPUid(sched_getcpu()) {
 
         tracr_proc_init = true;
         
         _proc_folder_name = "proc." + std::to_string(_lCPUid) + "/";
 
-        std::cout << "_proc_folder_name: " << _proc_folder_name << "\n";
+        debug_print("_proc_folder_name: %s", _proc_folder_name.c_str());
     };
 
     /**
-     * Default Con-/Destructor as we obey RAII 
+     * No default constructor allowed.
      */
     TraCRProc() = delete;
+
+    /**
+     * Default Destructor as we obey RAII 
+     */
     ~TraCRProc() = default;
 
     /**
      * 
      */
-    inline bool create_folder_recursive(const std::string& path = "", mode_t mode = 0755) {
-        
+    inline bool create_folder_recursive(const std::string& path = "") {
         _proc_folder_name = path + "tracr/" + _proc_folder_name;
+
         return std::filesystem::create_directories(_proc_folder_name);
     }
 
@@ -274,7 +320,7 @@ class TraCRProc {
         // Close the file
         file.close();
 
-        std::cout << filename <<" successfully written!\n";
+        debug_print("'%s' successfully written!", filename.c_str());
     }
     
     // A list of all the created _tracrThreadIDs

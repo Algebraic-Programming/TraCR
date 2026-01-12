@@ -74,7 +74,6 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_END() instrumentation_end()
 
-
 /**
  * Thread methods
  */
