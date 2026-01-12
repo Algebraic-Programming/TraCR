@@ -1,7 +1,3 @@
-option('buildPyTraCR', type : 'boolean', value : false,
-       description: 'Indicates whether to build the TraCR Python API',
-)
-
 option('buildTests', type : 'boolean', value : false,
        description: 'Indicates whether to build test apps'
 )
