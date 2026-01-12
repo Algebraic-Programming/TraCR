@@ -27,8 +27,9 @@
 
 /**
  * Marker colors values of the default Paraver color palette
- * 
- * NOTE: Some colors might be wrong when using Paraver in light mode instead of night mode
+ *
+ * NOTE: Some colors might be wrong when using Paraver in light mode instead of
+ * night mode
  */
 enum mark_color : uint16_t {
   MARK_COLOR_NONE = 0,
@@ -84,17 +85,23 @@ enum mark_color : uint16_t {
 /**
  * Marker methods
  */
-#define INSTRUMENTATION_MARK_ADD(colorId, label) instrumentation_mark_add(colorId, label)
+#define INSTRUMENTATION_MARK_ADD(colorId, label)                               \
+  instrumentation_mark_add(colorId, label)
 
-#define INSTRUMENTATION_MARK_LAZY_ADD(label) instrumentation_mark_lazy_add(label)
+#define INSTRUMENTATION_MARK_LAZY_ADD(label)                                   \
+  instrumentation_mark_lazy_add(label)
 
-#define INSTRUMENTATION_MARK_SET(channelId, eventId, extraId) instrumentation_mark_set(channelId, eventId, extraId)
+#define INSTRUMENTATION_MARK_SET(channelId, eventId, extraId)                  \
+  instrumentation_mark_set(channelId, eventId, extraId)
 
-#define INSTRUMENTATION_MARK_RESET(channelId) instrumentation_mark_reset(channelId)
+#define INSTRUMENTATION_MARK_RESET(channelId)                                  \
+  instrumentation_mark_reset(channelId)
 
-#define INSTRUMENTATION_ADD_CHANNEL_NAMES(channel_names)  tracrProc->addCustomChannelNames(channel_names)
+#define INSTRUMENTATION_ADD_CHANNEL_NAMES(channel_names)                       \
+  tracrProc->addCustomChannelNames(channel_names)
 
-#define INSTRUMENTATION_ADD_NUM_CHANNELS(num_channels) tracrProc->addNumberOfChannels(num_channels)
+#define INSTRUMENTATION_ADD_NUM_CHANNELS(num_channels)                         \
+  tracrProc->addNumberOfChannels(num_channels)
 
 /**
  * Other methods
@@ -114,9 +121,8 @@ enum mark_color : uint16_t {
  * Main proc methods
  */
 #define INSTRUMENTATION_START(path) (void)(path)
-  
-#define INSTRUMENTATION_END()
 
+#define INSTRUMENTATION_END()
 
 /**
  * Thread methods
@@ -128,11 +134,16 @@ enum mark_color : uint16_t {
 /**
  * Marker methods
  */
-#define INSTRUMENTATION_MARK_ADD(colorId, label) 0; (void)(label)
+#define INSTRUMENTATION_MARK_ADD(colorId, label)                               \
+  0;                                                                           \
+  (void)(label)
 
 #define INSTRUMENTATION_MARK_LAZY_ADD(label) 0
 
-#define INSTRUMENTATION_MARK_SET(channelId, eventId, extraId) (void)(channelId); (void)(eventId); (void)(extraId)
+#define INSTRUMENTATION_MARK_SET(channelId, eventId, extraId)                  \
+  (void)(channelId);                                                           \
+  (void)(eventId);                                                             \
+  (void)(extraId)
 
 #define INSTRUMENTATION_MARK_RESET(channelId) (void)(channelId)
 
