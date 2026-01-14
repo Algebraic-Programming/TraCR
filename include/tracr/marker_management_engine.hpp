@@ -30,7 +30,6 @@
 #include <mutex>
 #include <string>
 // #include <chrono>
-#include <filesystem>
 #include <fstream> // To store files
 #include <iomanip>
 #include <nlohmann/json.hpp>
@@ -175,11 +174,20 @@ public:
   inline void flush_traces(const std::string &path) {
 
     _thread_folder_name = path + "thread." + std::to_string(_tid) + "/";
+    
+    // C++17 version
+    // if (std::filesystem::create_directories(_thread_folder_name) == 0) {
+    //   std::cerr << "mkdir failed for: " << _thread_folder_name << "\n";
+    //   std::exit(EXIT_FAILURE);
+    // }
 
-    // create the last thread ID folder
-    if (std::filesystem::create_directories(_thread_folder_name) == 0) {
-      std::cerr << "mkdir failed for: " << _thread_folder_name << "\n";
-      std::exit(EXIT_FAILURE);
+    // Create the last thread ID folder
+    if (mkdir(_thread_folder_name.c_str(), 0755) != 0) {
+        if (errno != EEXIST) {  // ignore "already exists"
+            std::cerr << "mkdir failed for: " << _thread_folder_name
+                      << " errno=" << errno << " (" << std::strerror(errno) << ")\n";
+            std::exit(EXIT_FAILURE);
+        }
     }
 
     std::string filepath = _thread_folder_name + "traces.bts";
@@ -250,9 +258,35 @@ public:
    *
    */
   inline bool create_folder_recursive(const std::string &path = "") {
+    // _proc_folder_name = path + "tracr/" + _proc_folder_name;
+
+    // return std::filesystem::create_directories(_proc_folder_name);
+
     _proc_folder_name = path + "tracr/" + _proc_folder_name;
 
-    return std::filesystem::create_directories(_proc_folder_name);
+    std::istringstream iss(_proc_folder_name);
+    std::string token;
+    std::string current;
+
+    // Handle leading slash
+    if (!_proc_folder_name.empty() && _proc_folder_name[0] == '/') {
+        current = "/";
+    }
+
+    while (std::getline(iss, token, '/')) {
+        if (token.empty()) continue;
+        current += token + "/";
+
+        if (mkdir(current.c_str(), 0755) != 0) {
+            if (errno != EEXIST) {
+                std::cerr << "mkdir failed for: " << current
+                          << " errno=" << errno << " (" << std::strerror(errno) << ")\n";
+                return false;
+            }
+        }
+    }
+
+    return true;
   }
 
   /**
@@ -300,6 +334,10 @@ public:
     _json_file["tid"] = _tid;
     _json_file["start_time"] = _tracr_init_time;
 
+    for (const auto& [key, value] : _markerTypes) {
+        _json_file["markerTypes"][std::to_string(key)] = value;
+    }
+
     // Create and open the metadata.json file
     std::string filename = _proc_folder_name + "metadata.json";
     std::ofstream file(filename);
@@ -325,7 +363,7 @@ public:
   std::vector<pid_t> _tracrThreadIDs;
 
   // The dynamic list to store all the marker types created
-  std::unordered_map<uint16_t, std::string> markerTypes;
+  std::unordered_map<uint16_t, std::string> _markerTypes;
 
 private:
   // TraCR start time

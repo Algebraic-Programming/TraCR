@@ -220,14 +220,14 @@ static inline uint16_t instrumentation_mark_add(const uint16_t &colorId,
     return 0;
   }
 
-  if (tracrProc->markerTypes.count(colorId)) {
+  if (tracrProc->_markerTypes.count(colorId)) {
     std::cerr << "This color has already been used. Choose another one.\n";
     std::exit(EXIT_FAILURE);
   }
 
-  tracrProc->markerTypes[colorId] = label;
+  tracrProc->_markerTypes[colorId] = label;
 
-  return tracrProc->markerTypes.size() - 1;
+  return tracrProc->_markerTypes.size() - 1;
 }
 
 /**
@@ -245,14 +245,14 @@ static inline uint16_t instrumentation_mark_lazy_add(const std::string &label) {
   }
 
   uint16_t colorId = lazy_colorId.fetch_add(1);
-  if (tracrProc->markerTypes.count(colorId)) {
+  if (tracrProc->_markerTypes.count(colorId)) {
     std::cerr << "This color has already been used. Choose another one.\n";
     std::exit(EXIT_FAILURE);
   }
 
-  tracrProc->markerTypes[colorId] = label;
+  tracrProc->_markerTypes[colorId] = label;
 
-  return tracrProc->markerTypes.size() - 1;
+  return tracrProc->_markerTypes.size() - 1;
 }
 
 /**
