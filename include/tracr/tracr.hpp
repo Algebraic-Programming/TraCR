@@ -82,6 +82,8 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_THREAD_FINALIZE() instrumentation_thread_finalize()
 
+#define INSTRUMENTATION_GET_THREAD_TRACE_STR() instrumentation_get_thread_trace_str()
+
 /**
  * Marker methods
  */
@@ -112,6 +114,8 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_IS_PROC_READY() instrumentation_is_proc_ready()
 
+#define INSTRUMENTATION_GET_JSON_STR() instrumentation_get_json_str()
+
 #else /* ENABLE_TRACR */
 
 /**
@@ -132,6 +136,8 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_THREAD_INIT()
 
 #define INSTRUMENTATION_THREAD_FINALIZE()
+
+#define INSTRUMENTATION_GET_THREAD_TRACE_STR() ""
 
 /**
  * Marker methods
@@ -161,5 +167,7 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_OFF()
 
 #define INSTRUMENTATION_IS_PROC_READY() true
+
+#define INSTRUMENTATION_GET_JSON_STR() ""
 
 #endif /* ENABLE_TRACR */

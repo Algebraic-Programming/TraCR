@@ -212,12 +212,13 @@ public:
    */
   inline pid_t getTID() { return _tid; }
 
-private:
   // The array to keep track of the traces
   std::array<Payload, CAPACITY> _traces;
-
+  
   // The index at which point to add the next marker
   size_t _traceIdx = 0;
+private:
+
 
   // kernel thread ID
   pid_t _tid;
@@ -328,7 +329,7 @@ public:
   /**
    *
    */
-  inline void dump_JSON() {
+  inline void write_JSON() {
     // Before dumping, we have to fill in the metadata in the _json_file
     _json_file["pid"] = _lCPUid;
     _json_file["tid"] = _tid;
@@ -336,6 +337,17 @@ public:
 
     for (const auto& [key, value] : _markerTypes) {
         _json_file["markerTypes"][std::to_string(key)] = value;
+    }
+
+    json_is_ready = true;
+  }
+
+  /**
+   * 
+   */
+  inline void dump_JSON() {
+    if (!json_is_ready) {
+      write_JSON();
     }
 
     // Create and open the metadata.json file
@@ -365,6 +377,8 @@ public:
   // The dynamic list to store all the marker types created
   std::unordered_map<uint16_t, std::string> _markerTypes;
 
+  // Metadata and channel informations of this system
+  nlohmann::json _json_file;
 private:
   // TraCR start time
   int64_t _tracr_init_time;
@@ -381,6 +395,6 @@ private:
   // The name of the proc folder
   std::string _proc_folder_name;
 
-  // Metadata and channel informations of this system
-  nlohmann::json _json_file;
+  //
+  bool json_is_ready = false;
 };

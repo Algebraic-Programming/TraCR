@@ -205,6 +205,45 @@ static inline void instrumentation_thread_finalize() {
 }
 
 /**
+ * 
+ */
+static inline std::string instrumentation_get_thread_trace_str() {
+  // Safety checks
+  if (!tracrThread) {
+      return "[ERROR: No thread context]";
+  }
+  
+  if (tracrThread->_traceIdx == 0) {
+      return "[EMPTY: No trace data]";
+  }
+  
+  // Calculate total bytes
+  size_t total_bytes = sizeof(Payload) * tracrThread->_traceIdx;
+  const uint8_t* raw_data = reinterpret_cast<const uint8_t*>(tracrThread->_traces.data());
+  
+  // Convert to hex string
+  std::stringstream hex_stream;
+  hex_stream << std::hex << std::setfill('0');
+  
+  for (size_t i = 0; i < total_bytes; ++i) {
+      // Each byte as two hex digits
+      hex_stream << std::setw(2) << static_cast<int>(raw_data[i]);
+      
+      // Add space every 4 bytes for readability
+      if ((i + 1) % 4 == 0 && (i + 1) != total_bytes) {
+          hex_stream << " ";
+      }
+      
+      // New line every 16 bytes
+      if ((i + 1) % 16 == 0 && (i + 1) != total_bytes) {
+          hex_stream << "\n";
+      }
+  }
+  
+  return hex_stream.str();
+}
+
+/**
  * Marker add method
  *
  * NOTE: This is note thread safe! Should be called by one thread.
@@ -297,3 +336,11 @@ static inline void instrumentation_off() { enable_tracr = false; }
  * 
  */
 static inline bool instrumentation_is_proc_ready() { return tracr_proc_init.load(); }
+
+/**
+ * 
+ */
+static inline std::string instrumentation_get_json_str() {
+  tracrProc->write_JSON();
+  return (tracrProc->_json_file).dump();
+}
