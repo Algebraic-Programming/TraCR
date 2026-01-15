@@ -160,6 +160,6 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_OFF()
 
-#define INSTRUMENTATION_IS_PROC_READY()
+#define INSTRUMENTATION_IS_PROC_READY() true
 
 #endif /* ENABLE_TRACR */
