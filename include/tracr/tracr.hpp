@@ -110,6 +110,8 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_OFF() instrumentation_off()
 
+#define INSTRUMENTATION_IS_PROC_READY() instrumentation_is_proc_ready()
+
 #else /* ENABLE_TRACR */
 
 /**
@@ -157,5 +159,7 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_ON()
 
 #define INSTRUMENTATION_OFF()
+
+#define INSTRUMENTATION_IS_PROC_READY()
 
 #endif /* ENABLE_TRACR */

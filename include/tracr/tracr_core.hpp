@@ -292,3 +292,8 @@ static inline void instrumentation_on() { enable_tracr = true; }
  *
  */
 static inline void instrumentation_off() { enable_tracr = false; }
+
+/**
+ * 
+ */
+static inline bool instrumentation_is_proc_ready() { return tracr_proc_init.load(); }
