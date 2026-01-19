@@ -2,7 +2,7 @@ project('TraCR', [ 'cpp' ],
   subproject_dir : 'extern',
   default_options : [
   'cpp_std=c++17',
-  'buildtype=release',
+  'buildtype=debug', # 'buildtype=release',
   ]
 )
 
@@ -19,12 +19,9 @@ InstrumentationBuildCppArgs = [
   warningAsErrorFlags,
  ]
 
- InstrumentationBuildIncludes = include_directories([
+InstrumentationBuildIncludes = include_directories([
    'include', 'extern'
   ])
-
-# TODO: Add extern subdir
-# subdir('extern')
 
 ####### Collect the dependencies
 
@@ -32,6 +29,10 @@ InstrumentationBuildDep = declare_dependency(
     compile_args: InstrumentationBuildCppArgs,
     include_directories: InstrumentationBuildIncludes
     )
+
+####### Post-processing script
+
+subdir('postprocessing')
 
 ####### Build test / example targets only if this repo is being loaded not as a subproject
 

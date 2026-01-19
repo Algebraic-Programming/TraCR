@@ -1,5 +1,5 @@
 /*
- *   Copyright 2025 Huawei Technologies Co., Ltd.
+ *   Copyright 2026 Huawei Technologies Co., Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ int main(void) {
 
   // performance test
   auto perf_test_start = std::chrono::system_clock::now();
-  const int n_sets = 1e6;
+  const int n_sets = 1e2;
   for (int i = 0; i < n_sets; ++i) {
     INSTRUMENTATION_MARK_SET(0, fill_mat_label_id, 0);
   }

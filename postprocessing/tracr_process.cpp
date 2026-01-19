@@ -1,0 +1,308 @@
+/*
+ *   Copyright 2026 Huawei Technologies Co., Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <vector>
+#include <map>
+
+#include <tracr/marker_management_engine.hpp>
+
+namespace fs = std::filesystem;
+
+/**
+ * A function to load a bts file into a std::vector<Payload>
+ */
+bool load_bts_file(const fs::path& filepath, std::vector<Payload>& traces, size_t& out_count) {
+    std::ifstream ifs(filepath, std::ios::binary);
+    if (!ifs) {
+        std::cerr << "Failed to open file: " << filepath << "\n";
+        return false;
+    }
+
+    // Determine file size
+    ifs.seekg(0, std::ios::end);
+    std::streamsize filesize = ifs.tellg();
+    ifs.seekg(0, std::ios::beg);
+
+    size_t count = filesize / sizeof(Payload);
+
+    // Resize the vector to hold the data
+    traces.resize(count);
+
+    ifs.read(reinterpret_cast<char*>(traces.data()), count * sizeof(Payload));
+    if (!ifs) {
+        std::cerr << "Failed to read all data from file: " << filepath << "\n";
+        return false;
+    }
+
+    out_count = count;
+    return true;
+}
+
+/**
+ * 
+ */
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+      std::cerr << "Usage: " << argv[0] << " <folder_path>\n";
+      return 1;
+    }
+
+    fs::path base_path = argv[1];
+
+    if (!fs::exists(base_path) || !fs::is_directory(base_path)) {
+      std::cerr << "Error: Folder does not exist or is not a directory.\n";
+      return 1;
+    }
+
+    /**
+     * Iterate over all entries in the base folder
+     * 
+     * NOTE: multiple proc.* are not yet allowed, the code will terminate if this is the case.
+     */
+    nlohmann::json metadata;
+    bool proc_folder_found = false;
+    for (const auto& proc_entry : fs::directory_iterator(base_path)) {
+      if (proc_entry.is_directory() && proc_entry.path().filename().string().find("proc.") == 0) {
+        std::cout << "Found proc folder: " << proc_entry.path() << "\n";
+
+        if (proc_folder_found) {
+          std::cerr << "Error: Currently, having more than one proc folder is illegal.\n";
+          return 1;
+        }
+        proc_folder_found = true;
+
+        // Load the json metadata file
+        fs::path json_file = proc_entry.path() / "metadata.json";
+        if (fs::exists(json_file)) {
+          std::ifstream ifs(json_file);
+          if (ifs.is_open()) {
+            try {
+              ifs >> metadata;
+              std::cout << "  Loaded metadata.json:\n" << metadata.dump(4) << "\n";
+            } catch (const std::exception& e) {
+              std::cerr << "  Failed to parse JSON: " << e.what() << "\n";
+              return 1;
+            }
+          } else {
+            std::cerr << "  Failed to open metadata.json\n";
+            return 1;
+          }
+        } else {
+          std::cerr << "  No metadata.json found\n";
+          return 1;
+        }
+
+        // A container to keep all the bts files in one for the proc
+        std::map<pid_t, std::vector<Payload>> bts_files;
+
+        // Iterate over thread folders inside proc.*
+        for (const auto& thread_entry : fs::directory_iterator(proc_entry.path())) {
+          if (thread_entry.is_directory() && thread_entry.path().filename().string().find("thread.") == 0) {
+            fs::path trace_file = thread_entry.path() / "traces.bts";
+            if (fs::exists(trace_file)) {
+              std::cout << "  Found trace file: " << trace_file << "\n";
+            } else {
+              std::cerr << "  No trace file in: " << thread_entry.path() << "\n";
+              return 1;
+            }
+
+            // Open trace file and store it back into the std::array
+            std::vector<Payload> traces;
+            size_t num_traces = 0;
+
+            if (load_bts_file(trace_file, traces, num_traces)) {
+              std::cout << "Loaded " << num_traces << " traces from " << trace_file << "\n";
+
+              // Debug: print first 5 traces
+              // for (size_t i = 0; i < std::min(num_traces, size_t(5)); ++i) {
+              //   std::cout << "Trace[" << i << "]: channelId=" << traces[i].channelId
+              //             << ", eventId=" << traces[i].eventId
+              //             << ", extraId=" << traces[i].extraId
+              //             << ", timestamp=" << traces[i].timestamp << "\n";
+              // }
+            } else {
+              std::cerr << "  Failed to load bts file: " << trace_file << "\n";
+              return 1;
+            }
+
+            // Now store the vector<Payload> into the map using the TID
+            std::string folder_name = thread_entry.path().filename().string();
+            std::size_t dot_pos = folder_name.find('.');
+            pid_t tid;
+            if (dot_pos != std::string::npos) {
+              std::string tid_str = folder_name.substr(dot_pos + 1);
+              try {
+                tid = std::stoi(tid_str);
+              } catch (const std::exception& e) {
+                std::cerr << "  Error parsing TID in folder: " << folder_name << "\n";
+                return 1;
+              }
+            }
+
+            bts_files[tid] = traces;
+          }
+        }
+      }
+    }
+
+    if (!proc_folder_found) {
+      std::cerr << "Error: No proc folder found.\n";
+      return 1;
+    }
+    
+    /**
+     * Store the state.cfg in the given tracr folder
+     */
+    fs::path source = "state.cfg";
+    try {
+        // Copy the file into the base_path folder
+        fs::copy_file(source, base_path / source.filename(),
+                      fs::copy_options::overwrite_existing);
+        std::cout << "File copied successfully.\n";
+    } catch (const fs::filesystem_error& e) {
+        std::cerr << "Error copying file: " << e.what() << '\n';
+        return 1;
+    }
+
+    /**
+     * Create the tracr.pcf file
+     */
+    std::ofstream out(base_path / "tracr.pcf");
+    if (!out) {
+        std::cerr << "Error opening tracr.pcf for writing\n";
+        return 1;
+    }
+
+    // Fixed Paraver stuff
+    out << "DEFAULT_OPTIONS\n\n"
+           "LEVEL               THREAD\n"
+           "UNITS               NANOSEC\n"
+           "LOOK_BACK           100\n"
+           "SPEED               1\n"
+           "FLAG_ICONS          ENABLED\n"
+           "NUM_OF_STATE_COLORS 1000\n"
+           "YMAX_SCALE          37\n\n"
+
+           "DEFAULT_SEMANTIC\n\n"
+           "THREAD_FUNC         State As Is\n\n"
+
+           "STATES_COLOR\n"
+           "0   {  0,   0,   0}\n"
+           "1   {  0, 130, 200}\n"
+           "2   {217, 217, 217}\n"
+           "3   {230,  25,  75}\n"
+           "4   { 60, 180,  75}\n"
+           "5   {255, 225,  25}\n"
+           "6   {245, 130,  48}\n"
+           "7   {145,  30, 180}\n"
+           "8   { 70, 240, 240}\n"
+           "9   {240,  50, 230}\n"
+           "10  {210, 245,  60}\n"
+           "11  {250, 190, 212}\n"
+           "12  {  0, 128, 128}\n"
+           "13  {128, 128, 128}\n"
+           "14  {220, 190, 255}\n"
+           "15  {170, 110,  40}\n"
+           "16  {255, 250, 200}\n"
+           "17  {128,   0,   0}\n"
+           "18  {170, 255, 195}\n"
+           "19  {128, 128,   0}\n"
+           "20  {255, 215, 180}\n"
+           "21  {  0,   0, 128}\n"
+           "22  {  0,   0, 255}\n\n"
+
+           "EVENT_TYPE\n"
+           "0 90         TraCR\n"
+           "VALUES\n";
+
+    // Write markerTypes as VALUES
+    // Extract markerTypes
+    nlohmann::json markerTypes_json = metadata["markerTypes"];
+
+    for (auto it = markerTypes_json.begin(); it != markerTypes_json.end(); ++it) {
+        out << it.key() << "   " << it.value() << "\n";
+    }
+
+    out.close();
+    std::cout << "tracr.pcf written successfully.\n";
+
+    /**
+     * Create the tracr.prv file
+     */
+    out.open(base_path / "tracr.prv");
+    if (!out) {
+        std::cerr << "Error opening tracrprv for writing\n";
+        return 1;
+    }
+
+    uint32_t num_channels = 0;
+
+    
+
+
+
+
+    /**
+     * Create the tracr.row file
+     */
+    out.open(base_path / "tracr.row");
+    if (!out) {
+        std::cerr << "Error opening tracr.row for writing\n";
+        return 1;
+    }
+
+    std::stringstream ss;
+    if (metadata.contains("channel_names") && !metadata["channel_names"].is_null()) {
+      
+      if (!metadata.contains("num_channels") || !metadata["num_channels"].is_null()) {
+        num_channels = metadata["num_channels"];
+      } else {
+        num_channels = metadata["channel_names"].size();
+      }
+
+      // Iterate over JSON key-value pairs
+      for (auto& [key, value] : metadata["channel_names"].items()) {
+          ss << value.get<std::string>() << "\n"; // print just the string
+      }
+    }
+
+    if (!metadata.contains("num_channels") || !metadata["num_channels"].is_null()) {
+      num_channels = metadata["num_channels"];
+    }
+    
+
+    // Fixed Paraver stuff
+    out << "LEVEL NODE SIZE 1\n"
+           "hostname\n\n"
+           "LEVEL THREAD SIZE " << num_channels << "\n";
+
+    if (!ss.str().empty()) {
+      out << ss.str();
+    } else {
+      for(size_t i = 0; i < num_channels; ++i) {
+        out << "Channel_" << std::to_string(i) << "\n";
+      }
+    }
+
+    out.close();
+    std::cout << "tracr.row written successfully.\n";
+
+    return 0;
+}
