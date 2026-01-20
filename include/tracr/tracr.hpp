@@ -82,7 +82,8 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_THREAD_FINALIZE() instrumentation_thread_finalize()
 
-#define INSTRUMENTATION_GET_THREAD_TRACE_STR() instrumentation_get_thread_trace_str()
+#define INSTRUMENTATION_GET_THREAD_TRACE_STR()                                 \
+  instrumentation_get_thread_trace_str()
 
 /**
  * Marker methods

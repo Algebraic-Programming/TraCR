@@ -127,11 +127,11 @@ int main(void) {
   // User-defined number of channels to visualize
   INSTRUMENTATION_ADD_NUM_CHANNELS(1);
 
-// #ifdef ENABLE_TRACR
-//   printf("JSON: %s\n", INSTRUMENTATION_GET_JSON_STR().c_str());
+  // #ifdef ENABLE_TRACR
+  //   printf("JSON: %s\n", INSTRUMENTATION_GET_JSON_STR().c_str());
 
-//   printf("BTS: %s\n", INSTRUMENTATION_GET_THREAD_TRACE_STR().c_str());
-// #endif
+  //   printf("BTS: %s\n", INSTRUMENTATION_GET_THREAD_TRACE_STR().c_str());
+  // #endif
 
   // TraCR finished
   INSTRUMENTATION_END();
@@ -149,8 +149,6 @@ int main(void) {
   printf("Label set time: %f [s]\n", label_set_time.count());
 
   printf("Push/Pop time: %f [s]\n", push_pop_time.count());
-
-  
 
   return 0;
 }

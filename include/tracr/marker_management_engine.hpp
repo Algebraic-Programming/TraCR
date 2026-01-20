@@ -181,11 +181,12 @@ public:
 
     // Create the last thread ID folder
     if (mkdir(_thread_folder_name.c_str(), 0755) != 0) {
-        if (errno != EEXIST) {  // ignore "already exists"
-            std::cerr << "mkdir failed for: " << _thread_folder_name
-                      << " errno=" << errno << " (" << std::strerror(errno) << ")\n";
-            std::exit(EXIT_FAILURE);
-        }
+      if (errno != EEXIST) { // ignore "already exists"
+        std::cerr << "mkdir failed for: " << _thread_folder_name
+                  << " errno=" << errno << " (" << std::strerror(errno)
+                  << ")\n";
+        std::exit(EXIT_FAILURE);
+      }
     }
 
     std::string filepath = _thread_folder_name + "traces.bts";
@@ -203,15 +204,15 @@ public:
     ofs.write(reinterpret_cast<const char *>(_traces.data()),
               sizeof(Payload) * _traceIdx);
 
-    if(!ofs.good()) {
+    if (!ofs.good()) {
       std::cerr << "Failed to write into file: " << filepath << "\n";
       std::exit(EXIT_FAILURE);
     }
 
     // Closing file
     ofs.close();
-    
-    if(ofs.fail()) {
+
+    if (ofs.fail()) {
       std::cerr << "Failed to close file: " << filepath << "\n";
       std::exit(EXIT_FAILURE);
     }
@@ -224,12 +225,11 @@ public:
 
   // The array to keep track of the traces
   std::array<Payload, CAPACITY> _traces;
-  
+
   // The index at which point to add the next marker
   size_t _traceIdx = 0;
+
 private:
-
-
   // kernel thread ID
   pid_t _tid;
 
@@ -281,20 +281,21 @@ public:
 
     // Handle leading slash
     if (!_proc_folder_name.empty() && _proc_folder_name[0] == '/') {
-        current = "/";
+      current = "/";
     }
 
     while (std::getline(iss, token, '/')) {
-        if (token.empty()) continue;
-        current += token + "/";
+      if (token.empty())
+        continue;
+      current += token + "/";
 
-        if (mkdir(current.c_str(), 0755) != 0) {
-            if (errno != EEXIST) {
-                std::cerr << "mkdir failed for: " << current
-                          << " errno=" << errno << " (" << std::strerror(errno) << ")\n";
-                return false;
-            }
+      if (mkdir(current.c_str(), 0755) != 0) {
+        if (errno != EEXIST) {
+          std::cerr << "mkdir failed for: " << current << " errno=" << errno
+                    << " (" << std::strerror(errno) << ")\n";
+          return false;
         }
+      }
     }
 
     return true;
@@ -345,15 +346,15 @@ public:
     _json_file["tid"] = _tid;
     _json_file["start_time"] = _tracr_init_time;
 
-    for (const auto& [key, value] : _markerTypes) {
-        _json_file["markerTypes"][std::to_string(key)] = value;
+    for (const auto &[key, value] : _markerTypes) {
+      _json_file["markerTypes"][std::to_string(key)] = value;
     }
 
     json_is_ready = true;
   }
 
   /**
-   * 
+   *
    */
   inline void dump_JSON() {
     if (!json_is_ready) {
@@ -389,6 +390,7 @@ public:
 
   // Metadata and channel informations of this system
   nlohmann::json _json_file;
+
 private:
   // TraCR start time
   int64_t _tracr_init_time;
