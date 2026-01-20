@@ -70,7 +70,7 @@ int main(void) {
 
   // performance test
   auto perf_test_start = std::chrono::system_clock::now();
-  const int n_sets = 1e6;
+  const int n_sets = 1e2;
   for (int i = 0; i < n_sets; ++i) {
     INSTRUMENTATION_MARK_SET(0, fill_mat_label_id, 0);
   }
@@ -127,11 +127,11 @@ int main(void) {
   // User-defined number of channels to visualize
   INSTRUMENTATION_ADD_NUM_CHANNELS(1);
 
-  // #ifdef ENABLE_TRACR
-  //   printf("JSON: %s\n", INSTRUMENTATION_GET_JSON_STR().c_str());
+#ifdef ENABLE_TRACR
+  printf("JSON: %s\n", INSTRUMENTATION_GET_JSON_STR().c_str());
 
-  //   printf("BTS: %s\n", INSTRUMENTATION_GET_THREAD_TRACE_STR().c_str());
-  // #endif
+  printf("BTS: %s\n", INSTRUMENTATION_GET_THREAD_TRACE_STR().c_str());
+#endif
 
   // TraCR finished
   INSTRUMENTATION_END();
