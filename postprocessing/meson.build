@@ -6,4 +6,4 @@ configure_file(
   copy : true
 )
 
-executable('tracr_process', 'tracr_process.cpp', dependencies: InstrumentationBuildDep)
+tracr_process = executable('tracr_process', 'tracr_process.cpp', dependencies: InstrumentationBuildDep)

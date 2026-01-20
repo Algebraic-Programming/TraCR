@@ -172,14 +172,12 @@ public:
    * Flushed the traces into a file at the given path
    */
   inline void flush_traces(const std::string &path) {
+    // Don't create a folder if this TraCR thread is empty
+    if (_traceIdx == 0) {
+      return;
+    }
 
     _thread_folder_name = path + "thread." + std::to_string(_tid) + "/";
-    
-    // C++17 version
-    // if (std::filesystem::create_directories(_thread_folder_name) == 0) {
-    //   std::cerr << "mkdir failed for: " << _thread_folder_name << "\n";
-    //   std::exit(EXIT_FAILURE);
-    // }
 
     // Create the last thread ID folder
     if (mkdir(_thread_folder_name.c_str(), 0755) != 0) {
@@ -204,7 +202,19 @@ public:
     // Write raw memory
     ofs.write(reinterpret_cast<const char *>(_traces.data()),
               sizeof(Payload) * _traceIdx);
-    // return ofs.good();
+
+    if(!ofs.good()) {
+      std::cerr << "Failed to write into file: " << filepath << "\n";
+      std::exit(EXIT_FAILURE);
+    }
+
+    // Closing file
+    ofs.close();
+    
+    if(ofs.fail()) {
+      std::cerr << "Failed to close file: " << filepath << "\n";
+      std::exit(EXIT_FAILURE);
+    }
   }
 
   /**

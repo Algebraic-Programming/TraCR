@@ -2,8 +2,6 @@ testSuite = ['examples']
 
 cleanup_script = find_program('bash_scripts/cleanup_script.sh', native: true, required: true)
 
-# create_dir_script = find_program('bash_scripts/create_dirs.py', native: true, required: true)
-
 test_types = ['simple_example', 'pthread_example']
 
 cpp_args_list = [
@@ -31,12 +29,22 @@ foreach args : cpp_args_list
             test('cleanup_script_' + test_name, cleanup_script, 
                     workdir: output_dir,
                     suite : testSuite,
-                    is_parallel : false)
+                    is_parallel : false,
+                    priority : 2)
+
+
+            test('tracr_process_' + test_name, tracr_process,
+                workdir: meson.current_build_dir() / '../postprocessing',
+                args : [ output_dir / 'tracr'],
+                suite : testSuite,
+                is_parallel : false,
+                priority : 0)
         endif
 
         test(test_name, exe,
             workdir: output_dir,
             suite : testSuite,
-            is_parallel : false)
+            is_parallel : false,
+            priority : 1)
     endforeach
 endforeach

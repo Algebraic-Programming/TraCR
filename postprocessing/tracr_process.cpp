@@ -71,12 +71,18 @@ int main(int argc, char* argv[]) {
       return 1;
     }
 
+    // A container to keep all the bts files in one for the proc
+    std::vector<std::vector<Payload>> bts_files;
+    std::vector<pid_t> bts_tids;
+
+    // The metada of the proc
+    nlohmann::json metadata;
+    
     /**
      * Iterate over all entries in the base folder
      * 
      * NOTE: multiple proc.* are not yet allowed, the code will terminate if this is the case.
      */
-    nlohmann::json metadata;
     bool proc_folder_found = false;
     for (const auto& proc_entry : fs::directory_iterator(base_path)) {
       if (proc_entry.is_directory() && proc_entry.path().filename().string().find("proc.") == 0) {
@@ -109,8 +115,7 @@ int main(int argc, char* argv[]) {
           return 1;
         }
 
-        // A container to keep all the bts files in one for the proc
-        std::map<pid_t, std::vector<Payload>> bts_files;
+        
 
         // Iterate over thread folders inside proc.*
         for (const auto& thread_entry : fs::directory_iterator(proc_entry.path())) {
@@ -156,7 +161,8 @@ int main(int argc, char* argv[]) {
               }
             }
 
-            bts_files[tid] = traces;
+            bts_files.push_back(traces);
+            bts_tids.push_back(tid);
           }
         }
       }
@@ -175,7 +181,7 @@ int main(int argc, char* argv[]) {
         // Copy the file into the base_path folder
         fs::copy_file(source, base_path / source.filename(),
                       fs::copy_options::overwrite_existing);
-        std::cout << "File copied successfully.\n";
+        std::cout << "File 'state.cfg' copied successfully.\n";
     } catch (const fs::filesystem_error& e) {
         std::cerr << "Error copying file: " << e.what() << '\n';
         return 1;
@@ -254,20 +260,6 @@ int main(int argc, char* argv[]) {
 
     uint32_t num_channels = 0;
 
-    
-
-
-
-
-    /**
-     * Create the tracr.row file
-     */
-    out.open(base_path / "tracr.row");
-    if (!out) {
-        std::cerr << "Error opening tracr.row for writing\n";
-        return 1;
-    }
-
     std::stringstream ss;
     if (metadata.contains("channel_names") && !metadata["channel_names"].is_null()) {
       
@@ -286,7 +278,90 @@ int main(int argc, char* argv[]) {
     if (!metadata.contains("num_channels") || !metadata["num_channels"].is_null()) {
       num_channels = metadata["num_channels"];
     }
+
+    // Get current time as time_t
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+
+    // Convert to local time
+    std::tm* local_tm = std::localtime(&now_time);
+
+    // Print in desired format
+    out << "#Paraver ("
+        << std::setw(2) << std::setfill('0') << local_tm->tm_mday << "/"
+        << std::setw(2) << std::setfill('0') << local_tm->tm_mon + 1 << "/"
+        << std::setw(2) << std::setfill('0') << (local_tm->tm_year % 100)
+        << " at "
+        << std::setw(2) << std::setfill('0') << local_tm->tm_hour << ":"
+        << std::setw(2) << std::setfill('0') << local_tm->tm_min
+        << "):00000000000000000000_ns:0:1:1("  << std::to_string(num_channels) << ":1)\n";
+
     
+    // Convert metadata "markerTypes" into a std::vector of keys for easy/fast access
+    std::vector<std::string> markerTypes_keys;
+    for (auto& [key, value] : metadata["markerTypes"].items()) {
+      markerTypes_keys.push_back(key);
+    }
+    
+    // Now we have to travers the map of all the std::vector<Payload>
+    bool first = true;
+    uint64_t start_time = uint64_t(metadata["start_time"]);
+    std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
+    while(true) {
+      // First, find the next smallest time stamp in all the bts_files
+      uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
+      size_t index = 0;
+      for(size_t i = 0; i < bts_files.size(); ++i) {
+        if ( (bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp) && (bts_files_ptrs[i] != bts_files[i].size()) ) {
+          next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
+          index = i;
+        }
+      }
+
+      Payload payload = bts_files[index][bts_files_ptrs[index]];
+
+      if (first) {
+        first = false;
+        start_time = payload.timestamp;
+      }
+
+      std::string colorId = payload.eventId == UINT16_MAX ? "0" : markerTypes_keys[payload.eventId];
+
+
+      out << "2:0:1:1:" << payload.channelId + 1 
+          << ":" << std::to_string( payload.timestamp - start_time )
+          << ":90:" << colorId << "\n";
+
+      // increase this ptr as we used it
+      if (bts_files_ptrs[index] <  bts_files[index].size()) {
+        ++bts_files_ptrs[index];
+      }
+
+
+      // break the look if all the bts ptrs reached the limit.
+      bool ptrs_end = true;
+      for(size_t i = 0; i < bts_files.size(); ++i) {
+        if (bts_files_ptrs[i] != bts_files[i].size()) {
+          ptrs_end = false;
+          break;
+        }
+      }
+
+      if (ptrs_end) {
+        break;
+      }
+    }
+    out.close();
+    std::cout << "tracr.prv written successfully.\n";
+
+    /**
+     * Create the tracr.row file
+     */
+    out.open(base_path / "tracr.row");
+    if (!out) {
+        std::cerr << "Error opening tracr.row for writing\n";
+        return 1;
+    }
 
     // Fixed Paraver stuff
     out << "LEVEL NODE SIZE 1\n"
