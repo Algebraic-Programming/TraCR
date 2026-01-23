@@ -63,12 +63,6 @@ constexpr size_t CAPACITY = TRACR_CAPACITY;
 #endif
 
 /**
- * A way to check if the TraCRProc has been initialized, if not, throw at
- * runtime.
- */
-inline std::atomic<bool> tracr_proc_init{false};
-
-/**
  *
  */
 inline std::atomic<uint16_t> lazy_colorId{23};
@@ -247,9 +241,6 @@ public:
    */
   TraCRProc(const pid_t &tid)
       : _tracr_init_time(NanoTimer::now()), _tid(tid), _lCPUid(sched_getcpu()) {
-
-    tracr_proc_init = true;
-
     _proc_folder_name = "proc." + std::to_string(_lCPUid) + "/";
 
     debug_print("_proc_folder_name: %s", _proc_folder_name.c_str());
@@ -311,10 +302,32 @@ public:
    *
    * This is thread save.
    */
-  inline void addTraCRThread(pid_t tid) {
+  inline void addTraCRThread(const pid_t& tid) {
     // We have to lock this as this method can be called from multiple threads
     std::lock_guard<std::mutex> lock(mtx);
     _tracrThreadIDs.push_back(tid);
+  }
+
+  /**
+   * 
+   */
+  inline void eraseTraCRThread(const pid_t tid) {
+    std::lock_guard<std::mutex> lock(_tracrThreadIDsMutex);
+
+    auto it = std::find(_tracrThreadIDs.begin(), _tracrThreadIDs.end(), tid);
+
+    if (it == _tracrThreadIDs.end()) {
+      std::cerr << "Thread not found in tracr proc list!\n";
+      std::exit(EXIT_FAILURE);
+    }
+
+    if (it == _tracrThreadIDs.begin()) {
+      std::cerr
+          << "It is NOT allowed to thread_finalize the TraCR Proc thread!\n";
+      std::exit(EXIT_FAILURE);
+    }
+
+    _tracrThreadIDs.erase(it);
   }
 
   /**
@@ -392,6 +405,9 @@ public:
   nlohmann::json _json_file;
 
 private:
+  //
+  std::mutex _tracrThreadIDsMutex;
+
   // TraCR start time
   int64_t _tracr_init_time;
 

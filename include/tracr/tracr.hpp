@@ -75,6 +75,10 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_END() instrumentation_end()
 
+#define INSTRUMENTATION_PROC_INIT(path) instrumentation_proc_init(path)
+
+#define INSTRUMENTATION_PROC_FINALIZE() instrumentation_proc_finalize()
+
 /**
  * Thread methods
  */
@@ -130,6 +134,10 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_START(path) (void)(path)
 
 #define INSTRUMENTATION_END()
+
+#define INSTRUMENTATION_PROC_INIT(path) (void)(path)
+
+#define INSTRUMENTATION_PROC_FINALIZE()
 
 /**
  * Thread methods

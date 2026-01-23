@@ -246,12 +246,15 @@ int main(int argc, char *argv[]) {
          "0 90         TraCR\n"
          "VALUES\n";
 
-  // Write markerTypes as VALUES
-  // Extract markerTypes
-  nlohmann::json markerTypes_json = metadata["markerTypes"];
+  // If exists, write markerTypes in VALUES
+  if (metadata.contains("markerTypes") &&
+      !metadata["markerTypes"].is_null()) {
 
-  for (auto it = markerTypes_json.begin(); it != markerTypes_json.end(); ++it) {
-    out << it.key() << "   " << it.value() << "\n";
+    nlohmann::json markerTypes_json = metadata["markerTypes"];
+  
+    for (auto it = markerTypes_json.begin(); it != markerTypes_json.end(); ++it) {
+      out << it.key() << "   " << it.value() << "\n";
+    }
   }
 
   out.close();
