@@ -48,15 +48,21 @@ static inline thread_local std::unique_ptr<TraCRThread> tracrThread;
 static inline std::atomic<bool> enable_tracr{true};
 
 /**
+ * A way to check how many TraCR threads exists
+ */
+inline std::atomic<bool> tracr_proc_init{false};
+
+/**
+ * A way to check how many TraCR threads exists
+ */
+inline std::atomic<int> num_tracr_threads{0};
+
+/**
  *
  */
 static inline void instrumentation_start(const std::string &path = "") {
-  if (!enable_tracr) {
-    return;
-  }
-  // This could be also checked with if(!tracrProc){} but would not be thread
-  // safe
-  if (tracr_proc_init.load()) {
+  // Checking if the tracr Proc is ready
+  if (tracrProc) {
     std::cerr << "TraCR Proc has already been initialized by the thread: "
               << tracrProc->getTID() << "\n";
     std::exit(EXIT_FAILURE);
@@ -77,21 +83,34 @@ static inline void instrumentation_start(const std::string &path = "") {
   // Add tracr Thread
   tracrThread = std::make_unique<TraCRThread>(tid);
 
+  // Increase global thread counter
+  ++num_tracr_threads;
+
   // Add its TraCRThread TID
   tracrProc->addTraCRThread(tid);
+
+  // TraCR Proc is now ready
+  tracr_proc_init = true;
 }
 
 /**
  *
  */
 static inline void instrumentation_end() {
-  if (!enable_tracr) {
-    return;
+  if (!tracrProc) {
+    std::cerr << "TraCR Proc has not been initialized\n";
+    std::exit(EXIT_FAILURE);
   }
 
-  if (!tracr_proc_init.load()) {
-    std::cerr << "TraCR Proc has not been initialized by the thread: "
-              << tracrProc->getTID() << "\n";
+  if (num_tracr_threads.load() == 0) {
+    std::cerr << "No TraCR Thread existing counter: "
+              << num_tracr_threads.load() << "\n";
+    std::exit(EXIT_FAILURE);
+  }
+
+  if (num_tracr_threads.load() > 1) {
+    std::cerr << "There are still some TraCR Threads running: "
+              << num_tracr_threads.load() << "\n";
     std::exit(EXIT_FAILURE);
   }
 
@@ -111,31 +130,30 @@ static inline void instrumentation_end() {
     std::exit(EXIT_FAILURE);
   }
 
-  // Set the global boolean back to not being initialized
-  tracr_proc_init = false;
-
   // Flushing the trace of this TraCR thread now
   tracrThread->flush_traces(tracrProc->getFolderPath());
 
   // Destroys the TraCR Thread pointer and calls the destructor
   tracrThread.reset();
 
+  // Decrease global thread counter
+  --num_tracr_threads;
+
   // Dump TraCR Proc JSON file
   tracrProc->dump_JSON();
 
   // Destroys the TraCR Proc pointer and calls the destructor
   tracrProc.reset();
+
+  // TraCR Proc is now finalized
+  tracr_proc_init = false;
 }
 
 /**
  *
  */
 static inline void instrumentation_thread_init() {
-  if (!enable_tracr) {
-    return;
-  }
-
-  // Check
+  // Check if this C++ thread already has an Instance if so, abort
   if (tracrThread) {
     std::cerr << "TraCR Thread already exists with TID: "
               << tracrThread->getTID() << "\n";
@@ -155,6 +173,9 @@ static inline void instrumentation_thread_init() {
   // Add tracr Thread
   tracrThread = std::make_unique<TraCRThread>(this_tid);
 
+  // Increase global thread counter
+  ++num_tracr_threads;
+
   // Add the new TraCR Thread
   tracrProc->addTraCRThread(this_tid);
 }
@@ -163,10 +184,6 @@ static inline void instrumentation_thread_init() {
  *
  */
 static inline void instrumentation_thread_finalize() {
-  if (!enable_tracr) {
-    return;
-  }
-
   // Check if the tracr thread exists
   if (!tracrThread) {
     std::cerr << "TraCR Thread doesn't exist\n";
@@ -174,34 +191,17 @@ static inline void instrumentation_thread_finalize() {
   }
 
   // If it exists check if it is inside the tracr proc list
-  pid_t this_tid = syscall(SYS_gettid);
-  bool is_in_list = false;
-  for (auto it = tracrProc->_tracrThreadIDs.begin();
-       it != tracrProc->_tracrThreadIDs.end(); ++it) {
-
-    if (this_tid == (*it)) {
-      if (it == tracrProc->_tracrThreadIDs.begin()) {
-        std::cerr
-            << "It is NOT allowed to thread_finalize the TraCR Proc thread!\n";
-        std::exit(EXIT_FAILURE);
-      }
-
-      is_in_list = true;
-      tracrProc->_tracrThreadIDs.erase(it);
-      break;
-    }
-  }
-
-  if (!is_in_list) {
-    std::cerr << "TraCR Thread is not inside the TraCR Proc list\n";
-    std::exit(EXIT_FAILURE);
-  }
+  // If yes, erase it, else abort
+  tracrProc->eraseTraCRThread(syscall(SYS_gettid));
 
   // Flushing the trace of this TraCR thread now
   tracrThread->flush_traces(tracrProc->getFolderPath());
 
   // Finalize the thread now (destructor of it is also called)
   tracrThread.reset();
+
+  // Decrease global thread counter
+  --num_tracr_threads;
 }
 
 /**
@@ -338,6 +338,13 @@ static inline void instrumentation_off() { enable_tracr = false; }
  */
 static inline bool instrumentation_is_proc_ready() {
   return tracr_proc_init.load();
+}
+
+/**
+ *
+ */
+static inline int instrumentation_num_tracr_threads() {
+  return num_tracr_threads.load();
 }
 
 /**

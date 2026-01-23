@@ -248,10 +248,13 @@ int main(int argc, char *argv[]) {
 
   // Write markerTypes as VALUES
   // Extract markerTypes
-  nlohmann::json markerTypes_json = metadata["markerTypes"];
+  if (metadata.contains("markerTypes") && !metadata["markerTypes"].is_null()) {
+    nlohmann::json markerTypes_json = metadata["markerTypes"];
 
-  for (auto it = markerTypes_json.begin(); it != markerTypes_json.end(); ++it) {
-    out << it.key() << "   " << it.value() << "\n";
+    for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
+         ++it) {
+      out << it.key() << "   " << it.value() << "\n";
+    }
   }
 
   out.close();
@@ -266,16 +269,14 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  uint32_t num_channels = 0;
+  uint32_t num_channels = 1;
 
   std::stringstream ss;
   if (metadata.contains("channel_names") &&
       !metadata["channel_names"].is_null()) {
 
     if (!metadata.contains("num_channels") ||
-        !metadata["num_channels"].is_null()) {
-      num_channels = metadata["num_channels"];
-    } else {
+        metadata["num_channels"].is_null()) {
       num_channels = metadata["channel_names"].size();
     }
 
@@ -285,7 +286,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (!metadata.contains("num_channels") ||
+  if (metadata.contains("num_channels") &&
       !metadata["num_channels"].is_null()) {
     num_channels = metadata["num_channels"];
   }
@@ -309,8 +310,10 @@ int main(int argc, char *argv[]) {
   // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
   // access
   std::vector<std::string> markerTypes_keys;
-  for (auto &[key, value] : metadata["markerTypes"].items()) {
-    markerTypes_keys.push_back(key);
+  if (metadata.contains("markerTypes") && !metadata["markerTypes"].is_null()) {
+    for (auto &[key, value] : metadata["markerTypes"].items()) {
+      markerTypes_keys.push_back(key);
+    }
   }
 
   // Now we have to travers the map of all the std::vector<Payload>
@@ -336,8 +339,15 @@ int main(int argc, char *argv[]) {
       start_time = payload.timestamp;
     }
 
-    std::string colorId =
-        payload.eventId == UINT16_MAX ? "0" : markerTypes_keys[payload.eventId];
+    std::string colorId;
+    if (markerTypes_keys.size() > 0) {
+      colorId = payload.eventId == UINT16_MAX
+                    ? "0"
+                    : markerTypes_keys[payload.eventId];
+    } else {
+      colorId =
+          payload.eventId == UINT16_MAX ? "0" : std::to_string(payload.eventId);
+    }
 
     out << "2:0:1:1:" << payload.channelId + 1 << ":"
         << std::to_string(payload.timestamp - start_time) << ":90:" << colorId

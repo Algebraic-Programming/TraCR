@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <pthread.h>
+#include <string>
 #include <sys/syscall.h> // For syscall() and SYS_gettid
 #include <unistd.h>      // For getpid()
 #include <vector>
@@ -102,8 +103,12 @@ int main() {
   // Destroy the mutex
   pthread_mutex_destroy(&printMutex);
 
-  // User-defined number of channels to visualize
-  INSTRUMENTATION_ADD_NUM_CHANNELS(NRANKS);
+  // User-defined channels names to visualize
+  nlohmann::json j;
+  for (int i = 0; i < NRANKS; ++i) {
+    j[i] = std::string("Thread_") + std::to_string(i);
+  }
+  INSTRUMENTATION_ADD_CHANNEL_NAMES(j);
 
   // TraCR finished
   INSTRUMENTATION_END();
