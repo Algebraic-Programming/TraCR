@@ -38,6 +38,9 @@ int main(void) {
   printf("Setting %d markers costs: %f[ms] and on average: %f[ns]\n", n_sets,
          perf_time.count() * 1e6, perf_time.count() * 1e9 / double(n_sets));
 
+  // Mark reset for perfetto format
+  INSTRUMENTATION_MARK_RESET(0);
+
   // TraCR finished
   INSTRUMENTATION_END();
 

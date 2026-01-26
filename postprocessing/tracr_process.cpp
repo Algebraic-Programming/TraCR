@@ -67,6 +67,11 @@ int main(int argc, char *argv[]) {
 
   fs::path base_path = argv[1];
 
+  bool paraver_format = true;
+  if (argc == 3) {
+    paraver_format = std::atoi(argv[2]);
+  }
+
   if (!fs::exists(base_path) || !fs::is_directory(base_path)) {
     std::cerr << "Error: Folder does not exist or is not a directory.\n";
     return 1;
@@ -85,6 +90,7 @@ int main(int argc, char *argv[]) {
    * NOTE: multiple proc.* are not yet allowed, the code will terminate if this
    * is the case.
    */
+  int pid = -1;
   bool proc_folder_found = false;
   for (const auto &proc_entry : fs::directory_iterator(base_path)) {
     if (proc_entry.is_directory() &&
@@ -97,6 +103,19 @@ int main(int argc, char *argv[]) {
         return 1;
       }
       proc_folder_found = true;
+
+      // Store the PID, might be helpful for later
+      std::string folder_name = proc_entry.path().filename().string();
+      std::size_t dot_pos = folder_name.find('.');
+      if (dot_pos != std::string::npos) {
+        std::string pid_str = folder_name.substr(dot_pos + 1);
+        try {
+          pid = std::stoi(pid_str);
+        } catch (const std::exception &e) {
+          std::cerr << "  Error parsing TID in folder: " << folder_name << "\n";
+          return 1;
+        }
+      }
 
       // Load the json metadata file
       fs::path json_file = proc_entry.path() / "metadata.json";
@@ -154,7 +173,7 @@ int main(int argc, char *argv[]) {
             return 1;
           }
 
-          // Now store the vector<Payload> into the map using the TID
+          // Now store the vector<Payload> into the vector and its the TID
           std::string folder_name = thread_entry.path().filename().string();
           std::size_t dot_pos = folder_name.find('.');
           pid_t tid;
@@ -181,224 +200,383 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  /**
-   * Store the state.cfg in the given tracr folder
-   */
-  fs::path source = "state.cfg";
-  try {
-    // Copy the file into the base_path folder
-    fs::copy_file(source, base_path / source.filename(),
-                  fs::copy_options::overwrite_existing);
-    std::cout << "File 'state.cfg' copied successfully.\n";
-  } catch (const fs::filesystem_error &e) {
-    std::cerr << "Error copying file: " << e.what() << '\n';
-    return 1;
-  }
-
-  /**
-   * Create the tracr.pcf file
-   */
-  std::ofstream out(base_path / "tracr.pcf");
-  if (!out) {
-    std::cerr << "Error opening tracr.pcf for writing\n";
-    return 1;
-  }
-
-  // Fixed Paraver stuff
-  out << "DEFAULT_OPTIONS\n\n"
-         "LEVEL               THREAD\n"
-         "UNITS               NANOSEC\n"
-         "LOOK_BACK           100\n"
-         "SPEED               1\n"
-         "FLAG_ICONS          ENABLED\n"
-         "NUM_OF_STATE_COLORS 1000\n"
-         "YMAX_SCALE          37\n\n"
-
-         "DEFAULT_SEMANTIC\n\n"
-         "THREAD_FUNC         State As Is\n\n"
-
-         "STATES_COLOR\n"
-         "0   {  0,   0,   0}\n"
-         "1   {  0, 130, 200}\n"
-         "2   {217, 217, 217}\n"
-         "3   {230,  25,  75}\n"
-         "4   { 60, 180,  75}\n"
-         "5   {255, 225,  25}\n"
-         "6   {245, 130,  48}\n"
-         "7   {145,  30, 180}\n"
-         "8   { 70, 240, 240}\n"
-         "9   {240,  50, 230}\n"
-         "10  {210, 245,  60}\n"
-         "11  {250, 190, 212}\n"
-         "12  {  0, 128, 128}\n"
-         "13  {128, 128, 128}\n"
-         "14  {220, 190, 255}\n"
-         "15  {170, 110,  40}\n"
-         "16  {255, 250, 200}\n"
-         "17  {128,   0,   0}\n"
-         "18  {170, 255, 195}\n"
-         "19  {128, 128,   0}\n"
-         "20  {255, 215, 180}\n"
-         "21  {  0,   0, 128}\n"
-         "22  {  0,   0, 255}\n\n"
-
-         "EVENT_TYPE\n"
-         "0 90         TraCR\n"
-         "VALUES\n";
-
-  // Write markerTypes as VALUES
-  // Extract markerTypes
-  if (metadata.contains("markerTypes") && !metadata["markerTypes"].is_null()) {
-    nlohmann::json markerTypes_json = metadata["markerTypes"];
-
-    for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
-         ++it) {
-      out << it.key() << "   " << it.value() << "\n";
-    }
-  }
-
-  out.close();
-  std::cout << "tracr.pcf written successfully.\n";
-
-  /**
-   * Create the tracr.prv file
-   */
-  out.open(base_path / "tracr.prv");
-  if (!out) {
-    std::cerr << "Error opening tracrprv for writing\n";
-    return 1;
-  }
-
-  uint32_t num_channels = 1;
-
-  std::stringstream ss;
-  if (metadata.contains("channel_names") &&
-      !metadata["channel_names"].is_null()) {
-
-    if (!metadata.contains("num_channels") ||
-        metadata["num_channels"].is_null()) {
-      num_channels = metadata["channel_names"].size();
+  if (paraver_format) {
+    /**
+     * Store the state.cfg in the given tracr folder
+     */
+    fs::path source = "state.cfg";
+    try {
+      // Copy the file into the base_path folder
+      fs::copy_file(source, base_path / source.filename(),
+                    fs::copy_options::overwrite_existing);
+      std::cout << "File 'state.cfg' copied successfully.\n";
+    } catch (const fs::filesystem_error &e) {
+      std::cerr << "Error copying file: " << e.what() << '\n';
+      return 1;
     }
 
-    // Iterate over JSON key-value pairs
-    for (auto &[key, value] : metadata["channel_names"].items()) {
-      ss << value.get<std::string>() << "\n"; // print just the string
+    /**
+     * Create the tracr.pcf file
+     */
+    std::ofstream out(base_path / "tracr.pcf");
+    if (!out) {
+      std::cerr << "Error opening tracr.pcf for writing\n";
+      return 1;
     }
-  }
 
-  if (metadata.contains("num_channels") &&
-      !metadata["num_channels"].is_null()) {
-    num_channels = metadata["num_channels"];
-  }
+    // Fixed Paraver stuff
+    out << "DEFAULT_OPTIONS\n\n"
+           "LEVEL               THREAD\n"
+           "UNITS               NANOSEC\n"
+           "LOOK_BACK           100\n"
+           "SPEED               1\n"
+           "FLAG_ICONS          ENABLED\n"
+           "NUM_OF_STATE_COLORS 1000\n"
+           "YMAX_SCALE          37\n\n"
 
-  // Get current time as time_t
-  auto now = std::chrono::system_clock::now();
-  std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+           "DEFAULT_SEMANTIC\n\n"
+           "THREAD_FUNC         State As Is\n\n"
 
-  // Convert to local time
-  std::tm *local_tm = std::localtime(&now_time);
+           "STATES_COLOR\n"
+           "0   {  0,   0,   0}\n"
+           "1   {  0, 130, 200}\n"
+           "2   {217, 217, 217}\n"
+           "3   {230,  25,  75}\n"
+           "4   { 60, 180,  75}\n"
+           "5   {255, 225,  25}\n"
+           "6   {245, 130,  48}\n"
+           "7   {145,  30, 180}\n"
+           "8   { 70, 240, 240}\n"
+           "9   {240,  50, 230}\n"
+           "10  {210, 245,  60}\n"
+           "11  {250, 190, 212}\n"
+           "12  {  0, 128, 128}\n"
+           "13  {128, 128, 128}\n"
+           "14  {220, 190, 255}\n"
+           "15  {170, 110,  40}\n"
+           "16  {255, 250, 200}\n"
+           "17  {128,   0,   0}\n"
+           "18  {170, 255, 195}\n"
+           "19  {128, 128,   0}\n"
+           "20  {255, 215, 180}\n"
+           "21  {  0,   0, 128}\n"
+           "22  {  0,   0, 255}\n\n"
 
-  // Print in desired format
-  out << "#Paraver (" << std::setw(2) << std::setfill('0') << local_tm->tm_mday
-      << "/" << std::setw(2) << std::setfill('0') << local_tm->tm_mon + 1 << "/"
-      << std::setw(2) << std::setfill('0') << (local_tm->tm_year % 100)
-      << " at " << std::setw(2) << std::setfill('0') << local_tm->tm_hour << ":"
-      << std::setw(2) << std::setfill('0') << local_tm->tm_min
-      << "):00000000000000000000_ns:0:1:1(" << std::to_string(num_channels)
-      << ":1)\n";
+           "EVENT_TYPE\n"
+           "0 90         TraCR\n"
+           "VALUES\n";
 
-  // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
-  // access
-  std::vector<std::string> markerTypes_keys;
-  if (metadata.contains("markerTypes") && !metadata["markerTypes"].is_null()) {
-    for (auto &[key, value] : metadata["markerTypes"].items()) {
-      markerTypes_keys.push_back(key);
-    }
-  }
+    // Write markerTypes as VALUES
+    // Extract markerTypes
+    if (metadata.contains("markerTypes") &&
+        !metadata["markerTypes"].is_null()) {
+      nlohmann::json markerTypes_json = metadata["markerTypes"];
 
-  // Now we have to travers the map of all the std::vector<Payload>
-  bool first = true;
-  uint64_t start_time = uint64_t(metadata["start_time"]);
-  std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
-  while (true) {
-    // First, find the next smallest time stamp in all the bts_files
-    uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
-    size_t index = 0;
-    for (size_t i = 0; i < bts_files.size(); ++i) {
-      if ((bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp) &&
-          (bts_files_ptrs[i] != bts_files[i].size())) {
-        next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
-        index = i;
+      for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
+           ++it) {
+        out << it.key() << "   " << it.value() << "\n";
       }
     }
 
-    Payload payload = bts_files[index][bts_files_ptrs[index]];
+    out.close();
+    std::cout << "tracr.pcf written successfully.\n";
 
-    if (first) {
-      first = false;
-      start_time = payload.timestamp;
+    /**
+     * Create the tracr.prv file
+     */
+    out.open(base_path / "tracr.prv");
+    if (!out) {
+      std::cerr << "Error opening tracrprv for writing\n";
+      return 1;
     }
 
-    std::string colorId;
-    if (markerTypes_keys.size() > 0) {
-      colorId = payload.eventId == UINT16_MAX
-                    ? "0"
-                    : markerTypes_keys[payload.eventId];
+    uint32_t num_channels = 1;
+
+    std::stringstream ss;
+    if (metadata.contains("channel_names") &&
+        !metadata["channel_names"].is_null()) {
+
+      if (!metadata.contains("num_channels") ||
+          metadata["num_channels"].is_null()) {
+        num_channels = metadata["channel_names"].size();
+      }
+
+      // Iterate over JSON key-value pairs
+      for (auto &[key, value] : metadata["channel_names"].items()) {
+        ss << value.get<std::string>() << "\n"; // print just the string
+      }
+    }
+
+    if (metadata.contains("num_channels") &&
+        !metadata["num_channels"].is_null()) {
+      num_channels = metadata["num_channels"];
+    }
+
+    // Get current time as time_t
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+
+    // Convert to local time
+    std::tm *local_tm = std::localtime(&now_time);
+
+    // Print in desired format
+    out << "#Paraver (" << std::setw(2) << std::setfill('0')
+        << local_tm->tm_mday << "/" << std::setw(2) << std::setfill('0')
+        << local_tm->tm_mon + 1 << "/" << std::setw(2) << std::setfill('0')
+        << (local_tm->tm_year % 100) << " at " << std::setw(2)
+        << std::setfill('0') << local_tm->tm_hour << ":" << std::setw(2)
+        << std::setfill('0') << local_tm->tm_min
+        << "):00000000000000000000_ns:0:1:1(" << std::to_string(num_channels)
+        << ":1)\n";
+
+    // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
+    // access
+    std::vector<std::string> markerTypes_keys;
+    if (metadata.contains("markerTypes") &&
+        !metadata["markerTypes"].is_null()) {
+      for (auto &[key, value] : metadata["markerTypes"].items()) {
+        markerTypes_keys.push_back(key);
+      }
+    }
+
+    // Now we have to travers the map of all the std::vector<Payload>
+    bool first = true;
+    uint64_t start_time = uint64_t(metadata["start_time"]);
+    std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
+    while (true) {
+      // First, find the next smallest time stamp in all the bts_files
+      uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
+      size_t index = 0;
+      for (size_t i = 0; i < bts_files.size(); ++i) {
+        if ((bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp) &&
+            (bts_files_ptrs[i] != bts_files[i].size())) {
+          next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
+          index = i;
+        }
+      }
+
+      Payload payload = bts_files[index][bts_files_ptrs[index]];
+
+      if (first) {
+        first = false;
+        start_time = payload.timestamp;
+      }
+
+      std::string colorId;
+      if (markerTypes_keys.size() > 0) {
+        colorId = payload.eventId == UINT16_MAX
+                      ? "0"
+                      : markerTypes_keys[payload.eventId];
+      } else {
+        colorId = payload.eventId == UINT16_MAX
+                      ? "0"
+                      : std::to_string(payload.eventId);
+      }
+
+      out << "2:0:1:1:" << payload.channelId + 1 << ":"
+          << std::to_string(payload.timestamp - start_time) << ":90:" << colorId
+          << "\n";
+
+      // increase this ptr as we used it
+      if (bts_files_ptrs[index] < bts_files[index].size()) {
+        ++bts_files_ptrs[index];
+      }
+
+      // break the while-loop if all the bts ptrs reached the limit.
+      bool ptrs_end = true;
+      for (size_t i = 0; i < bts_files.size(); ++i) {
+        if (bts_files_ptrs[i] != bts_files[i].size()) {
+          ptrs_end = false;
+          break;
+        }
+      }
+
+      if (ptrs_end) {
+        break;
+      }
+    }
+    out.close();
+    std::cout << "tracr.prv written successfully.\n";
+
+    /**
+     * Create the tracr.row file
+     */
+    out.open(base_path / "tracr.row");
+    if (!out) {
+      std::cerr << "Error opening tracr.row for writing\n";
+      return 1;
+    }
+
+    // Fixed Paraver stuff
+    out << "LEVEL NODE SIZE 1\n"
+           "hostname\n\n"
+           "LEVEL THREAD SIZE "
+        << num_channels << "\n";
+
+    if (!ss.str().empty()) {
+      out << ss.str();
     } else {
-      colorId =
-          payload.eventId == UINT16_MAX ? "0" : std::to_string(payload.eventId);
+      for (size_t i = 0; i < num_channels; ++i) {
+        out << "Channel_" << std::to_string(i) << "\n";
+      }
     }
 
-    out << "2:0:1:1:" << payload.channelId + 1 << ":"
-        << std::to_string(payload.timestamp - start_time) << ":90:" << colorId
-        << "\n";
+    out.close();
+    std::cout << "tracr.row written successfully.\n";
 
-    // increase this ptr as we used it
-    if (bts_files_ptrs[index] < bts_files[index].size()) {
-      ++bts_files_ptrs[index];
+  } else {
+    nlohmann::json perfetto = nlohmann::json::array();
+
+    if (pid == -1) {
+      pid = 0;
     }
 
-    // break the look if all the bts ptrs reached the limit.
-    bool ptrs_end = true;
-    for (size_t i = 0; i < bts_files.size(); ++i) {
-      if (bts_files_ptrs[i] != bts_files[i].size()) {
-        ptrs_end = false;
+    uint32_t num_channels = 1;
+
+    if (metadata.contains("channel_names") &&
+        !metadata["channel_names"].is_null()) {
+
+      if (!metadata.contains("num_channels") ||
+          metadata["num_channels"].is_null()) {
+        num_channels = metadata["channel_names"].size();
+      }
+    }
+
+    if (metadata.contains("num_channels") &&
+        !metadata["num_channels"].is_null()) {
+      num_channels = metadata["num_channels"];
+    }
+
+    if (metadata.contains("channel_names") &&
+        !metadata["channel_names"].is_null()) {
+      for (uint32_t i = 0; i < num_channels; ++i) {
+        perfetto.push_back(
+            {{"name", "thread_name"},
+             {"ph", "M"},
+             {"pid", pid},
+             {"tid", i},
+             {"args", {{"name", metadata["channel_names"][i]}}}});
+      }
+    } else {
+      for (uint32_t i = 0; i < num_channels; ++i) {
+        std::cout << "Channel_" + std::to_string(i) << "\n";
+        perfetto.push_back(
+            {{"name", "thread_name"},
+             {"ph", "M"},
+             {"pid", pid},
+             {"tid", i},
+             {"args", {{"name", "Channel_" + std::to_string(i + 1)}}}});
+      }
+    }
+
+    // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
+    // access
+    std::vector<std::string> markerTypes_values;
+    if (metadata.contains("markerTypes") &&
+        !metadata["markerTypes"].is_null()) {
+      for (auto &[key, value] : metadata["markerTypes"].items()) {
+        markerTypes_values.push_back(value);
+      }
+    }
+
+    // Now we have to travers the map of all the std::vector<Payload>
+    bool first = true;
+    uint64_t start_time = uint64_t(metadata["start_time"]);
+    std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
+    std::vector<Payload> prev_payload(num_channels, Payload{0, 0, 0, 0});
+    while (true) {
+      // First, find the next smallest time stamp in all the bts_files
+      uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
+      size_t index = 0;
+      for (size_t i = 0; i < bts_files.size(); ++i) {
+        if ((bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp) &&
+            (bts_files_ptrs[i] != bts_files[i].size())) {
+          next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
+          index = i;
+        }
+      }
+
+      Payload payload = bts_files[index][bts_files_ptrs[index]];
+
+      if (first) {
+        first = false;
+        start_time = payload.timestamp;
+      }
+
+      if (prev_payload[payload.channelId].timestamp != 0) {
+        uint16_t channelId = payload.channelId;
+        std::string colorId;
+        if (markerTypes_values.size() > 0) {
+          colorId = prev_payload[channelId].eventId == UINT16_MAX
+                        ? ""
+                        : markerTypes_values[prev_payload[channelId].eventId];
+        } else {
+          colorId = prev_payload[channelId].eventId == UINT16_MAX
+                        ? ""
+                        : std::to_string(prev_payload[channelId].eventId);
+        }
+
+        perfetto.push_back(
+            {{"name", colorId},
+             {"cat", "Group"},
+             {"ph", "X"},
+             {"ts", (prev_payload[channelId].timestamp - start_time) / 1000.0},
+             {"dur",
+              (payload.timestamp - prev_payload[channelId].timestamp) / 1000.0},
+             {"pid", pid},
+             {"tid", prev_payload[channelId].channelId},
+             {"freq", 50}});
+      }
+      prev_payload[payload.channelId] = payload;
+
+      // increase this ptr as we used it
+      if (bts_files_ptrs[index] < bts_files[index].size()) {
+        ++bts_files_ptrs[index];
+      }
+
+      // break the while-loop if all the bts ptrs reached the limit.
+      bool ptrs_end = true;
+      for (size_t i = 0; i < bts_files.size(); ++i) {
+        if (bts_files_ptrs[i] != bts_files[i].size()) {
+          ptrs_end = false;
+          break;
+        }
+      }
+
+      if (ptrs_end) {
         break;
       }
     }
 
-    if (ptrs_end) {
-      break;
+    // Now we assert that all the last payloads of all are resets.
+    // This is important, as otherwise we have missed the last set trace
+    // information.
+    for (size_t i = 0; i < bts_files.size(); ++i) {
+      Payload payload = bts_files[i][bts_files[i].size() - 1];
+      if (payload.eventId != UINT16_MAX) {
+        std::cerr << "Error: the last event of this thread: " << bts_tids[i]
+                  << " has to be a INSTRUMENTATION_MARK_RESET() for perfetto "
+                     "format!\n";
+        return 1;
+      }
     }
-  }
-  out.close();
-  std::cout << "tracr.prv written successfully.\n";
 
-  /**
-   * Create the tracr.row file
-   */
-  out.open(base_path / "tracr.row");
-  if (!out) {
-    std::cerr << "Error opening tracr.row for writing\n";
-    return 1;
-  }
+    // Create and open the metadata.json file
+    std::ofstream out(base_path / "perfetto.json");
 
-  // Fixed Paraver stuff
-  out << "LEVEL NODE SIZE 1\n"
-         "hostname\n\n"
-         "LEVEL THREAD SIZE "
-      << num_channels << "\n";
-
-  if (!ss.str().empty()) {
-    out << ss.str();
-  } else {
-    for (size_t i = 0; i < num_channels; ++i) {
-      out << "Channel_" << std::to_string(i) << "\n";
+    if (!out.is_open()) {
+      std::cerr << "Failed to open 'perfetto.json' for writing!\n";
+      return 1;
     }
-  }
 
-  out.close();
-  std::cout << "tracr.row written successfully.\n";
+    // Dump JSON into file (pretty-printed with 4 spaces)
+    out << perfetto.dump(4);
+
+    // Close the file
+    out.close();
+
+    std::cout << "perfetto.json written successfully.\n";
+  }
 
   return 0;
 }

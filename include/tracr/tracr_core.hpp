@@ -213,8 +213,11 @@ static inline std::string instrumentation_get_thread_trace_str() {
     return "[ERROR: No thread context]";
   }
 
+  std::string tid_str =
+      "Thread(" + std::to_string(tracrThread->getTID()) + "):";
+
   if (tracrThread->_traceIdx == 0) {
-    return "[EMPTY: No trace data]";
+    return tid_str + "[EMPTY: No trace data]";
   }
 
   // Calculate total bytes
@@ -225,6 +228,8 @@ static inline std::string instrumentation_get_thread_trace_str() {
   // Convert to hex string
   std::stringstream hex_stream;
   hex_stream << std::hex << std::setfill('0');
+
+  hex_stream << tid_str;
 
   for (size_t i = 0; i < total_bytes; ++i) {
     // Each byte as two hex digits
