@@ -348,8 +348,8 @@ int main(int argc, char *argv[]) {
       uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
       size_t index = 0;
       for (size_t i = 0; i < bts_files.size(); ++i) {
-        if ((bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp) &&
-            (bts_files_ptrs[i] < bts_files[i].size())) {
+        if ((bts_files_ptrs[i] < bts_files[i].size()) &&
+            (bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp)) {
           next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
           index = i;
         }
@@ -489,8 +489,8 @@ int main(int argc, char *argv[]) {
       uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
       size_t index = 0;
       for (size_t i = 0; i < bts_files.size(); ++i) {
-        if ((bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp) &&
-            (bts_files_ptrs[i] < bts_files[i].size())) {
+        if ((bts_files_ptrs[i] < bts_files[i].size()) &&
+            (bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp)) {
           next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
           index = i;
         }
