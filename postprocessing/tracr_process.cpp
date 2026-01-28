@@ -67,9 +67,14 @@ int main(int argc, char *argv[]) {
 
   fs::path base_path = argv[1];
 
-  bool paraver_format = true;
-  if (argc == 3) {
+  bool paraver_format = false;
+  if (argc > 2) {
     paraver_format = std::atoi(argv[2]);
+  }
+
+  size_t num_channels = 1;
+  if (argc > 3) {
+    num_channels = std::atoi(argv[3]);
   }
 
   if (!fs::exists(base_path) || !fs::is_directory(base_path)) {
@@ -290,14 +295,15 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    uint32_t num_channels = 1;
+    bool num_channel_exists = (!metadata.contains("num_channels") ||
+                               metadata["num_channels"].is_null()) &&
+                              (num_channels != 1);
 
     std::stringstream ss;
     if (metadata.contains("channel_names") &&
         !metadata["channel_names"].is_null()) {
 
-      if (!metadata.contains("num_channels") ||
-          metadata["num_channels"].is_null()) {
+      if (!num_channel_exists) {
         num_channels = metadata["channel_names"].size();
       }
 
@@ -307,8 +313,7 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    if (metadata.contains("num_channels") &&
-        !metadata["num_channels"].is_null()) {
+    if (num_channel_exists) {
       num_channels = metadata["num_channels"];
     }
 
@@ -431,19 +436,19 @@ int main(int argc, char *argv[]) {
       pid = 0;
     }
 
-    uint32_t num_channels = 1;
+    bool num_channel_exists = (!metadata.contains("num_channels") ||
+                               metadata["num_channels"].is_null()) &&
+                              (num_channels != 1);
 
     if (metadata.contains("channel_names") &&
         !metadata["channel_names"].is_null()) {
 
-      if (!metadata.contains("num_channels") ||
-          metadata["num_channels"].is_null()) {
+      if (!num_channel_exists) {
         num_channels = metadata["channel_names"].size();
       }
     }
 
-    if (metadata.contains("num_channels") &&
-        !metadata["num_channels"].is_null()) {
+    if (num_channel_exists) {
       num_channels = metadata["num_channels"];
     }
 

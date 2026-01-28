@@ -43,7 +43,7 @@ foreach args : cpp_args_list
             # Perfetto format
             test('tracr_process_' + test_name, tracr_process,
                 workdir: meson.current_build_dir() / '../postprocessing',
-                args : [ output_dir / 'tracr', '0'],
+                args : [ output_dir / 'tracr', '1'],
                 suite : testSuite,
                 is_parallel : false,
                 priority : 0)
