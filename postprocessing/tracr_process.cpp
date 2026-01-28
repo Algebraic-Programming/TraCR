@@ -57,9 +57,22 @@ bool load_bts_file(const fs::path &filepath, std::vector<Payload> &traces,
 }
 
 /**
+ *  The main function to transform bts files into readable files
  *
+ *  Use:
+ *  1. Create a perfetto format file:
+ *    - ./tracr_process <path-to-tracr/>
+ *    - ./tracr_process <path-to-tracr/> perfetto
+ *
+ *  2. Create a perfetto format file:
+ *    - ./tracr_process <path-to-tracr/> paraver
+ *
+ *  3. Pass extra informations about "channel_names" and/or "markerTypes"
+ *    - ./tracr_process <path-to-tracr/> perfetto extra_info.json
+ *    - ./tracr_process <path-to-tracr/> paraver extra_info.json
  */
 int main(int argc, char *argv[]) {
+  // Pass the tracr file and other additional arguments
   if (argc < 2) {
     std::cerr << "Usage: " << argv[0] << " <folder_path>\n";
     return 1;
@@ -67,14 +80,42 @@ int main(int argc, char *argv[]) {
 
   fs::path base_path = argv[1];
 
+  // Optional: Choose "paraver" or "perfetto" format, default "perfetto"
   bool paraver_format = false;
   if (argc > 2) {
-    paraver_format = std::atoi(argv[2]);
+    std::string type = argv[2];
+
+    if (type == "paraver") {
+      paraver_format = true;
+    } else if (type == "perfetto") {
+      paraver_format = false;
+    }
   }
 
-  size_t num_channels = 1;
+  // Optional: Provide "channel_names" and/or "markerTypes" directly,
+  // if they are not provided by the metadata.json
+  nlohmann::json extra_info;
   if (argc > 3) {
-    num_channels = std::atoi(argv[3]);
+    // Load the json metadata file
+    fs::path json_file = argv[3];
+    if (fs::exists(json_file)) {
+      std::ifstream ifs(json_file);
+      if (ifs.is_open()) {
+        try {
+          ifs >> extra_info;
+          std::cout << "  Loaded custom JSON:\n" << extra_info.dump(4) << "\n";
+        } catch (const std::exception &e) {
+          std::cerr << "  Failed to parse JSON: " << e.what() << "\n";
+          return 1;
+        }
+      } else {
+        std::cerr << "  Failed to open: " << argv[3] << "\n";
+        return 1;
+      }
+    } else {
+      std::cerr << "  No '" << argv[3] << "' found\n";
+      return 1;
+    }
   }
 
   if (!fs::exists(base_path) || !fs::is_directory(base_path)) {
@@ -272,9 +313,19 @@ int main(int argc, char *argv[]) {
            "VALUES\n";
 
     // Write markerTypes as VALUES
-    // Extract markerTypes
-    if (metadata.contains("markerTypes") &&
-        !metadata["markerTypes"].is_null()) {
+    // Extract markerTypes (if they exist)
+    if (extra_info.contains("markerTypes") &&
+        !extra_info["markerTypes"].is_null()) {
+
+      nlohmann::json markerTypes_json = extra_info["markerTypes"];
+
+      for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
+           ++it) {
+        out << it.key() << "   " << it.value() << "\n";
+      }
+
+    } else if (metadata.contains("markerTypes") &&
+               !metadata["markerTypes"].is_null()) {
       nlohmann::json markerTypes_json = metadata["markerTypes"];
 
       for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
@@ -295,26 +346,33 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    bool num_channel_exists = (!metadata.contains("num_channels") ||
-                               metadata["num_channels"].is_null()) &&
-                              (num_channels != 1);
+    size_t num_channels = 1;
 
     std::stringstream ss;
-    if (metadata.contains("channel_names") &&
-        !metadata["channel_names"].is_null()) {
+    if (extra_info.contains("channel_names") &&
+        !extra_info["channel_names"].is_null()) {
 
-      if (!num_channel_exists) {
-        num_channels = metadata["channel_names"].size();
+      num_channels = extra_info["channel_names"].size();
+
+      // Iterate over JSON key-value pairs
+      for (auto &[key, value] : extra_info["channel_names"].items()) {
+        ss << value.get<std::string>() << "\n"; // print just the string
       }
+
+    } else if (metadata.contains("channel_names") &&
+               !metadata["channel_names"].is_null()) {
+
+      num_channels = metadata["channel_names"].size();
 
       // Iterate over JSON key-value pairs
       for (auto &[key, value] : metadata["channel_names"].items()) {
         ss << value.get<std::string>() << "\n"; // print just the string
       }
-    }
-
-    if (num_channel_exists) {
-      num_channels = metadata["num_channels"];
+    } else {
+      if (metadata.contains("num_channels") ||
+          !metadata["num_channels"].is_null()) {
+        num_channels = metadata["num_channels"];
+      }
     }
 
     // Get current time as time_t
@@ -335,10 +393,15 @@ int main(int argc, char *argv[]) {
         << ":1)\n";
 
     // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
-    // access
+    // access (if they exist)
     std::vector<std::string> markerTypes_keys;
-    if (metadata.contains("markerTypes") &&
-        !metadata["markerTypes"].is_null()) {
+    if (extra_info.contains("markerTypes") &&
+        !extra_info["markerTypes"].is_null()) {
+      for (auto &[key, value] : extra_info["markerTypes"].items()) {
+        markerTypes_keys.push_back(key);
+      }
+    } else if (metadata.contains("markerTypes") &&
+               !metadata["markerTypes"].is_null()) {
       for (auto &[key, value] : metadata["markerTypes"].items()) {
         markerTypes_keys.push_back(key);
       }
@@ -436,24 +499,26 @@ int main(int argc, char *argv[]) {
       pid = 0;
     }
 
-    bool num_channel_exists = (!metadata.contains("num_channels") ||
-                               metadata["num_channels"].is_null()) &&
-                              (num_channels != 1);
+    uint32_t num_channels = 1;
+    if (extra_info.contains("channel_names") &&
+        !extra_info["channel_names"].is_null()) {
 
-    if (metadata.contains("channel_names") &&
-        !metadata["channel_names"].is_null()) {
+      num_channels = extra_info["channel_names"].size();
 
-      if (!num_channel_exists) {
-        num_channels = metadata["channel_names"].size();
+      for (uint32_t i = 0; i < num_channels; ++i) {
+        perfetto.push_back(
+            {{"name", "thread_name"},
+             {"ph", "M"},
+             {"pid", pid},
+             {"tid", i},
+             {"args", {{"name", extra_info["channel_names"][i]}}}});
       }
-    }
 
-    if (num_channel_exists) {
-      num_channels = metadata["num_channels"];
-    }
+    } else if (metadata.contains("channel_names") &&
+               !metadata["channel_names"].is_null()) {
 
-    if (metadata.contains("channel_names") &&
-        !metadata["channel_names"].is_null()) {
+      num_channels = metadata["channel_names"].size();
+
       for (uint32_t i = 0; i < num_channels; ++i) {
         perfetto.push_back(
             {{"name", "thread_name"},
@@ -463,6 +528,11 @@ int main(int argc, char *argv[]) {
              {"args", {{"name", metadata["channel_names"][i]}}}});
       }
     } else {
+      if (metadata.contains("num_channels") ||
+          !metadata["num_channels"].is_null()) {
+        num_channels = metadata["num_channels"];
+      }
+
       for (uint32_t i = 0; i < num_channels; ++i) {
         std::cout << "Channel_" + std::to_string(i) << "\n";
         perfetto.push_back(
@@ -477,8 +547,13 @@ int main(int argc, char *argv[]) {
     // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
     // access
     std::vector<std::string> markerTypes_values;
-    if (metadata.contains("markerTypes") &&
-        !metadata["markerTypes"].is_null()) {
+    if (extra_info.contains("markerTypes") &&
+        !extra_info["markerTypes"].is_null()) {
+      for (auto &[key, value] : extra_info["markerTypes"].items()) {
+        markerTypes_values.push_back(value);
+      }
+    } else if (metadata.contains("markerTypes") &&
+               !metadata["markerTypes"].is_null()) {
       for (auto &[key, value] : metadata["markerTypes"].items()) {
         markerTypes_values.push_back(value);
       }
@@ -559,7 +634,8 @@ int main(int argc, char *argv[]) {
     for (size_t i = 0; i < bts_files.size(); ++i) {
       Payload payload = bts_files[i][bts_files[i].size() - 1];
       if (payload.eventId != UINT16_MAX) {
-        std::cerr << "Error: the last event of this thread: " << bts_tids[i]
+        std::cout << "Warning: the last event got lost of this thread: "
+                  << bts_tids[i]
                   << " has to be a INSTRUMENTATION_MARK_RESET() for perfetto "
                      "format!\n";
         return 1;

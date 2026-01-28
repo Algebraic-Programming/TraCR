@@ -32,21 +32,29 @@ foreach args : cpp_args_list
                     is_parallel : false,
                     priority : 2)
 
-            # Paraver format 
-            test('tracr_process_' + test_name, tracr_process,
-                workdir: meson.current_build_dir() / '../postprocessing',
-                args : [ output_dir / 'tracr'],
-                suite : testSuite,
-                is_parallel : false,
-                priority : 0)
-
-            # Perfetto format
-            test('tracr_process_' + test_name, tracr_process,
-                workdir: meson.current_build_dir() / '../postprocessing',
-                args : [ output_dir / 'tracr', '1'],
-                suite : testSuite,
-                is_parallel : false,
-                priority : 0)
+            foreach format : ['paraver', 'perfetto']
+                foreach custom_info : [ '', 'custom_both', 'custom_channel_names', 'custom_markerTypes']
+                    if custom_info == ''
+                        test('tracr_process_' + format + '_' + test_name + '_' + custom_info, tracr_process,
+                            workdir: meson.current_build_dir() / '../postprocessing',
+                            args : [ output_dir / 'tracr', format],
+                            suite : testSuite,
+                            is_parallel : false,
+                            priority : 0)
+                    else
+                        if test_type != 'performance_test'
+                            custom_info_json = 'bash_scripts/' + custom_info + '.json'
+                            config_json = join_paths(meson.current_source_dir(), custom_info_json)
+                            test('tracr_process_' + format + '_' + test_name + '_' + custom_info, tracr_process,
+                                workdir: meson.current_build_dir() / '../postprocessing',
+                                args : [ output_dir / 'tracr', format, config_json],
+                                suite : testSuite,
+                                is_parallel : false,
+                                priority : 0)
+                        endif
+                    endif
+                endforeach
+            endforeach
         endif
 
         test(test_name, exe,

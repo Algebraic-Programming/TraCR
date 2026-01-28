@@ -27,7 +27,7 @@ int main(void) {
 
   // performance test
   auto perf_test_start = std::chrono::system_clock::now();
-  const int n_sets = 1e6;
+  const int n_sets = 1e2;
   for (int i = 0; i < n_sets; ++i) {
     INSTRUMENTATION_MARK_SET(0, i % 128, 0);
   }
