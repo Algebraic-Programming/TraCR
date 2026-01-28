@@ -510,7 +510,7 @@ int main(int argc, char *argv[]) {
             {{"name", "thread_name"},
              {"ph", "M"},
              {"pid", pid},
-             {"tid", i},
+             {"tid", i+1},
              {"args", {{"name", extra_info["channel_names"][i]}}}});
       }
 
@@ -524,7 +524,7 @@ int main(int argc, char *argv[]) {
             {{"name", "thread_name"},
              {"ph", "M"},
              {"pid", pid},
-             {"tid", i},
+             {"tid", i+1},
              {"args", {{"name", metadata["channel_names"][i]}}}});
       }
     } else {
@@ -539,7 +539,7 @@ int main(int argc, char *argv[]) {
             {{"name", "thread_name"},
              {"ph", "M"},
              {"pid", pid},
-             {"tid", i},
+             {"tid", i+1},
              {"args", {{"name", "Channel_" + std::to_string(i + 1)}}}});
       }
     }
@@ -604,7 +604,7 @@ int main(int argc, char *argv[]) {
              {"dur",
               (payload.timestamp - prev_payload[channelId].timestamp) / 1000.0},
              {"pid", pid},
-             {"tid", prev_payload[channelId].channelId},
+             {"tid", prev_payload[channelId].channelId + 1},
              {"freq", 50}});
       }
       prev_payload[payload.channelId] = payload;

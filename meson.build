@@ -2,7 +2,7 @@ project('TraCR', [ 'cpp' ],
   subproject_dir : 'extern',
   default_options : [
   'cpp_std=c++17',
-  'buildtype=debug',
+  'buildtype=release',
   ]
 )
 
