@@ -355,6 +355,20 @@ static inline int instrumentation_num_tracr_threads() {
 /**
  *
  */
+static inline bool instrumentation_proc_exists() {
+  return (tracrProc != nullptr);
+}
+
+/**
+ *
+ */
+static inline bool instrumentation_thread_exists() {
+  return (tracrThread != nullptr);
+}
+
+/**
+ *
+ */
 static inline std::string instrumentation_get_json_str() {
   tracrProc->write_JSON();
   return (tracrProc->_json_file).dump();

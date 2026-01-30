@@ -117,6 +117,10 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_NUM_TRACR_THREADS() instrumentation_num_tracr_threads()
 
+#define INSTRUMENTATION_PROC_EXISTS() instrumentation_proc_exists()
+
+#define INSTRUMENTATION_THREAD_EXISTS() instrumentation_thread_exists()
+
 #define INSTRUMENTATION_GET_JSON_STR() instrumentation_get_json_str()
 
 #else /* ENABLE_TRACR */
@@ -169,9 +173,13 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_OFF()
 
-#define INSTRUMENTATION_IS_PROC_READY() true
+#define INSTRUMENTATION_IS_PROC_READY() false
 
 #define INSTRUMENTATION_NUM_TRACR_THREADS() 0
+
+#define INSTRUMENTATION_PROC_EXISTS() false
+
+#define INSTRUMENTATION_THREAD_EXISTS() false
 
 #define INSTRUMENTATION_GET_JSON_STR() ""
 
