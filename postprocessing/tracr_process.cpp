@@ -342,7 +342,7 @@ int main(int argc, char *argv[]) {
      */
     out.open(base_path / "tracr.prv");
     if (!out) {
-      std::cerr << "Error opening tracrprv for writing\n";
+      std::cerr << "Error opening tracr.prv for writing\n";
       return 1;
     }
 
@@ -354,9 +354,9 @@ int main(int argc, char *argv[]) {
 
       num_channels = extra_info["channel_names"].size();
 
-      // Iterate over JSON key-value pairs
-      for (auto &[key, value] : extra_info["channel_names"].items()) {
-        ss << value.get<std::string>() << "\n"; // print just the string
+      // Iterate over JSON Array
+      for (auto &channel_name : extra_info["channel_names"]) {
+        ss << channel_name << "\n";
       }
 
     } else if (metadata.contains("channel_names") &&
@@ -364,9 +364,9 @@ int main(int argc, char *argv[]) {
 
       num_channels = metadata["channel_names"].size();
 
-      // Iterate over JSON key-value pairs
-      for (auto &[key, value] : metadata["channel_names"].items()) {
-        ss << value.get<std::string>() << "\n"; // print just the string
+      // Iterate over JSON Array
+      for (auto &channel_name : extra_info["channel_names"]) {
+        ss << channel_name << "\n";
       }
     } else {
       if (metadata.contains("num_channels") ||

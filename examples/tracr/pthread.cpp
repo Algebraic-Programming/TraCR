@@ -104,9 +104,9 @@ int main() {
   pthread_mutex_destroy(&printMutex);
 
   // User-defined channels names to visualize
-  nlohmann::json j;
+  nlohmann::json j = nlohmann::json::array();
   for (int i = 0; i < NRANKS; ++i) {
-    j[i] = std::string("Thread_") + std::to_string(i);
+    j.push_back(std::string("Thread_") + std::to_string(i));
   }
   INSTRUMENTATION_ADD_CHANNEL_NAMES(j);
 
