@@ -510,7 +510,7 @@ int main(int argc, char *argv[]) {
             {{"name", "thread_name"},
              {"ph", "M"},
              {"pid", pid},
-             {"tid", i+1},
+             {"tid", i + 1},
              {"args", {{"name", extra_info["channel_names"][i]}}}});
       }
 
@@ -524,7 +524,7 @@ int main(int argc, char *argv[]) {
             {{"name", "thread_name"},
              {"ph", "M"},
              {"pid", pid},
-             {"tid", i+1},
+             {"tid", i + 1},
              {"args", {{"name", metadata["channel_names"][i]}}}});
       }
     } else {
@@ -539,7 +539,7 @@ int main(int argc, char *argv[]) {
             {{"name", "thread_name"},
              {"ph", "M"},
              {"pid", pid},
-             {"tid", i+1},
+             {"tid", i + 1},
              {"args", {{"name", "Channel_" + std::to_string(i + 1)}}}});
       }
     }
