@@ -25,6 +25,8 @@
 
 #include "tracr_core.hpp"
 
+using namespace TraCR;
+
 /**
  * Marker colors values of the default Paraver color palette
  *

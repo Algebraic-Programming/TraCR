@@ -32,6 +32,8 @@
 
 #include "marker_management_engine.hpp"
 
+namespace TraCR {
+
 /**
  * Global TraCR proc place holder
  */
@@ -373,3 +375,5 @@ static inline std::string instrumentation_get_json_str() {
   tracrProc->write_JSON();
   return (tracrProc->_json_file).dump();
 }
+
+} // namespace TraCR

@@ -25,19 +25,20 @@
 
 #include <array>
 #include <atomic>
-#include <ctime> //
-#include <iostream>
-#include <mutex>
-#include <string>
-// #include <chrono>
+#include <ctime>
 #include <fstream> // To store files
 #include <iomanip>
+#include <iostream>
+#include <mutex>
 #include <nlohmann/json.hpp>
-#include <sched.h>     // sched_getcpu()
+#include <sched.h> // sched_getcpu()
+#include <string>
 #include <sys/stat.h>  // mkdir()
 #include <sys/types.h> // chmod type
 #include <unistd.h>    // SYS_gettid
 #include <unordered_map>
+
+namespace TraCR {
 
 /**
  * The maximum capacity of one tracr thread for capturing the traces.
@@ -81,12 +82,6 @@ public:
     return static_cast<uint64_t>(ts.tv_sec) * 1'000'000'000ULL +
            static_cast<uint64_t>(ts.tv_nsec);
   }
-
-  // The chrono timer version about ~2ns slower than the above one
-  // static uint64_t now() {
-  //     return std::chrono::duration_cast<std::chrono::nanoseconds>(
-  //         std::chrono::steady_clock::now().time_since_epoch()).count();
-  // }
 };
 
 /**
@@ -424,3 +419,5 @@ private:
   //
   bool json_is_ready = false;
 };
+
+} // namespace TraCR

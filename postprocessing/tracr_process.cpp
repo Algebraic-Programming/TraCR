@@ -28,8 +28,8 @@ namespace fs = std::filesystem;
 /**
  * A function to load a bts file into a std::vector<Payload>
  */
-bool load_bts_file(const fs::path &filepath, std::vector<Payload> &traces,
-                   size_t &out_count) {
+bool load_bts_file(const fs::path &filepath,
+                   std::vector<TraCR::Payload> &traces, size_t &out_count) {
   std::ifstream ifs(filepath, std::ios::binary);
   if (!ifs) {
     std::cerr << "Failed to open file: " << filepath << "\n";
@@ -41,12 +41,13 @@ bool load_bts_file(const fs::path &filepath, std::vector<Payload> &traces,
   std::streamsize filesize = ifs.tellg();
   ifs.seekg(0, std::ios::beg);
 
-  size_t count = filesize / sizeof(Payload);
+  size_t count = filesize / sizeof(TraCR::Payload);
 
   // Resize the vector to hold the data
   traces.resize(count);
 
-  ifs.read(reinterpret_cast<char *>(traces.data()), count * sizeof(Payload));
+  ifs.read(reinterpret_cast<char *>(traces.data()),
+           count * sizeof(TraCR::Payload));
   if (!ifs) {
     std::cerr << "Failed to read all data from file: " << filepath << "\n";
     return false;
@@ -124,7 +125,7 @@ int main(int argc, char *argv[]) {
   }
 
   // A container to keep all the bts files in one for the proc
-  std::vector<std::vector<Payload>> bts_files;
+  std::vector<std::vector<TraCR::Payload>> bts_files;
   std::vector<pid_t> bts_tids;
 
   // The metada of the proc
@@ -199,7 +200,7 @@ int main(int argc, char *argv[]) {
           }
 
           // Open trace file and store it back into the std::array
-          std::vector<Payload> traces;
+          std::vector<TraCR::Payload> traces;
           size_t num_traces = 0;
 
           if (load_bts_file(trace_file, traces, num_traces)) {
@@ -423,7 +424,7 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      Payload payload = bts_files[index][bts_files_ptrs[index]];
+      TraCR::Payload payload = bts_files[index][bts_files_ptrs[index]];
 
       if (first) {
         first = false;
@@ -563,7 +564,8 @@ int main(int argc, char *argv[]) {
     bool first = true;
     uint64_t start_time = uint64_t(metadata["start_time"]);
     std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
-    std::vector<Payload> prev_payload(num_channels, Payload{0, 0, 0, 0});
+    std::vector<TraCR::Payload> prev_payload(num_channels,
+                                             TraCR::Payload{0, 0, 0, 0});
     while (true) {
       // First, find the next smallest time stamp in all the bts_files
       uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
@@ -576,7 +578,7 @@ int main(int argc, char *argv[]) {
         }
       }
 
-      Payload payload = bts_files[index][bts_files_ptrs[index]];
+      TraCR::Payload payload = bts_files[index][bts_files_ptrs[index]];
 
       if (first) {
         first = false;
@@ -632,7 +634,7 @@ int main(int argc, char *argv[]) {
     // This is important, as otherwise we have missed the last set trace
     // information.
     for (size_t i = 0; i < bts_files.size(); ++i) {
-      Payload payload = bts_files[i][bts_files[i].size() - 1];
+      TraCR::Payload payload = bts_files[i][bts_files[i].size() - 1];
       if (payload.eventId != UINT16_MAX) {
         std::cout << "Warning: the last event got lost of this thread: "
                   << bts_tids[i]
