@@ -64,11 +64,6 @@ constexpr size_t CAPACITY = TRACR_CAPACITY;
 #endif
 
 /**
- *
- */
-inline std::atomic<uint16_t> lazy_colorId{23};
-
-/**
  * Our nanosecond timer
  *
  * This timer can also be changed by the chrono (or PyPTO get_cycle()) method

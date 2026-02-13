@@ -81,6 +81,11 @@ int main(int argc, char *argv[]) {
 
   fs::path base_path = argv[1];
 
+  if (!fs::exists(base_path) || !fs::is_directory(base_path)) {
+    std::cerr << "Error: Folder does not exist or is not a directory.\n";
+    return 1;
+  }
+
   // Optional: Choose "paraver" or "perfetto" format, default "perfetto"
   bool paraver_format = false;
   if (argc > 2) {
@@ -93,8 +98,9 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Optional: Provide "channel_names" and/or "markerTypes" directly,
-  // if they are not provided by the metadata.json
+  // Optional: Provide "channel_names", "markerTypes", etc. directly by the
+  // user. if they are not provided by the metadata.json or metadata.json
+  // doesn't exists.
   nlohmann::json extra_info;
   if (argc > 3) {
     // Load the json metadata file
@@ -117,11 +123,6 @@ int main(int argc, char *argv[]) {
       std::cerr << "  No '" << argv[3] << "' found\n";
       return 1;
     }
-  }
-
-  if (!fs::exists(base_path) || !fs::is_directory(base_path)) {
-    std::cerr << "Error: Folder does not exist or is not a directory.\n";
-    return 1;
   }
 
   // A container to keep all the bts files in one for the proc

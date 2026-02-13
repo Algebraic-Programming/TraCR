@@ -60,6 +60,16 @@ inline std::atomic<bool> tracr_proc_init{false};
 inline std::atomic<int> num_tracr_threads{0};
 
 /**
+ * Lazy add color definition method for the Paraver format
+ */
+inline std::atomic<uint16_t> lazy_colorId{23};
+
+/**
+ * A global boolean flag to check if we want to flush to file.
+ */
+inline std::atomic<bool> flush_enabled{true};
+
+/**
  *
  */
 static inline void instrumentation_start(const std::string &path = "") {
@@ -132,8 +142,10 @@ static inline void instrumentation_end() {
     std::exit(EXIT_FAILURE);
   }
 
-  // Flushing the trace of this TraCR thread now
-  tracrThread->flush_traces(tracrProc->getFolderPath());
+  // Flushing the trace of this TraCR thread now (if enabled)
+  if (flush_enabled) {
+    tracrThread->flush_traces(tracrProc->getFolderPath());
+  }
 
   // Destroys the TraCR Thread pointer and calls the destructor
   tracrThread.reset();
@@ -141,8 +153,10 @@ static inline void instrumentation_end() {
   // Decrease global thread counter
   --num_tracr_threads;
 
-  // Dump TraCR Proc JSON file
-  tracrProc->dump_JSON();
+  // Dump TraCR Proc JSON file (if enabled)
+  if (flush_enabled) {
+    tracrProc->dump_JSON();
+  }
 
   // Destroys the TraCR Proc pointer and calls the destructor
   tracrProc.reset();
@@ -197,7 +211,9 @@ static inline void instrumentation_thread_finalize() {
   tracrProc->eraseTraCRThread(syscall(SYS_gettid));
 
   // Flushing the trace of this TraCR thread now
-  tracrThread->flush_traces(tracrProc->getFolderPath());
+  if (flush_enabled) {
+    tracrThread->flush_traces(tracrProc->getFolderPath());
+  }
 
   // Finalize the thread now (destructor of it is also called)
   tracrThread.reset();
@@ -339,6 +355,13 @@ static inline void instrumentation_on() { enable_tracr = true; }
  *
  */
 static inline void instrumentation_off() { enable_tracr = false; }
+
+/**
+ *
+ */
+static inline void instrumentation_enable_flush(const bool &enable_flush) {
+  flush_enabled = enable_flush;
+}
 
 /**
  *
