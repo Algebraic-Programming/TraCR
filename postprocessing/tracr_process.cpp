@@ -98,9 +98,8 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Optional: Provide "channel_names", "markerTypes", etc. directly by the
-  // user. if they are not provided by the metadata.json or metadata.json
-  // doesn't exists.
+  // Optional: Provide "channel_names" and/or "markerTypes" directly by the
+  // user. if they are not provided by the metadata.json
   nlohmann::json extra_info;
   if (argc > 3) {
     // Load the json metadata file
@@ -367,7 +366,7 @@ int main(int argc, char *argv[]) {
       num_channels = metadata["channel_names"].size();
 
       // Iterate over JSON Array
-      for (auto &channel_name : extra_info["channel_names"]) {
+      for (auto &channel_name : metadata["channel_names"]) {
         ss << channel_name << "\n";
       }
     } else {
@@ -565,8 +564,8 @@ int main(int argc, char *argv[]) {
     bool first = true;
     uint64_t start_time = uint64_t(metadata["start_time"]);
     std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
-    std::vector<TraCR::Payload> prev_payload(num_channels,
-                                             TraCR::Payload{0, 0, 0, 0});
+    std::vector<TraCR::Payload> prev_payload(
+        num_channels, TraCR::Payload{0, UINT16_MAX, UINT32_MAX, 0});
     while (true) {
       // First, find the next smallest time stamp in all the bts_files
       uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();

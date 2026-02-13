@@ -341,7 +341,7 @@ static inline void instrumentation_mark_reset(const uint16_t &channelId) {
     return;
   }
 
-  Payload payload{channelId, UINT16_MAX, 0, NanoTimer::now()};
+  Payload payload{channelId, UINT16_MAX, UINT32_MAX, NanoTimer::now()};
 
   tracrThread->store_trace(payload);
 }
