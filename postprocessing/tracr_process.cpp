@@ -201,10 +201,30 @@ int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>> &bts_files,
 }
 
 /**
+ * Returns true if all pointers reached the end, false otherwise
+ */
+bool advance_ptrs_and_check_end(
+    std::vector<size_t> &bts_files_ptrs,
+    const std::vector<std::vector<TraCR::Payload>> &bts_files, size_t index) {
+  // Increase the pointer for the given index if not at the end
+  if (bts_files_ptrs[index] < bts_files[index].size()) {
+    ++bts_files_ptrs[index];
+  }
+
+  // Check if all pointers reached the limit
+  for (size_t i = 0; i < bts_files.size(); ++i) {
+    if (bts_files_ptrs[i] != bts_files[i].size()) {
+      return false; // Not all reached the end
+    }
+  }
+  return true; // All reached the end
+}
+
+/**
  * Store in Paraver format
  */
-int paraver(std::vector<std::vector<TraCR::Payload>> &bts_files,
-            std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
+int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
+            const std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
             nlohmann::json &metadata, const fs::path base_path, int &pid) {
   /**
    * Store the state.cfg in the given tracr folder
@@ -369,7 +389,9 @@ int paraver(std::vector<std::vector<TraCR::Payload>> &bts_files,
   bool first = true;
   uint64_t start_time = uint64_t(metadata["start_time"]);
   std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
-  while (true) {
+
+  bool ptrs_end = false;
+  while (!ptrs_end) {
     // First, find the next smallest time stamp in all the bts_files
     uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
     size_t index = 0;
@@ -402,23 +424,8 @@ int paraver(std::vector<std::vector<TraCR::Payload>> &bts_files,
         << std::to_string(payload.timestamp - start_time) << ":90:" << colorId
         << "\n";
 
-    // increase this ptr as we used it
-    if (bts_files_ptrs[index] < bts_files[index].size()) {
-      ++bts_files_ptrs[index];
-    }
-
-    // break the while-loop if all the bts ptrs reached the limit.
-    bool ptrs_end = true;
-    for (size_t i = 0; i < bts_files.size(); ++i) {
-      if (bts_files_ptrs[i] != bts_files[i].size()) {
-        ptrs_end = false;
-        break;
-      }
-    }
-
-    if (ptrs_end) {
-      break;
-    }
+    // check if all ptrs are at the ending
+    ptrs_end = advance_ptrs_and_check_end(bts_files_ptrs, bts_files, index);
   }
   out.close();
   std::cout << "tracr.prv written successfully.\n";
@@ -455,8 +462,8 @@ int paraver(std::vector<std::vector<TraCR::Payload>> &bts_files,
 /**
  * Store in Perfetto format
  */
-int perfetto(std::vector<std::vector<TraCR::Payload>> &bts_files,
-             std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
+int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
+             const std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
              nlohmann::json &metadata, const fs::path base_path, int &pid) {
   nlohmann::json perfetto = nlohmann::json::array();
 
@@ -529,7 +536,8 @@ int perfetto(std::vector<std::vector<TraCR::Payload>> &bts_files,
   std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
   std::vector<TraCR::Payload> prev_payload(
       num_channels, TraCR::Payload{0, UINT16_MAX, UINT32_MAX, 0});
-  while (true) {
+  bool ptrs_end = false;
+  while (!ptrs_end) {
     // First, find the next smallest time stamp in all the bts_files
     uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
     size_t index = 0;
@@ -577,23 +585,8 @@ int perfetto(std::vector<std::vector<TraCR::Payload>> &bts_files,
     }
     prev_payload[payload.channelId] = payload;
 
-    // increase this ptr as we used it
-    if (bts_files_ptrs[index] < bts_files[index].size()) {
-      ++bts_files_ptrs[index];
-    }
-
-    // break the while-loop if all the bts ptrs reached the limit.
-    bool ptrs_end = true;
-    for (size_t i = 0; i < bts_files.size(); ++i) {
-      if (bts_files_ptrs[i] != bts_files[i].size()) {
-        ptrs_end = false;
-        break;
-      }
-    }
-
-    if (ptrs_end) {
-      break;
-    }
+    // check if all ptrs are at the ending
+    ptrs_end = advance_ptrs_and_check_end(bts_files_ptrs, bts_files, index);
   }
 
   // Now we assert that all the last payloads of all are resets.
