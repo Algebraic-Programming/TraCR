@@ -28,6 +28,51 @@ namespace fs = std::filesystem;
 /**
  *
  */
+// In your .cpp file, above the function
+constexpr const char PARAVER_HEADER[] = "DEFAULT_OPTIONS\n\n"
+                                        "LEVEL               THREAD\n"
+                                        "UNITS               NANOSEC\n"
+                                        "LOOK_BACK           100\n"
+                                        "SPEED               1\n"
+                                        "FLAG_ICONS          ENABLED\n"
+                                        "NUM_OF_STATE_COLORS 1000\n"
+                                        "YMAX_SCALE          37\n\n"
+
+                                        "DEFAULT_SEMANTIC\n\n"
+                                        "THREAD_FUNC         State As Is\n\n"
+
+                                        "STATES_COLOR\n"
+                                        "0   {  0,   0,   0}\n"
+                                        "1   {  0, 130, 200}\n"
+                                        "2   {217, 217, 217}\n"
+                                        "3   {230,  25,  75}\n"
+                                        "4   { 60, 180,  75}\n"
+                                        "5   {255, 225,  25}\n"
+                                        "6   {245, 130,  48}\n"
+                                        "7   {145,  30, 180}\n"
+                                        "8   { 70, 240, 240}\n"
+                                        "9   {240,  50, 230}\n"
+                                        "10  {210, 245,  60}\n"
+                                        "11  {250, 190, 212}\n"
+                                        "12  {  0, 128, 128}\n"
+                                        "13  {128, 128, 128}\n"
+                                        "14  {220, 190, 255}\n"
+                                        "15  {170, 110,  40}\n"
+                                        "16  {255, 250, 200}\n"
+                                        "17  {128,   0,   0}\n"
+                                        "18  {170, 255, 195}\n"
+                                        "19  {128, 128,   0}\n"
+                                        "20  {255, 215, 180}\n"
+                                        "21  {  0,   0, 128}\n"
+                                        "22  {  0,   0, 255}\n\n"
+
+                                        "EVENT_TYPE\n"
+                                        "0 90         TraCR\n"
+                                        "VALUES\n";
+
+/**
+ *
+ */
 static const char *perfetto_colors[] = {"yellow", "olive", "purple", "blue",
                                         "green",  "red",   "pink"};
 
@@ -201,6 +246,29 @@ int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>> &bts_files,
 }
 
 /**
+ * Finds the next payload with the smallest timestamp across all BTS files
+ * Returns the index of the file containing it
+ */
+size_t
+find_next_payload(const std::vector<std::vector<TraCR::Payload>> &bts_files,
+                  const std::vector<size_t> &bts_files_ptrs,
+                  TraCR::Payload &out_payload) {
+  uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
+  size_t index = 0;
+
+  for (size_t i = 0; i < bts_files.size(); ++i) {
+    if (bts_files_ptrs[i] < bts_files[i].size() &&
+        bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp) {
+      next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
+      index = i;
+    }
+  }
+
+  out_payload = bts_files[index][bts_files_ptrs[index]];
+  return index;
+}
+
+/**
  * Returns true if all pointers reached the end, false otherwise
  */
 bool advance_ptrs_and_check_end(
@@ -250,46 +318,7 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   }
 
   // Fixed Paraver stuff
-  out << "DEFAULT_OPTIONS\n\n"
-         "LEVEL               THREAD\n"
-         "UNITS               NANOSEC\n"
-         "LOOK_BACK           100\n"
-         "SPEED               1\n"
-         "FLAG_ICONS          ENABLED\n"
-         "NUM_OF_STATE_COLORS 1000\n"
-         "YMAX_SCALE          37\n\n"
-
-         "DEFAULT_SEMANTIC\n\n"
-         "THREAD_FUNC         State As Is\n\n"
-
-         "STATES_COLOR\n"
-         "0   {  0,   0,   0}\n"
-         "1   {  0, 130, 200}\n"
-         "2   {217, 217, 217}\n"
-         "3   {230,  25,  75}\n"
-         "4   { 60, 180,  75}\n"
-         "5   {255, 225,  25}\n"
-         "6   {245, 130,  48}\n"
-         "7   {145,  30, 180}\n"
-         "8   { 70, 240, 240}\n"
-         "9   {240,  50, 230}\n"
-         "10  {210, 245,  60}\n"
-         "11  {250, 190, 212}\n"
-         "12  {  0, 128, 128}\n"
-         "13  {128, 128, 128}\n"
-         "14  {220, 190, 255}\n"
-         "15  {170, 110,  40}\n"
-         "16  {255, 250, 200}\n"
-         "17  {128,   0,   0}\n"
-         "18  {170, 255, 195}\n"
-         "19  {128, 128,   0}\n"
-         "20  {255, 215, 180}\n"
-         "21  {  0,   0, 128}\n"
-         "22  {  0,   0, 255}\n\n"
-
-         "EVENT_TYPE\n"
-         "0 90         TraCR\n"
-         "VALUES\n";
+  out << PARAVER_HEADER;
 
   // Write markerTypes as VALUES
   // Extract markerTypes (if they exist)
@@ -392,18 +421,8 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
 
   bool ptrs_end = false;
   while (!ptrs_end) {
-    // First, find the next smallest time stamp in all the bts_files
-    uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
-    size_t index = 0;
-    for (size_t i = 0; i < bts_files.size(); ++i) {
-      if ((bts_files_ptrs[i] < bts_files[i].size()) &&
-          (bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp)) {
-        next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
-        index = i;
-      }
-    }
-
-    TraCR::Payload payload = bts_files[index][bts_files_ptrs[index]];
+    TraCR::Payload payload;
+    size_t index = find_next_payload(bts_files, bts_files_ptrs, payload);
 
     if (first) {
       first = false;
@@ -538,18 +557,8 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
       num_channels, TraCR::Payload{0, UINT16_MAX, UINT32_MAX, 0});
   bool ptrs_end = false;
   while (!ptrs_end) {
-    // First, find the next smallest time stamp in all the bts_files
-    uint64_t next_timestamp = std::numeric_limits<uint64_t>::max();
-    size_t index = 0;
-    for (size_t i = 0; i < bts_files.size(); ++i) {
-      if ((bts_files_ptrs[i] < bts_files[i].size()) &&
-          (bts_files[i][bts_files_ptrs[i]].timestamp < next_timestamp)) {
-        next_timestamp = bts_files[i][bts_files_ptrs[i]].timestamp;
-        index = i;
-      }
-    }
-
-    TraCR::Payload payload = bts_files[index][bts_files_ptrs[index]];
+    TraCR::Payload payload;
+    size_t index = find_next_payload(bts_files, bts_files_ptrs, payload);
 
     if (first) {
       first = false;
