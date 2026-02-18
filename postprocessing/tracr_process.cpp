@@ -196,6 +196,34 @@ int load_thread_traces(const fs::path &proc_path,
 }
 
 /**
+ *
+ */
+int load_metadata_json(const fs::path &proc_path, nlohmann::json &metadata) {
+  fs::path json_file = proc_path / "metadata.json";
+
+  if (!fs::exists(json_file)) {
+    std::cerr << "  No metadata.json found\n";
+    return 1;
+  }
+
+  std::ifstream ifs(json_file);
+  if (!ifs.is_open()) {
+    std::cerr << "  Failed to open metadata.json\n";
+    return 1;
+  }
+
+  try {
+    ifs >> metadata;
+    std::cout << "  Loaded metadata.json:\n" << metadata.dump(4) << "\n";
+  } catch (const std::exception &e) {
+    std::cerr << "  Failed to parse JSON: " << e.what() << "\n";
+    return 1;
+  }
+
+  return 0;
+}
+
+/**
  * A function for extracting the bts and metadata
  */
 int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>> &bts_files,
@@ -229,24 +257,7 @@ int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>> &bts_files,
       }
 
       // Load the json metadata file
-      fs::path json_file = proc_entry.path() / "metadata.json";
-      if (fs::exists(json_file)) {
-        std::ifstream ifs(json_file);
-        if (ifs.is_open()) {
-          try {
-            ifs >> metadata;
-            std::cout << "  Loaded metadata.json:\n"
-                      << metadata.dump(4) << "\n";
-          } catch (const std::exception &e) {
-            std::cerr << "  Failed to parse JSON: " << e.what() << "\n";
-            return 1;
-          }
-        } else {
-          std::cerr << "  Failed to open metadata.json\n";
-          return 1;
-        }
-      } else {
-        std::cerr << "  No metadata.json found\n";
+      if (load_metadata_json(proc_entry.path(), metadata) != 0) {
         return 1;
       }
 
@@ -370,18 +381,11 @@ int create_tracr_pcf(const fs::path &base_path,
 /**
  *
  */
-int create_tracr_prv(const fs::path &base_path,
-                     const nlohmann::json &extra_info,
-                     const nlohmann::json &metadata,
-                     const std::vector<std::vector<TraCR::Payload>> &bts_files,
-                     size_t &num_channels, std::stringstream &ss) {
-  std::ofstream out(base_path / "tracr.prv");
-  if (!out) {
-    std::cerr << "Error opening tracr.prv for writing\n";
-    return 1;
-  }
+void extract_channel_info(const nlohmann::json &extra_info,
+                          const nlohmann::json &metadata, size_t &num_channels,
+                          std::stringstream &ss) {
+  num_channels = 1; // default
 
-  // Determine channel names / number of channels
   if (extra_info.contains("channel_names") &&
       !extra_info["channel_names"].is_null()) {
 
@@ -401,6 +405,24 @@ int create_tracr_prv(const fs::path &base_path,
 
     num_channels = metadata["num_channels"];
   }
+}
+
+/**
+ *
+ */
+int create_tracr_prv(const fs::path &base_path,
+                     const nlohmann::json &extra_info,
+                     const nlohmann::json &metadata,
+                     const std::vector<std::vector<TraCR::Payload>> &bts_files,
+                     size_t &num_channels, std::stringstream &ss) {
+  std::ofstream out(base_path / "tracr.prv");
+  if (!out) {
+    std::cerr << "Error opening tracr.prv for writing\n";
+    return 1;
+  }
+
+  // Determine channel names / number of channels
+  extract_channel_info(extra_info, metadata, num_channels, ss);
 
   // ---- Write Paraver header ----
   auto now = std::chrono::system_clock::now();
@@ -543,64 +565,51 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
 }
 
 /**
- * Store in Perfetto format
+ *
  */
-int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
-             const std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
-             nlohmann::json &metadata, const fs::path base_path, int &pid) {
-  nlohmann::json perfetto = nlohmann::json::array();
+uint32_t
+populate_perfetto_channels(const nlohmann::json &extra_info,
+                           const nlohmann::json &metadata, uint32_t pid,
+                           nlohmann::json &perfetto,
+                           std::vector<std::string> &markerTypes_values) {
+  uint32_t num_channels = 1; // default
+  const nlohmann::json *channels_json = nullptr;
 
-  if (pid == -1) {
-    pid = 0;
-  }
-
-  uint32_t num_channels = 1;
+  // Determine which JSON array to use for channel names
   if (extra_info.contains("channel_names") &&
       !extra_info["channel_names"].is_null()) {
-
-    num_channels = extra_info["channel_names"].size();
-
-    for (uint32_t i = 0; i < num_channels; ++i) {
-      perfetto.push_back(
-          {{"name", "thread_name"},
-           {"ph", "M"},
-           {"pid", pid},
-           {"tid", i + 1},
-           {"args", {{"name", extra_info["channel_names"][i]}}}});
-    }
-
+    channels_json = &extra_info["channel_names"];
   } else if (metadata.contains("channel_names") &&
              !metadata["channel_names"].is_null()) {
+    channels_json = &metadata["channel_names"];
+  }
 
-    num_channels = metadata["channel_names"].size();
+  if (channels_json) {
+    num_channels = channels_json->size();
+  } else if (metadata.contains("num_channels") &&
+             !metadata["num_channels"].is_null()) {
+    num_channels = metadata["num_channels"];
+  }
 
-    for (uint32_t i = 0; i < num_channels; ++i) {
-      perfetto.push_back({{"name", "thread_name"},
-                          {"ph", "M"},
-                          {"pid", pid},
-                          {"tid", i + 1},
-                          {"args", {{"name", metadata["channel_names"][i]}}}});
-    }
-  } else {
-    if (metadata.contains("num_channels") ||
-        !metadata["num_channels"].is_null()) {
-      num_channels = metadata["num_channels"];
+  // Populate Perfetto JSON
+  for (uint32_t i = 0; i < num_channels; ++i) {
+    std::string channel_name;
+    if (channels_json) {
+      channel_name = (*channels_json)[i];
+    } else {
+      channel_name = "Channel_" + std::to_string(i + 1);
+      std::cout << channel_name << "\n";
     }
 
-    for (uint32_t i = 0; i < num_channels; ++i) {
-      std::cout << "Channel_" + std::to_string(i) << "\n";
-      perfetto.push_back(
-          {{"name", "thread_name"},
-           {"ph", "M"},
-           {"pid", pid},
-           {"tid", i + 1},
-           {"args", {{"name", "Channel_" + std::to_string(i + 1)}}}});
-    }
+    perfetto.push_back({{"name", "thread_name"},
+                        {"ph", "M"},
+                        {"pid", pid},
+                        {"tid", i + 1},
+                        {"args", {{"name", channel_name}}}});
   }
 
   // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
   // access
-  std::vector<std::string> markerTypes_values;
   if (extra_info.contains("markerTypes") &&
       !extra_info["markerTypes"].is_null()) {
     for (auto &[key, value] : extra_info["markerTypes"].items()) {
@@ -612,6 +621,48 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
       markerTypes_values.push_back(value);
     }
   }
+
+  return num_channels;
+}
+
+/**
+ *
+ */
+int write_perfetto_json(const fs::path &base_path, nlohmann::json &perfetto) {
+  std::ofstream out(base_path / "perfetto.json");
+
+  if (!out.is_open()) {
+    std::cerr << "Failed to open 'perfetto.json' for writing!\n";
+    return 1;
+  }
+
+  // Dump JSON into file (pretty-printed with 4 spaces)
+  out << perfetto.dump(4);
+  out.close();
+
+  std::cout << "perfetto.json written successfully.\n";
+  return 0;
+}
+
+/**
+ * Store in Perfetto format
+ */
+int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
+             const std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
+             nlohmann::json &metadata, const fs::path base_path, int &pid) {
+
+  // perfetto json array
+  nlohmann::json perfetto = nlohmann::json::array();
+
+  // if PID has not yet been set (i.e. -1), use 0
+  if (pid == -1) {
+    pid = 0;
+  }
+
+  // Define channel names in Perfetto
+  std::vector<std::string> markerTypes_values;
+  uint32_t num_channels = populate_perfetto_channels(
+      extra_info, metadata, pid, perfetto, markerTypes_values);
 
   // Now we have to travers the map of all the std::vector<Payload>
   bool first = true;
@@ -677,20 +728,9 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   }
 
   // Create and open the metadata.json file
-  std::ofstream out(base_path / "perfetto.json");
-
-  if (!out.is_open()) {
-    std::cerr << "Failed to open 'perfetto.json' for writing!\n";
+  if (write_perfetto_json(base_path, perfetto) != 0) {
     return 1;
   }
-
-  // Dump JSON into file (pretty-printed with 4 spaces)
-  out << perfetto.dump(4);
-
-  // Close the file
-  out.close();
-
-  std::cout << "perfetto.json written successfully.\n";
 
   return 0;
 }
