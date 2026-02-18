@@ -26,11 +26,10 @@
 namespace fs = std::filesystem;
 
 /**
- * 
+ *
  */
-static const char* perfetto_colors[] = {
-  "yellow", "olive", "purple", "blue", "green", "red", "pink"
-};
+static const char *perfetto_colors[] = {"yellow", "olive", "purple", "blue",
+                                        "green",  "red",   "pink"};
 
 /**
  * A function to load a bts file into a std::vector<Payload>
@@ -67,7 +66,7 @@ bool load_bts_file(const fs::path &filepath,
 /**
  * A function for extracting the optional json information
  */
-int get_extra_info(nlohmann::json& extra_info, char *argv3) {
+int get_extra_info(nlohmann::json &extra_info, char *argv3) {
   // Load the json metadata file
   fs::path json_file = argv3;
   if (fs::exists(json_file)) {
@@ -94,8 +93,9 @@ int get_extra_info(nlohmann::json& extra_info, char *argv3) {
 /**
  * A function for extracting the bts and metadata
  */
-int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>>& bts_files,
-    std::vector<pid_t>& bts_tids, nlohmann::json& metadata, const fs::path base_path, int& pid) {
+int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>> &bts_files,
+                         std::vector<pid_t> &bts_tids, nlohmann::json &metadata,
+                         const fs::path base_path, int &pid) {
 
   bool proc_folder_found = false;
   for (const auto &proc_entry : fs::directory_iterator(base_path)) {
@@ -203,8 +203,9 @@ int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>>& bts_files,
 /**
  * Store in Paraver format
  */
-int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
-    std::vector<pid_t>& bts_tids, nlohmann::json& extra_info, nlohmann::json& metadata, const fs::path base_path, int& pid) {
+int paraver(std::vector<std::vector<TraCR::Payload>> &bts_files,
+            std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
+            nlohmann::json &metadata, const fs::path base_path, int &pid) {
   /**
    * Store the state.cfg in the given tracr folder
    */
@@ -230,45 +231,45 @@ int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
 
   // Fixed Paraver stuff
   out << "DEFAULT_OPTIONS\n\n"
-          "LEVEL               THREAD\n"
-          "UNITS               NANOSEC\n"
-          "LOOK_BACK           100\n"
-          "SPEED               1\n"
-          "FLAG_ICONS          ENABLED\n"
-          "NUM_OF_STATE_COLORS 1000\n"
-          "YMAX_SCALE          37\n\n"
+         "LEVEL               THREAD\n"
+         "UNITS               NANOSEC\n"
+         "LOOK_BACK           100\n"
+         "SPEED               1\n"
+         "FLAG_ICONS          ENABLED\n"
+         "NUM_OF_STATE_COLORS 1000\n"
+         "YMAX_SCALE          37\n\n"
 
-          "DEFAULT_SEMANTIC\n\n"
-          "THREAD_FUNC         State As Is\n\n"
+         "DEFAULT_SEMANTIC\n\n"
+         "THREAD_FUNC         State As Is\n\n"
 
-          "STATES_COLOR\n"
-          "0   {  0,   0,   0}\n"
-          "1   {  0, 130, 200}\n"
-          "2   {217, 217, 217}\n"
-          "3   {230,  25,  75}\n"
-          "4   { 60, 180,  75}\n"
-          "5   {255, 225,  25}\n"
-          "6   {245, 130,  48}\n"
-          "7   {145,  30, 180}\n"
-          "8   { 70, 240, 240}\n"
-          "9   {240,  50, 230}\n"
-          "10  {210, 245,  60}\n"
-          "11  {250, 190, 212}\n"
-          "12  {  0, 128, 128}\n"
-          "13  {128, 128, 128}\n"
-          "14  {220, 190, 255}\n"
-          "15  {170, 110,  40}\n"
-          "16  {255, 250, 200}\n"
-          "17  {128,   0,   0}\n"
-          "18  {170, 255, 195}\n"
-          "19  {128, 128,   0}\n"
-          "20  {255, 215, 180}\n"
-          "21  {  0,   0, 128}\n"
-          "22  {  0,   0, 255}\n\n"
+         "STATES_COLOR\n"
+         "0   {  0,   0,   0}\n"
+         "1   {  0, 130, 200}\n"
+         "2   {217, 217, 217}\n"
+         "3   {230,  25,  75}\n"
+         "4   { 60, 180,  75}\n"
+         "5   {255, 225,  25}\n"
+         "6   {245, 130,  48}\n"
+         "7   {145,  30, 180}\n"
+         "8   { 70, 240, 240}\n"
+         "9   {240,  50, 230}\n"
+         "10  {210, 245,  60}\n"
+         "11  {250, 190, 212}\n"
+         "12  {  0, 128, 128}\n"
+         "13  {128, 128, 128}\n"
+         "14  {220, 190, 255}\n"
+         "15  {170, 110,  40}\n"
+         "16  {255, 250, 200}\n"
+         "17  {128,   0,   0}\n"
+         "18  {170, 255, 195}\n"
+         "19  {128, 128,   0}\n"
+         "20  {255, 215, 180}\n"
+         "21  {  0,   0, 128}\n"
+         "22  {  0,   0, 255}\n\n"
 
-          "EVENT_TYPE\n"
-          "0 90         TraCR\n"
-          "VALUES\n";
+         "EVENT_TYPE\n"
+         "0 90         TraCR\n"
+         "VALUES\n";
 
   // Write markerTypes as VALUES
   // Extract markerTypes (if they exist)
@@ -278,16 +279,16 @@ int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
     nlohmann::json markerTypes_json = extra_info["markerTypes"];
 
     for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
-          ++it) {
+         ++it) {
       out << it.key() << "   " << it.value() << "\n";
     }
 
   } else if (metadata.contains("markerTypes") &&
-              !metadata["markerTypes"].is_null()) {
+             !metadata["markerTypes"].is_null()) {
     nlohmann::json markerTypes_json = metadata["markerTypes"];
 
     for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
-          ++it) {
+         ++it) {
       out << it.key() << "   " << it.value() << "\n";
     }
   }
@@ -318,7 +319,7 @@ int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
     }
 
   } else if (metadata.contains("channel_names") &&
-              !metadata["channel_names"].is_null()) {
+             !metadata["channel_names"].is_null()) {
 
     num_channels = metadata["channel_names"].size();
 
@@ -341,12 +342,11 @@ int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
   std::tm *local_tm = std::localtime(&now_time);
 
   // Print in desired format
-  out << "#Paraver (" << std::setw(2) << std::setfill('0')
-      << local_tm->tm_mday << "/" << std::setw(2) << std::setfill('0')
-      << local_tm->tm_mon + 1 << "/" << std::setw(2) << std::setfill('0')
-      << (local_tm->tm_year % 100) << " at " << std::setw(2)
-      << std::setfill('0') << local_tm->tm_hour << ":" << std::setw(2)
-      << std::setfill('0') << local_tm->tm_min
+  out << "#Paraver (" << std::setw(2) << std::setfill('0') << local_tm->tm_mday
+      << "/" << std::setw(2) << std::setfill('0') << local_tm->tm_mon + 1 << "/"
+      << std::setw(2) << std::setfill('0') << (local_tm->tm_year % 100)
+      << " at " << std::setw(2) << std::setfill('0') << local_tm->tm_hour << ":"
+      << std::setw(2) << std::setfill('0') << local_tm->tm_min
       << "):00000000000000000000_ns:0:1:1(" << std::to_string(num_channels)
       << ":1)\n";
 
@@ -359,7 +359,7 @@ int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
       markerTypes_keys.push_back(key);
     }
   } else if (metadata.contains("markerTypes") &&
-              !metadata["markerTypes"].is_null()) {
+             !metadata["markerTypes"].is_null()) {
     for (auto &[key, value] : metadata["markerTypes"].items()) {
       markerTypes_keys.push_back(key);
     }
@@ -394,9 +394,8 @@ int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
                     ? "0"
                     : markerTypes_keys[payload.eventId];
     } else {
-      colorId = payload.eventId == UINT16_MAX
-                    ? "0"
-                    : std::to_string(payload.eventId);
+      colorId =
+          payload.eventId == UINT16_MAX ? "0" : std::to_string(payload.eventId);
     }
 
     out << "2:0:1:1:" << payload.channelId + 1 << ":"
@@ -435,8 +434,8 @@ int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
 
   // Fixed Paraver stuff
   out << "LEVEL NODE SIZE 1\n"
-          "hostname\n\n"
-          "LEVEL THREAD SIZE "
+         "hostname\n\n"
+         "LEVEL THREAD SIZE "
       << num_channels << "\n";
 
   if (!ss.str().empty()) {
@@ -456,8 +455,9 @@ int paraver(std::vector<std::vector<TraCR::Payload>>& bts_files,
 /**
  * Store in Perfetto format
  */
-int perfetto(std::vector<std::vector<TraCR::Payload>>& bts_files,
-    std::vector<pid_t>& bts_tids, nlohmann::json& extra_info, nlohmann::json& metadata, const fs::path base_path, int& pid) {
+int perfetto(std::vector<std::vector<TraCR::Payload>> &bts_files,
+             std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
+             nlohmann::json &metadata, const fs::path base_path, int &pid) {
   nlohmann::json perfetto = nlohmann::json::array();
 
   if (pid == -1) {
@@ -473,24 +473,23 @@ int perfetto(std::vector<std::vector<TraCR::Payload>>& bts_files,
     for (uint32_t i = 0; i < num_channels; ++i) {
       perfetto.push_back(
           {{"name", "thread_name"},
-            {"ph", "M"},
-            {"pid", pid},
-            {"tid", i + 1},
-            {"args", {{"name", extra_info["channel_names"][i]}}}});
+           {"ph", "M"},
+           {"pid", pid},
+           {"tid", i + 1},
+           {"args", {{"name", extra_info["channel_names"][i]}}}});
     }
 
   } else if (metadata.contains("channel_names") &&
-              !metadata["channel_names"].is_null()) {
+             !metadata["channel_names"].is_null()) {
 
     num_channels = metadata["channel_names"].size();
 
     for (uint32_t i = 0; i < num_channels; ++i) {
-      perfetto.push_back(
-          {{"name", "thread_name"},
-            {"ph", "M"},
-            {"pid", pid},
-            {"tid", i + 1},
-            {"args", {{"name", metadata["channel_names"][i]}}}});
+      perfetto.push_back({{"name", "thread_name"},
+                          {"ph", "M"},
+                          {"pid", pid},
+                          {"tid", i + 1},
+                          {"args", {{"name", metadata["channel_names"][i]}}}});
     }
   } else {
     if (metadata.contains("num_channels") ||
@@ -502,10 +501,10 @@ int perfetto(std::vector<std::vector<TraCR::Payload>>& bts_files,
       std::cout << "Channel_" + std::to_string(i) << "\n";
       perfetto.push_back(
           {{"name", "thread_name"},
-            {"ph", "M"},
-            {"pid", pid},
-            {"tid", i + 1},
-            {"args", {{"name", "Channel_" + std::to_string(i + 1)}}}});
+           {"ph", "M"},
+           {"pid", pid},
+           {"tid", i + 1},
+           {"args", {{"name", "Channel_" + std::to_string(i + 1)}}}});
     }
   }
 
@@ -518,7 +517,7 @@ int perfetto(std::vector<std::vector<TraCR::Payload>>& bts_files,
       markerTypes_values.push_back(value);
     }
   } else if (metadata.contains("markerTypes") &&
-              !metadata["markerTypes"].is_null()) {
+             !metadata["markerTypes"].is_null()) {
     for (auto &[key, value] : metadata["markerTypes"].items()) {
       markerTypes_values.push_back(value);
     }
@@ -554,27 +553,27 @@ int perfetto(std::vector<std::vector<TraCR::Payload>>& bts_files,
       std::string mType, colorId;
 
       colorId = prev_payload[channelId].eventId == UINT16_MAX
-                      ? "rail_idle"
-                      : perfetto_colors[prev_payload[channelId].eventId % 7];
+                    ? "rail_idle"
+                    : perfetto_colors[prev_payload[channelId].eventId % 7];
 
       if (markerTypes_values.size() > 0) {
         mType = prev_payload[channelId].eventId == UINT16_MAX
-                      ? ""
-                      : markerTypes_values[prev_payload[channelId].eventId];
+                    ? ""
+                    : markerTypes_values[prev_payload[channelId].eventId];
       } else {
         mType = std::to_string(prev_payload[channelId].eventId);
       }
 
       perfetto.push_back(
           {{"name", mType},
-            {"cat", mType},
-            {"ph", "X"},
-            {"ts", (prev_payload[channelId].timestamp - start_time) / 1000.0},
-            {"dur",
+           {"cat", mType},
+           {"ph", "X"},
+           {"ts", (prev_payload[channelId].timestamp - start_time) / 1000.0},
+           {"dur",
             (payload.timestamp - prev_payload[channelId].timestamp) / 1000.0},
-            {"pid", pid},
-            {"tid", prev_payload[channelId].channelId + 1},
-            {"cname", colorId}});
+           {"pid", pid},
+           {"tid", prev_payload[channelId].channelId + 1},
+           {"cname", colorId}});
     }
     prev_payload[payload.channelId] = payload;
 
@@ -606,7 +605,7 @@ int perfetto(std::vector<std::vector<TraCR::Payload>>& bts_files,
       std::cout << "Warning: the last event got lost of this thread: "
                 << bts_tids[i]
                 << " has to be a INSTRUMENTATION_MARK_RESET() for perfetto "
-                    "format!\n";
+                   "format!\n";
       return 1;
     }
   }
@@ -675,7 +674,7 @@ int main(int argc, char *argv[]) {
   // user. if they are not provided by the metadata.json
   nlohmann::json extra_info;
   if (argc > 3) {
-    if(get_extra_info(extra_info, argv[3]) != 0) {
+    if (get_extra_info(extra_info, argv[3]) != 0) {
       std::cerr << "get_extra_info() failed\n";
       return 1;
     };
@@ -688,27 +687,30 @@ int main(int argc, char *argv[]) {
   // The metada of the proc
   nlohmann::json metadata;
 
-  // TraCR Proc PID placeholder 
+  // TraCR Proc PID placeholder
   int pid = -1;
 
   /**
    * Iterate over all entries in the base folder
    *
-   * NOTE: multiple proc.* are currenttly not yet allowed, the code will terminate if this
-   * is the case.
+   * NOTE: multiple proc.* are currenttly not yet allowed, the code will
+   * terminate if this is the case.
    */
-  if (extract_bts_metadata(bts_files, bts_tids, metadata, base_path, pid) != 0) {
+  if (extract_bts_metadata(bts_files, bts_tids, metadata, base_path, pid) !=
+      0) {
     std::cerr << "extract_bts_metadata() failed\n";
     return 1;
   }
 
   if (paraver_format) {
-    if (paraver(bts_files, bts_tids, extra_info, metadata, base_path, pid) != 0) {
+    if (paraver(bts_files, bts_tids, extra_info, metadata, base_path, pid) !=
+        0) {
       std::cerr << "paraver() failed\n";
       return 1;
     }
   } else {
-    if (perfetto(bts_files, bts_tids, extra_info, metadata, base_path, pid) != 0) {
+    if (perfetto(bts_files, bts_tids, extra_info, metadata, base_path, pid) !=
+        0) {
       std::cerr << "perfetto() failed\n";
       return 1;
     }
