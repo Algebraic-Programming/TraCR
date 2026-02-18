@@ -136,6 +136,66 @@ int get_extra_info(nlohmann::json &extra_info, char *argv3) {
 }
 
 /**
+ * Goes through all the thread folder and loads all the bts files from
+ * the given proc folder
+ */
+int load_thread_traces(const fs::path &proc_path,
+                       std::vector<std::vector<TraCR::Payload>> &bts_files,
+                       std::vector<pid_t> &bts_tids) {
+  for (const auto &thread_entry : fs::directory_iterator(proc_path)) {
+
+    if (!thread_entry.is_directory())
+      continue;
+
+    const std::string folder_name = thread_entry.path().filename().string();
+
+    if (folder_name.find("thread.") != 0)
+      continue;
+
+    fs::path trace_file = thread_entry.path() / "traces.bts";
+
+    if (!fs::exists(trace_file)) {
+      std::cerr << "  No trace file in: " << thread_entry.path() << "\n";
+      return 1;
+    }
+
+    std::cout << "  Found trace file: " << trace_file << "\n";
+
+    // Load traces
+    std::vector<TraCR::Payload> traces;
+    size_t num_traces = 0;
+
+    if (!load_bts_file(trace_file, traces, num_traces)) {
+      std::cerr << "  Failed to load bts file: " << trace_file << "\n";
+      return 1;
+    }
+
+    std::cout << "Loaded " << num_traces << " traces from " << trace_file
+              << "\n";
+
+    // Extract TID
+    std::size_t dot_pos = folder_name.find('.');
+    if (dot_pos == std::string::npos) {
+      std::cerr << "  Invalid thread folder name: " << folder_name << "\n";
+      return 1;
+    }
+
+    pid_t tid;
+    try {
+      tid = std::stoi(folder_name.substr(dot_pos + 1));
+    } catch (const std::exception &) {
+      std::cerr << "  Error parsing TID in folder: " << folder_name << "\n";
+      return 1;
+    }
+
+    bts_files.push_back(std::move(traces));
+    bts_tids.push_back(tid);
+  }
+
+  return 0;
+}
+
+/**
  * A function for extracting the bts and metadata
  */
 int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>> &bts_files,
@@ -191,48 +251,9 @@ int extract_bts_metadata(std::vector<std::vector<TraCR::Payload>> &bts_files,
       }
 
       // Iterate over thread folders inside proc.*
-      for (const auto &thread_entry :
-           fs::directory_iterator(proc_entry.path())) {
-        if (thread_entry.is_directory() &&
-            thread_entry.path().filename().string().find("thread.") == 0) {
-          fs::path trace_file = thread_entry.path() / "traces.bts";
-          if (fs::exists(trace_file)) {
-            std::cout << "  Found trace file: " << trace_file << "\n";
-          } else {
-            std::cerr << "  No trace file in: " << thread_entry.path() << "\n";
-            return 1;
-          }
-
-          // Open trace file and store it back into the std::array
-          std::vector<TraCR::Payload> traces;
-          size_t num_traces = 0;
-
-          if (load_bts_file(trace_file, traces, num_traces)) {
-            std::cout << "Loaded " << num_traces << " traces from "
-                      << trace_file << "\n";
-          } else {
-            std::cerr << "  Failed to load bts file: " << trace_file << "\n";
-            return 1;
-          }
-
-          // Now store the vector<Payload> into the vector and its the TID
-          std::string folder_name = thread_entry.path().filename().string();
-          std::size_t dot_pos = folder_name.find('.');
-          pid_t tid;
-          if (dot_pos != std::string::npos) {
-            std::string tid_str = folder_name.substr(dot_pos + 1);
-            try {
-              tid = std::stoi(tid_str);
-            } catch (const std::exception &e) {
-              std::cerr << "  Error parsing TID in folder: " << folder_name
-                        << "\n";
-              return 1;
-            }
-          }
-
-          bts_files.push_back(traces);
-          bts_tids.push_back(tid);
-        }
+      if (load_thread_traces(proc_entry.path(), bts_files, bts_tids) != 0) {
+        std::cerr << "Error: load_thread_traces() failed.\n";
+        return 1;
       }
     }
   }
@@ -289,28 +310,30 @@ bool advance_ptrs_and_check_end(
 }
 
 /**
- * Store in Paraver format
+ * Store the state.cfg in the given tracr folder
  */
-int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
-            const std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
-            nlohmann::json &metadata, const fs::path base_path, int &pid) {
-  /**
-   * Store the state.cfg in the given tracr folder
-   */
+int copy_state_cfg(const fs::path &base_path) {
   fs::path source = "state.cfg";
+
   try {
-    // Copy the file into the base_path folder
     fs::copy_file(source, base_path / source.filename(),
                   fs::copy_options::overwrite_existing);
+
     std::cout << "File 'state.cfg' copied successfully.\n";
   } catch (const fs::filesystem_error &e) {
     std::cerr << "Error copying file: " << e.what() << '\n';
     return 1;
   }
 
-  /**
-   * Create the tracr.pcf file
-   */
+  return 0;
+}
+
+/**
+ * Create the tracr.pcf file
+ */
+int create_tracr_pcf(const fs::path &base_path,
+                     const nlohmann::json &extra_info,
+                     const nlohmann::json &metadata) {
   std::ofstream out(base_path / "tracr.pcf");
   if (!out) {
     std::cerr << "Error opening tracr.pcf for writing\n";
@@ -321,22 +344,18 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   out << PARAVER_HEADER;
 
   // Write markerTypes as VALUES
-  // Extract markerTypes (if they exist)
+  const nlohmann::json *markerTypes_json = nullptr;
+
   if (extra_info.contains("markerTypes") &&
       !extra_info["markerTypes"].is_null()) {
-
-    nlohmann::json markerTypes_json = extra_info["markerTypes"];
-
-    for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
-         ++it) {
-      out << it.key() << "   " << it.value() << "\n";
-    }
-
+    markerTypes_json = &extra_info["markerTypes"];
   } else if (metadata.contains("markerTypes") &&
              !metadata["markerTypes"].is_null()) {
-    nlohmann::json markerTypes_json = metadata["markerTypes"];
+    markerTypes_json = &metadata["markerTypes"];
+  }
 
-    for (auto it = markerTypes_json.begin(); it != markerTypes_json.end();
+  if (markerTypes_json) {
+    for (auto it = markerTypes_json->begin(); it != markerTypes_json->end();
          ++it) {
       out << it.key() << "   " << it.value() << "\n";
     }
@@ -345,82 +364,81 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   out.close();
   std::cout << "tracr.pcf written successfully.\n";
 
-  /**
-   * Create the tracr.prv file
-   */
-  out.open(base_path / "tracr.prv");
+  return 0;
+}
+
+/**
+ *
+ */
+int create_tracr_prv(const fs::path &base_path,
+                     const nlohmann::json &extra_info,
+                     const nlohmann::json &metadata,
+                     const std::vector<std::vector<TraCR::Payload>> &bts_files,
+                     size_t &num_channels, std::stringstream &ss) {
+  std::ofstream out(base_path / "tracr.prv");
   if (!out) {
     std::cerr << "Error opening tracr.prv for writing\n";
     return 1;
   }
 
-  size_t num_channels = 1;
-
-  std::stringstream ss;
+  // Determine channel names / number of channels
   if (extra_info.contains("channel_names") &&
       !extra_info["channel_names"].is_null()) {
 
     num_channels = extra_info["channel_names"].size();
-
-    // Iterate over JSON Array
-    for (auto &channel_name : extra_info["channel_names"]) {
+    for (auto &channel_name : extra_info["channel_names"])
       ss << channel_name << "\n";
-    }
 
   } else if (metadata.contains("channel_names") &&
              !metadata["channel_names"].is_null()) {
 
     num_channels = metadata["channel_names"].size();
-
-    // Iterate over JSON Array
-    for (auto &channel_name : metadata["channel_names"]) {
+    for (auto &channel_name : metadata["channel_names"])
       ss << channel_name << "\n";
-    }
-  } else {
-    if (metadata.contains("num_channels") ||
-        !metadata["num_channels"].is_null()) {
-      num_channels = metadata["num_channels"];
-    }
+
+  } else if (metadata.contains("num_channels") &&
+             !metadata["num_channels"].is_null()) {
+
+    num_channels = metadata["num_channels"];
   }
 
-  // Get current time as time_t
+  // ---- Write Paraver header ----
   auto now = std::chrono::system_clock::now();
   std::time_t now_time = std::chrono::system_clock::to_time_t(now);
-
-  // Convert to local time
   std::tm *local_tm = std::localtime(&now_time);
 
-  // Print in desired format
   out << "#Paraver (" << std::setw(2) << std::setfill('0') << local_tm->tm_mday
-      << "/" << std::setw(2) << std::setfill('0') << local_tm->tm_mon + 1 << "/"
-      << std::setw(2) << std::setfill('0') << (local_tm->tm_year % 100)
+      << "/" << std::setw(2) << std::setfill('0') << (local_tm->tm_mon + 1)
+      << "/" << std::setw(2) << std::setfill('0') << (local_tm->tm_year % 100)
       << " at " << std::setw(2) << std::setfill('0') << local_tm->tm_hour << ":"
       << std::setw(2) << std::setfill('0') << local_tm->tm_min
-      << "):00000000000000000000_ns:0:1:1(" << std::to_string(num_channels)
-      << ":1)\n";
+      << "):00000000000000000000_ns:0:1:1(" << num_channels << ":1)\n";
 
-  // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
-  // access (if they exist)
+  // ---- Extract markerTypes keys ----
   std::vector<std::string> markerTypes_keys;
+
   if (extra_info.contains("markerTypes") &&
       !extra_info["markerTypes"].is_null()) {
-    for (auto &[key, value] : extra_info["markerTypes"].items()) {
+
+    for (auto &[key, value] : extra_info["markerTypes"].items())
       markerTypes_keys.push_back(key);
-    }
+
   } else if (metadata.contains("markerTypes") &&
              !metadata["markerTypes"].is_null()) {
-    for (auto &[key, value] : metadata["markerTypes"].items()) {
+
+    for (auto &[key, value] : metadata["markerTypes"].items())
       markerTypes_keys.push_back(key);
-    }
   }
 
-  // Now we have to travers the map of all the std::vector<Payload>
+  // ---- Merge and write payloads ----
   bool first = true;
   uint64_t start_time = uint64_t(metadata["start_time"]);
   std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
 
   bool ptrs_end = false;
+
   while (!ptrs_end) {
+
     TraCR::Payload payload;
     size_t index = find_next_payload(bts_files, bts_files_ptrs, payload);
 
@@ -430,29 +448,35 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
     }
 
     std::string colorId;
-    if (markerTypes_keys.size() > 0) {
-      colorId = payload.eventId == UINT16_MAX
+
+    if (!markerTypes_keys.empty()) {
+      colorId = (payload.eventId == UINT16_MAX)
                     ? "0"
                     : markerTypes_keys[payload.eventId];
     } else {
-      colorId =
-          payload.eventId == UINT16_MAX ? "0" : std::to_string(payload.eventId);
+      colorId = (payload.eventId == UINT16_MAX)
+                    ? "0"
+                    : std::to_string(payload.eventId);
     }
 
     out << "2:0:1:1:" << payload.channelId + 1 << ":"
-        << std::to_string(payload.timestamp - start_time) << ":90:" << colorId
-        << "\n";
+        << (payload.timestamp - start_time) << ":90:" << colorId << "\n";
 
-    // check if all ptrs are at the ending
     ptrs_end = advance_ptrs_and_check_end(bts_files_ptrs, bts_files, index);
   }
+
   out.close();
   std::cout << "tracr.prv written successfully.\n";
 
-  /**
-   * Create the tracr.row file
-   */
-  out.open(base_path / "tracr.row");
+  return 0;
+}
+
+/**
+ *
+ */
+int create_tracr_row(const fs::path &base_path, size_t num_channels,
+                     const std::stringstream &ss) {
+  std::ofstream out(base_path / "tracr.row");
   if (!out) {
     std::cerr << "Error opening tracr.row for writing\n";
     return 1;
@@ -468,12 +492,52 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
     out << ss.str();
   } else {
     for (size_t i = 0; i < num_channels; ++i) {
-      out << "Channel_" << std::to_string(i) << "\n";
+      out << "Channel_" << i << "\n";
     }
   }
 
   out.close();
   std::cout << "tracr.row written successfully.\n";
+
+  return 0;
+}
+
+/**
+ * Store in Paraver format
+ */
+int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
+            const std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
+            nlohmann::json &metadata, const fs::path base_path, int &pid) {
+  /**
+   * Store the state.cfg in the given tracr folder
+   */
+  if (copy_state_cfg(base_path) != 0) {
+    return 1;
+  }
+
+  /**
+   * Create the tracr.pcf file
+   */
+  if (create_tracr_pcf(base_path, extra_info, metadata) != 0) {
+    return 1;
+  }
+
+  /**
+   * Create the tracr.prv file
+   */
+  size_t num_channels = 1;
+  std::stringstream ss;
+  if (create_tracr_prv(base_path, extra_info, metadata, bts_files, num_channels,
+                       ss) != 0) {
+    return 1;
+  }
+
+  /**
+   * Create the tracr.row file
+   */
+  if (create_tracr_row(base_path, num_channels, ss) != 0) {
+    return 1;
+  }
 
   return 0;
 }
