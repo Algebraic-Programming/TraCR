@@ -71,12 +71,6 @@ constexpr const char PARAVER_HEADER[] = "DEFAULT_OPTIONS\n\n"
                                         "VALUES\n";
 
 /**
- *
- */
-static const char *perfetto_colors[] = {"yellow", "olive", "purple", "blue",
-                                        "green",  "red",   "pink"};
-
-/**
  * A function to load a bts file into a std::vector<Payload>
  */
 bool load_bts_file(const fs::path &filepath,
@@ -410,6 +404,32 @@ void extract_channel_info(const nlohmann::json &extra_info,
 /**
  *
  */
+std::vector<std::string> extract_marker_keys(const nlohmann::json &extra_info,
+                                             const nlohmann::json &metadata) {
+  std::vector<std::string> markerTypes_keys;
+
+  const nlohmann::json *marker_json = nullptr;
+
+  if (extra_info.contains("markerTypes") &&
+      !extra_info["markerTypes"].is_null()) {
+    marker_json = &extra_info["markerTypes"];
+  } else if (metadata.contains("markerTypes") &&
+             !metadata["markerTypes"].is_null()) {
+    marker_json = &metadata["markerTypes"];
+  }
+
+  if (marker_json) {
+    for (auto &[key, value] : marker_json->items()) {
+      markerTypes_keys.push_back(key);
+    }
+  }
+
+  return markerTypes_keys;
+}
+
+/**
+ * Create the tracr.prv file for Paraver format
+ */
 int create_tracr_prv(const fs::path &base_path,
                      const nlohmann::json &extra_info,
                      const nlohmann::json &metadata,
@@ -437,20 +457,8 @@ int create_tracr_prv(const fs::path &base_path,
       << "):00000000000000000000_ns:0:1:1(" << num_channels << ":1)\n";
 
   // ---- Extract markerTypes keys ----
-  std::vector<std::string> markerTypes_keys;
-
-  if (extra_info.contains("markerTypes") &&
-      !extra_info["markerTypes"].is_null()) {
-
-    for (auto &[key, value] : extra_info["markerTypes"].items())
-      markerTypes_keys.push_back(key);
-
-  } else if (metadata.contains("markerTypes") &&
-             !metadata["markerTypes"].is_null()) {
-
-    for (auto &[key, value] : metadata["markerTypes"].items())
-      markerTypes_keys.push_back(key);
-  }
+  std::vector<std::string> markerTypes_keys =
+      extract_marker_keys(extra_info, metadata);
 
   // ---- Merge and write payloads ----
   bool first = true;
@@ -645,6 +653,28 @@ int write_perfetto_json(const fs::path &base_path, nlohmann::json &perfetto) {
 }
 
 /**
+ *
+ */
+void validate_last_events_for_perfetto(
+    const std::vector<std::vector<TraCR::Payload>> &bts_files,
+    const std::vector<pid_t> &bts_tids) {
+  for (size_t i = 0; i < bts_files.size(); ++i) {
+
+    if (bts_files[i].empty())
+      continue; // Safety guard
+
+    const TraCR::Payload &payload = bts_files[i].back();
+
+    if (payload.eventId != UINT16_MAX) {
+      std::cout << "Warning: the last event got lost of this thread: "
+                << bts_tids[i]
+                << " has to be a INSTRUMENTATION_MARK_RESET() "
+                   "for perfetto format!\n";
+    }
+  }
+}
+
+/**
  * Store in Perfetto format
  */
 int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
@@ -682,11 +712,7 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
 
     if (prev_payload[payload.channelId].timestamp != 0) {
       uint16_t channelId = payload.channelId;
-      std::string mType, colorId;
-
-      colorId = prev_payload[channelId].eventId == UINT16_MAX
-                    ? "rail_idle"
-                    : perfetto_colors[prev_payload[channelId].eventId % 7];
+      std::string mType;
 
       if (markerTypes_values.size() > 0) {
         mType = prev_payload[channelId].eventId == UINT16_MAX
@@ -704,8 +730,7 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
            {"dur",
             (payload.timestamp - prev_payload[channelId].timestamp) / 1000.0},
            {"pid", pid},
-           {"tid", prev_payload[channelId].channelId + 1},
-           {"cname", colorId}});
+           {"tid", prev_payload[channelId].channelId + 1}});
     }
     prev_payload[payload.channelId] = payload;
 
@@ -716,16 +741,7 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   // Now we assert that all the last payloads of all are resets.
   // This is important, as otherwise we have missed the last set trace
   // information.
-  for (size_t i = 0; i < bts_files.size(); ++i) {
-    TraCR::Payload payload = bts_files[i][bts_files[i].size() - 1];
-    if (payload.eventId != UINT16_MAX) {
-      std::cout << "Warning: the last event got lost of this thread: "
-                << bts_tids[i]
-                << " has to be a INSTRUMENTATION_MARK_RESET() for perfetto "
-                   "format!\n";
-      return 1;
-    }
-  }
+  validate_last_events_for_perfetto(bts_files, bts_tids);
 
   // Create and open the metadata.json file
   if (write_perfetto_json(base_path, perfetto) != 0) {
