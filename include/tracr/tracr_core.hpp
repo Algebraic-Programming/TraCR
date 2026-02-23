@@ -186,18 +186,8 @@ static inline void instrumentation_end() {
   }
 
   if (tracrProc->_tracrThreadIDs.size() != 1) {
-    std::cerr << "TraCR Proc should only have his thread left but got: "
+    std::cerr << "TraCR Proc should only have one thread left but got: "
               << tracrProc->_tracrThreadIDs.size() << "\n";
-    std::exit(EXIT_FAILURE);
-  }
-
-  // Get current thread ID
-  pid_t tid = syscall(SYS_gettid);
-
-  if (tracrProc->_tracrThreadIDs[0] != tid) {
-    std::cerr << "TraCR instrumentation_end called by thread: " << tid
-              << " instead of the main thread: "
-              << tracrProc->_tracrThreadIDs[0] << "\n";
     std::exit(EXIT_FAILURE);
   }
 

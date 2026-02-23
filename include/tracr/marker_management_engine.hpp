@@ -341,9 +341,7 @@ public:
    *
    */
   inline void write_JSON() {
-    // Before dumping, we have to fill in the metadata in the _json_file
     _json_file["pid"] = _lCPUid;
-    _json_file["tid"] = _tid;
     _json_file["start_time"] = _tracr_init_time;
 
     for (const auto &[key, value] : _markerTypes) {
