@@ -73,7 +73,7 @@ enum mark_color : uint16_t {
 /**
  * Proc methods
  */
-#define INSTRUMENTATION_START(path) instrumentation_start(path)
+#define INSTRUMENTATION_START() instrumentation_start()
 
 #define INSTRUMENTATION_END() instrumentation_end()
 
@@ -90,11 +90,10 @@ enum mark_color : uint16_t {
 /**
  * Marker methods
  */
-#define INSTRUMENTATION_MARK_ADD(colorId, label)                               \
-  instrumentation_mark_add(colorId, label)
+#define INSTRUMENTATION_MARK_W_COLOR_ADD(label, colorId)                       \
+  instrumentation_mark_w_color_add(label, colorId)
 
-#define INSTRUMENTATION_MARK_LAZY_ADD(label)                                   \
-  instrumentation_mark_lazy_add(label)
+#define INSTRUMENTATION_MARK_ADD(label) instrumentation_mark_add(label)
 
 #define INSTRUMENTATION_MARK_SET(channelId, eventId, extraId)                  \
   instrumentation_mark_set(channelId, eventId, extraId)
@@ -114,6 +113,8 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_ON() instrumentation_on()
 
 #define INSTRUMENTATION_OFF() instrumentation_off()
+
+#define INSTRUMENTATION_TRACE_PATH(path) instrumentation_trace_path(path)
 
 #define INSTRUMENTATION_ENABLE_FLUSH(enable_flush)                             \
   instrumentation_enable_flush(enable_flush)
@@ -138,7 +139,7 @@ enum mark_color : uint16_t {
 /**
  * Main proc methods
  */
-#define INSTRUMENTATION_START(path) (void)(path)
+#define INSTRUMENTATION_START()
 
 #define INSTRUMENTATION_END()
 
@@ -154,11 +155,12 @@ enum mark_color : uint16_t {
 /**
  * Marker methods
  */
-#define INSTRUMENTATION_MARK_ADD(colorId, label)                               \
+#define INSTRUMENTATION_MARK_W_COLOR_ADD(label, colorId)                       \
   0;                                                                           \
-  (void)(label)
+  (void)(label);                                                               \
+  (void)(colorId)
 
-#define INSTRUMENTATION_MARK_LAZY_ADD(label) 0
+#define INSTRUMENTATION_MARK_ADD(label) 0
 
 #define INSTRUMENTATION_MARK_SET(channelId, eventId, extraId)                  \
   (void)(channelId);                                                           \
@@ -177,6 +179,8 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_ON()
 
 #define INSTRUMENTATION_OFF()
+
+#define INSTRUMENTATION_TRACE_PATH(path) (void)(path)
 
 #define INSTRUMENTATION_ENABLE_FLUSH(enable_flush) (void)(enable_flush)
 

@@ -76,10 +76,11 @@ void *threadFunction(void *arg) {
  */
 int main() {
   // Initialize TraCR
-  INSTRUMENTATION_START("");
+  INSTRUMENTATION_START();
 
-  task_running_id = INSTRUMENTATION_MARK_ADD(MARK_COLOR_MINT, "task running");
-  task_finished_id = INSTRUMENTATION_MARK_LAZY_ADD("task finishing");
+  task_running_id =
+      INSTRUMENTATION_MARK_W_COLOR_ADD("task running", MARK_COLOR_MINT);
+  task_finished_id = INSTRUMENTATION_MARK_ADD("task finishing");
 
   std::vector<pthread_t> threads(NRANKS); // Vector to hold pthreads
   std::vector<int> threadIds(NRANKS);     // Vector to hold thread IDs

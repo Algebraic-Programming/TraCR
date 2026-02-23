@@ -70,9 +70,71 @@ inline std::atomic<uint16_t> lazy_colorId{23};
 inline std::atomic<bool> flush_enabled{true};
 
 /**
+ * User defined output path (default is current directory)
+ */
+inline std::string trace_folder_path{""};
+
+/**
  *
  */
-static inline void instrumentation_start(const std::string &path = "") {
+static inline void instrumentation_thread_init() {
+  // Check if this C++ thread already has an Instance if so, abort
+  if (tracrThread) {
+    std::cerr << "TraCR Thread already exists with TID: "
+              << tracrThread->getTID() << "\n";
+    std::exit(EXIT_FAILURE);
+  }
+
+  pid_t this_tid = syscall(SYS_gettid);
+
+  for (const auto &tid : tracrProc->_tracrThreadIDs) {
+    if (this_tid == tid) {
+      std::cerr << "TraCR thread with this TID already exists in the list in "
+                   "tracr proc\n";
+      std::exit(EXIT_FAILURE);
+    }
+  }
+
+  // Add tracr Thread
+  tracrThread = std::make_unique<TraCRThread>(this_tid);
+
+  // Increase global thread counter
+  ++num_tracr_threads;
+
+  // Add the new TraCR Thread
+  tracrProc->addTraCRThread(this_tid);
+}
+
+/**
+ *
+ */
+static inline void instrumentation_thread_finalize() {
+  // Check if the tracr thread exists
+  if (!tracrThread) {
+    std::cerr << "TraCR Thread doesn't exist\n";
+    std::exit(EXIT_FAILURE);
+  }
+
+  // If it exists check if it is inside the tracr proc list
+  // If yes, erase it, else abort
+  tracrProc->eraseTraCRThread(syscall(SYS_gettid));
+
+  // Flushing the trace of this TraCR thread now
+  if (flush_enabled) {
+    tracrThread->flush_traces(tracrProc->getFolderPath());
+  }
+
+  // Finalize the thread now (destructor of it is also called)
+  tracrThread.reset();
+
+  // Decrease global thread counter
+  --num_tracr_threads;
+}
+
+/**
+ *
+ */
+static inline void instrumentation_start() {
   // Checking if the tracr Proc is ready
   if (tracrProc) {
     std::cerr << "TraCR Proc has already been initialized by the thread: "
@@ -87,19 +149,16 @@ static inline void instrumentation_start(const std::string &path = "") {
   tracrProc = std::make_unique<TraCRProc>(tid);
 
   // Create the folders to store the traces
-  if (!tracrProc->create_folder_recursive(path)) {
-    std::cerr << "Folder creation did not work: " << path << "\n";
-    std::exit(EXIT_FAILURE);
+  if (flush_enabled) {
+    if (!tracrProc->create_folder_recursive(trace_folder_path)) {
+      std::cerr << "Folder creation did not work: " << trace_folder_path
+                << "\n";
+      std::exit(EXIT_FAILURE);
+    }
   }
 
-  // Add tracr Thread
-  tracrThread = std::make_unique<TraCRThread>(tid);
-
-  // Increase global thread counter
-  ++num_tracr_threads;
-
-  // Add its TraCRThread TID
-  tracrProc->addTraCRThread(tid);
+  // Initialize the tracr thread of this tracr proc
+  instrumentation_thread_init();
 
   // TraCR Proc is now ready
   tracr_proc_init = true;
@@ -166,64 +225,7 @@ static inline void instrumentation_end() {
 }
 
 /**
- *
- */
-static inline void instrumentation_thread_init() {
-  // Check if this C++ thread already has an Instance if so, abort
-  if (tracrThread) {
-    std::cerr << "TraCR Thread already exists with TID: "
-              << tracrThread->getTID() << "\n";
-    std::exit(EXIT_FAILURE);
-  }
-
-  pid_t this_tid = syscall(SYS_gettid);
-
-  for (const auto &tid : tracrProc->_tracrThreadIDs) {
-    if (this_tid == tid) {
-      std::cerr << "TraCR thread with this TID already exists in the list in "
-                   "tracr proc\n";
-      std::exit(EXIT_FAILURE);
-    }
-  }
-
-  // Add tracr Thread
-  tracrThread = std::make_unique<TraCRThread>(this_tid);
-
-  // Increase global thread counter
-  ++num_tracr_threads;
-
-  // Add the new TraCR Thread
-  tracrProc->addTraCRThread(this_tid);
-}
-
-/**
- *
- */
-static inline void instrumentation_thread_finalize() {
-  // Check if the tracr thread exists
-  if (!tracrThread) {
-    std::cerr << "TraCR Thread doesn't exist\n";
-    std::exit(EXIT_FAILURE);
-  }
-
-  // If it exists check if it is inside the tracr proc list
-  // If yes, erase it, else abort
-  tracrProc->eraseTraCRThread(syscall(SYS_gettid));
-
-  // Flushing the trace of this TraCR thread now
-  if (flush_enabled) {
-    tracrThread->flush_traces(tracrProc->getFolderPath());
-  }
-
-  // Finalize the thread now (destructor of it is also called)
-  tracrThread.reset();
-
-  // Decrease global thread counter
-  --num_tracr_threads;
-}
-
-/**
- *
+ * Debugging method for checking if something has been stored in tracr thread
  */
 static inline std::string instrumentation_get_thread_trace_str() {
   // Safety checks
@@ -272,13 +274,14 @@ static inline std::string instrumentation_get_thread_trace_str() {
  *
  * NOTE: This is note thread safe! Should be called by one thread.
  *
- * \param[in] colorId
  * \param[in] label
+ * \param[in] colorId
  *
  * @return the eventId of this marker
  */
-static inline uint16_t instrumentation_mark_add(const uint16_t &colorId,
-                                                const std::string &label) {
+static inline uint16_t
+instrumentation_mark_w_color_add(const std::string &label,
+                                 const uint16_t &colorId) {
   if (!enable_tracr) {
     return 0;
   }
@@ -302,7 +305,7 @@ static inline uint16_t instrumentation_mark_add(const uint16_t &colorId,
  *
  * @return the eventId of this marker
  */
-static inline uint16_t instrumentation_mark_lazy_add(const std::string &label) {
+static inline uint16_t instrumentation_mark_add(const std::string &label) {
   if (!enable_tracr) {
     return 0;
   }
@@ -361,6 +364,13 @@ static inline void instrumentation_off() { enable_tracr = false; }
  */
 static inline void instrumentation_enable_flush(const bool &enable_flush) {
   flush_enabled = enable_flush;
+}
+
+/**
+ *
+ */
+static inline void instrumentation_trace_path(const std::string &path) {
+  trace_folder_path = path;
 }
 
 /**

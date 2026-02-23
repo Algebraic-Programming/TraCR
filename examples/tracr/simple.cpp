@@ -44,21 +44,22 @@ int main(void) {
   const size_t N = 4;
 
   // Initialize TraCR
-  INSTRUMENTATION_START("");
+  INSTRUMENTATION_START();
 
   // Each INSTRUMENTATION_MARK_ADD costs around (~3us)
   // Should be done at the beginning or at the ending of the code
   const auto alloc_mem_label_id =
-      INSTRUMENTATION_MARK_ADD(MARK_COLOR_TEAL, "Allocate Memory");
-  const auto fill_mat_label_id = INSTRUMENTATION_MARK_ADD(
-      MARK_COLOR_LAVENDER, "Fill matrices with values");
+      INSTRUMENTATION_MARK_W_COLOR_ADD("Allocate Memory", MARK_COLOR_TEAL);
+  const auto fill_mat_label_id = INSTRUMENTATION_MARK_W_COLOR_ADD(
+      "Fill matrices with values", MARK_COLOR_LAVENDER);
   const auto prt_mat_label_id =
-      INSTRUMENTATION_MARK_ADD(MARK_COLOR_RED, "Print all matrices");
-  const auto mmm_label_id = INSTRUMENTATION_MARK_ADD(MARK_COLOR_PEACH, "MMM");
-  const auto prt_A_label_id = INSTRUMENTATION_MARK_ADD(
-      MARK_COLOR_LIGHT_GRAY, "Print solution of matrix A");
+      INSTRUMENTATION_MARK_W_COLOR_ADD("Print all matrices", MARK_COLOR_RED);
+  const auto mmm_label_id =
+      INSTRUMENTATION_MARK_W_COLOR_ADD("MMM", MARK_COLOR_PEACH);
+  const auto prt_A_label_id = INSTRUMENTATION_MARK_W_COLOR_ADD(
+      "Print solution of matrix A", MARK_COLOR_LIGHT_GRAY);
   const auto free_mem_label_id =
-      INSTRUMENTATION_MARK_ADD(MARK_COLOR_MINT, "Free memory");
+      INSTRUMENTATION_MARK_W_COLOR_ADD("Free memory", MARK_COLOR_MINT);
 
   after_label_set = std::chrono::system_clock::now();
 

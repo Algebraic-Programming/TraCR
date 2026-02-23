@@ -23,23 +23,22 @@
  */
 int main(void) {
   // Initialize TraCR
-  INSTRUMENTATION_START("");
+  INSTRUMENTATION_START();
 
   // performance test
   auto perf_test_start = std::chrono::system_clock::now();
   const int n_sets = 1e2;
   for (int i = 0; i < n_sets; ++i) {
     INSTRUMENTATION_MARK_SET(0, i % 128, 0);
+    INSTRUMENTATION_MARK_RESET(0);
   }
   auto perf_test_stop = std::chrono::system_clock::now();
 
   std::chrono::duration<double> perf_time = (perf_test_stop - perf_test_start);
 
-  printf("Setting %d markers costs: %f[ms] and on average: %f[ns]\n", n_sets,
-         perf_time.count() * 1e6, perf_time.count() * 1e9 / double(n_sets));
-
-  // Mark reset for perfetto format
-  INSTRUMENTATION_MARK_RESET(0);
+  printf("Setting %d markers costs: %f[ms] and on average: %f[ns]\n",
+         2 * n_sets, perf_time.count() * 1e6,
+         perf_time.count() * 1e9 / double(2 * n_sets));
 
   // TraCR finished
   INSTRUMENTATION_END();

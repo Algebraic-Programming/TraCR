@@ -666,10 +666,10 @@ void validate_last_events_for_perfetto(
     const TraCR::Payload &payload = bts_files[i].back();
 
     if (payload.eventId != UINT16_MAX) {
-      std::cout << "Warning: the last event got lost of this thread: "
-                << bts_tids[i]
-                << " has to be a INSTRUMENTATION_MARK_RESET() "
-                   "for perfetto format!\n";
+      std::cout
+          << "WARNING: the last event got lost of this thread: " << bts_tids[i]
+          << ". To not loose this last event add INSTRUMENTATION_MARK_RESET() "
+             "as the last event for Perfetto format.\n";
     }
   }
 }
@@ -710,14 +710,12 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
       start_time = payload.timestamp;
     }
 
-    if (prev_payload[payload.channelId].timestamp != 0) {
-      uint16_t channelId = payload.channelId;
+    uint16_t channelId = payload.channelId;
+    if (prev_payload[channelId].eventId != UINT16_MAX) {
       std::string mType;
 
       if (markerTypes_values.size() > 0) {
-        mType = prev_payload[channelId].eventId == UINT16_MAX
-                    ? ""
-                    : markerTypes_values[prev_payload[channelId].eventId];
+        mType = markerTypes_values[prev_payload[channelId].eventId];
       } else {
         mType = std::to_string(prev_payload[channelId].eventId);
       }
@@ -824,6 +822,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  // Choose either paraver or perfetto format
   if (paraver_format) {
     if (paraver(bts_files, bts_tids, extra_info, metadata, base_path, pid) !=
         0) {
