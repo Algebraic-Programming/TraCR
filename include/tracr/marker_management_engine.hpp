@@ -64,6 +64,43 @@ constexpr size_t CAPACITY = TRACR_CAPACITY;
 #endif
 
 /**
+ * A way to keep the tracrThreads save when adding/erasing
+ */
+inline std::mutex tracrThreadIDsMutex;
+
+/**
+ * A list of all the created _tracrThreadIDs
+ */
+inline std::vector<pid_t> tracrThreadIDs;
+
+/**
+ * Adding a new tracr thread
+ *
+ * This is thread save.
+ */
+inline void addTraCRThread(pid_t tid) {
+  // We have to lock this as this method can be called from multiple threads
+  std::lock_guard<std::mutex> lock(tracrThreadIDsMutex);
+  tracrThreadIDs.push_back(tid);
+}
+
+/**
+ *
+ */
+inline void eraseTraCRThread(const pid_t tid) {
+  std::lock_guard<std::mutex> lock(tracrThreadIDsMutex);
+
+  auto it = std::find(tracrThreadIDs.begin(), tracrThreadIDs.end(), tid);
+
+  if (it == tracrThreadIDs.end()) {
+    std::cerr << "Thread not found in tracr proc list!\n";
+    std::exit(EXIT_FAILURE);
+  }
+
+  tracrThreadIDs.erase(it);
+}
+
+/**
  * Our nanosecond timer
  *
  * This timer can also be changed by the chrono (or PyPTO get_cycle()) method
@@ -285,39 +322,6 @@ public:
   inline std::string getFolderPath() { return _proc_folder_name; }
 
   /**
-   * Adding a new tracr thread
-   *
-   * This is thread save.
-   */
-  inline void addTraCRThread(pid_t tid) {
-    // We have to lock this as this method can be called from multiple threads
-    std::lock_guard<std::mutex> lock(_tracrThreadIDsMutex);
-    _tracrThreadIDs.push_back(tid);
-  }
-
-  /**
-   *
-   */
-  inline void eraseTraCRThread(const pid_t tid) {
-    std::lock_guard<std::mutex> lock(_tracrThreadIDsMutex);
-
-    auto it = std::find(_tracrThreadIDs.begin(), _tracrThreadIDs.end(), tid);
-
-    if (it == _tracrThreadIDs.end()) {
-      std::cerr << "Thread not found in tracr proc list!\n";
-      std::exit(EXIT_FAILURE);
-    }
-
-    if (it == _tracrThreadIDs.begin()) {
-      std::cerr
-          << "It is NOT allowed to thread_finalize the TraCR Proc thread!\n";
-      std::exit(EXIT_FAILURE);
-    }
-
-    _tracrThreadIDs.erase(it);
-  }
-
-  /**
    *
    */
   inline pid_t getTID() { return _tid; }
@@ -377,12 +381,6 @@ public:
     debug_print("'%s' successfully written!", filename.c_str());
   }
 
-  // A list of all the created _tracrThreadIDs
-  // Publicly available as the list has to be checked
-  // The first tracr Thread represents the one for the proc.
-  // Every other is extra.
-  std::vector<pid_t> _tracrThreadIDs;
-
   // The dynamic list to store all the marker types created
   std::unordered_map<uint16_t, std::string> _markerTypes;
 
@@ -398,9 +396,6 @@ private:
 
   // logical CPU ID
   int _lCPUid;
-
-  // A way to keep the tracrThreads save when adding/erasing
-  std::mutex _tracrThreadIDsMutex;
 
   // The name of the proc folder
   std::string _proc_folder_name;
