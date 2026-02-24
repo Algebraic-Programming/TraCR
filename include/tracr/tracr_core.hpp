@@ -178,27 +178,20 @@ static inline void instrumentation_end() {
     std::exit(EXIT_FAILURE);
   }
 
-  if (num_tracr_threads.load() == 0) {
-    std::cerr << "No TraCR Thread existing counter: "
-              << num_tracr_threads.load() << "\n";
-    std::exit(EXIT_FAILURE);
-  }
-
-  if (num_tracr_threads.load() > 1) {
-    std::cerr << "There are still some TraCR Threads running: "
-              << num_tracr_threads.load() << "\n";
-    std::exit(EXIT_FAILURE);
-  }
-
-  if (tracrThreadIDs.size() != 1) {
-    std::cerr << "TraCR Proc should only have one thread left but got: "
-              << tracrThreadIDs.size() << "\n";
-    std::exit(EXIT_FAILURE);
-  }
-
-  // Flushing the trace of this TraCR thread now (if enabled)
+  // Flushing the trace of this TraCR thread/proc now (if enabled)
   if (flush_enabled) {
+    if (num_tracr_threads.load() != 1 || tracrThreadIDs.size() != 1) {
+      std::cerr << "Only one(this) TraCR Threads allowed but got: "
+                << num_tracr_threads.load() << ":" << tracrThreadIDs.size()
+                << "\n";
+      std::exit(EXIT_FAILURE);
+    }
+
+    // flush the traces of this thread
     tracrThread->flush_traces(tracrProc->getFolderPath());
+
+    // Dump TraCR Proc JSON file
+    tracrProc->dump_JSON();
   }
 
   // Destroys the TraCR Thread pointer and calls the destructor
@@ -210,11 +203,6 @@ static inline void instrumentation_end() {
 
   // Decrease global thread counter
   --num_tracr_threads;
-
-  // Dump TraCR Proc JSON file (if enabled)
-  if (flush_enabled) {
-    tracrProc->dump_JSON();
-  }
 
   // Destroys the TraCR Proc pointer and calls the destructor
   tracrProc.reset();
