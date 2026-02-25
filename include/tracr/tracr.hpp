@@ -116,9 +116,6 @@ enum mark_color : uint16_t {
 
 #define INSTRUMENTATION_TRACE_PATH(path) instrumentation_trace_path(path)
 
-#define INSTRUMENTATION_ENABLE_FLUSH(enable_flush)                             \
-  instrumentation_enable_flush(enable_flush)
-
 #define INSTRUMENTATION_IS_PROC_READY() instrumentation_is_proc_ready()
 
 #define INSTRUMENTATION_NUM_TRACR_THREADS() instrumentation_num_tracr_threads()
@@ -181,8 +178,6 @@ enum mark_color : uint16_t {
 #define INSTRUMENTATION_OFF()
 
 #define INSTRUMENTATION_TRACE_PATH(path) (void)(path)
-
-#define INSTRUMENTATION_ENABLE_FLUSH(enable_flush) (void)(enable_flush)
 
 #define INSTRUMENTATION_IS_PROC_READY() false
 

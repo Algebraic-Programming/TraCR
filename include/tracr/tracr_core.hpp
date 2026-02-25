@@ -28,7 +28,6 @@
 #include <string>
 #include <sys/syscall.h> // syscall()
 #include <unistd.h>      // SYS_gettid
-#include <unordered_map>
 
 #include "marker_management_engine.hpp"
 
@@ -50,7 +49,8 @@ inline thread_local std::unique_ptr<TraCRThread> tracrThread;
 inline std::atomic<bool> enable_tracr{true};
 
 /**
- * A way to check how many TraCR threads exists
+ * A way to check how many TraCR proc exists.
+ * This is more reliable than checking if the TraCR proc is not a nullptr
  */
 inline std::atomic<bool> tracr_proc_init{false};
 
@@ -63,11 +63,6 @@ inline std::atomic<int> num_tracr_threads{0};
  * Lazy add color definition method for the Paraver format
  */
 inline std::atomic<uint16_t> lazy_colorId{23};
-
-/**
- * A global boolean flag to check if we want to flush to file.
- */
-inline std::atomic<bool> flush_enabled{true};
 
 /**
  * User defined output path (default is current directory)
@@ -104,9 +99,9 @@ static inline void instrumentation_thread_finalize() {
   }
 
   // Flushing the trace of this TraCR thread now
-  if (flush_enabled) {
-    tracrThread->flush_traces(tracrProc->getFolderPath());
-  }
+#ifndef TRACR_DISABLE_FLUSH
+  tracrThread->flush_traces(tracrProc->getFolderPath());
+#endif
 
   // Finalize the thread now (destructor of it is also called)
   tracrThread.reset();
@@ -132,14 +127,13 @@ static inline void instrumentation_start() {
   // Initialize the TraCRProc
   tracrProc = std::make_unique<TraCRProc>(tid);
 
-  // Create the folders to store the traces
-  if (flush_enabled) {
-    if (!tracrProc->create_folder_recursive(trace_folder_path)) {
-      std::cerr << "Folder creation did not work: " << trace_folder_path
-                << "\n";
-      std::exit(EXIT_FAILURE);
-    }
+  // Create the folders to store the traces (if enabled)
+#ifndef TRACR_DISABLE_FLUSH
+  if (!tracrProc->create_folder_recursive(trace_folder_path)) {
+    std::cerr << "Folder creation did not work: " << trace_folder_path << "\n";
+    std::exit(EXIT_FAILURE);
   }
+#endif
 
   // Initialize the tracr thread of this tracr proc
   instrumentation_thread_init();
@@ -163,19 +157,19 @@ static inline void instrumentation_end() {
   }
 
   // Flushing the trace of this TraCR thread/proc now (if enabled)
-  if (flush_enabled) {
-    if (num_tracr_threads.load() != 1) {
-      std::cerr << "Only one(this) TraCR Threads allowed but got: "
-                << num_tracr_threads.load() << "\n";
-      std::exit(EXIT_FAILURE);
-    }
-
-    // flush the traces of this thread
-    tracrThread->flush_traces(tracrProc->getFolderPath());
-
-    // Dump TraCR Proc JSON file
-    tracrProc->dump_JSON();
+#ifndef TRACR_DISABLE_FLUSH
+  if (num_tracr_threads.load() != 1) {
+    std::cerr << "Only one(this) TraCR Threads allowed but got: "
+              << num_tracr_threads.load() << "\n";
+    std::exit(EXIT_FAILURE);
   }
+
+  // flush the traces of this thread
+  tracrThread->flush_traces(tracrProc->getFolderPath());
+
+  // Dump TraCR Proc JSON file
+  tracrProc->dump_JSON();
+#endif
 
   // Destroys the TraCR Thread pointer and calls the destructor
   tracrThread.reset();
@@ -324,13 +318,6 @@ static inline void instrumentation_on() { enable_tracr = true; }
  *
  */
 static inline void instrumentation_off() { enable_tracr = false; }
-
-/**
- *
- */
-static inline void instrumentation_enable_flush(const bool &enable_flush) {
-  flush_enabled = enable_flush;
-}
 
 /**
  *
