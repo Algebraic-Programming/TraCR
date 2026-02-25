@@ -29,7 +29,6 @@
 #include <fstream> // To store files
 #include <iomanip>
 #include <iostream>
-#include <mutex>
 #include <nlohmann/json.hpp>
 #include <sched.h> // sched_getcpu()
 #include <string>
@@ -62,43 +61,6 @@ constexpr size_t CAPACITY = TRACR_CAPACITY;
 #else
 #define debug_print(fmt, ...)
 #endif
-
-/**
- * A way to keep the tracrThreads save when adding/erasing
- */
-inline std::mutex tracrThreadIDsMutex;
-
-/**
- * A list of all the created _tracrThreadIDs
- */
-inline std::vector<pid_t> tracrThreadIDs;
-
-/**
- * Adding a new tracr thread
- *
- * This is thread save.
- */
-inline void addTraCRThread(pid_t tid) {
-  // We have to lock this as this method can be called from multiple threads
-  std::lock_guard<std::mutex> lock(tracrThreadIDsMutex);
-  tracrThreadIDs.push_back(tid);
-}
-
-/**
- *
- */
-inline void eraseTraCRThread(const pid_t tid) {
-  std::lock_guard<std::mutex> lock(tracrThreadIDsMutex);
-
-  auto it = std::find(tracrThreadIDs.begin(), tracrThreadIDs.end(), tid);
-
-  if (it == tracrThreadIDs.end()) {
-    std::cerr << "Thread not found in tracr proc list!\n";
-    std::exit(EXIT_FAILURE);
-  }
-
-  tracrThreadIDs.erase(it);
-}
 
 /**
  * Our nanosecond timer
