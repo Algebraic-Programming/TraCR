@@ -70,13 +70,81 @@ constexpr size_t CAPACITY = TRACR_CAPACITY;
  */
 class NanoTimer {
 public:
-  // get current time in nanoseconds
+  // Always returns nanoseconds
   static uint64_t now() {
+#ifdef USE_HW_COUNTER
+    return ticks_to_ns(raw());
+#else
+    return clock_ns();
+#endif
+  }
+
+#ifdef USE_HW_COUNTER
+
+  // Raw hardware counter ticks
+  static inline uint64_t raw() {
+#if defined(__aarch64__)
+    uint64_t val;
+    asm volatile("mrs %0, cntvct_el0" : "=r"(val));
+    return val;
+#elif defined(__x86_64__)
+    unsigned hi, lo;
+    asm volatile("rdtsc" : "=a"(lo), "=d"(hi));
+    return ((uint64_t)hi << 32) | lo;
+#else
+#error "Unsupported architecture for HW counter"
+#endif
+  }
+
+  // Counter frequency (ticks per second)
+  static inline uint64_t frequency() {
+#if defined(__aarch64__)
+    uint64_t freq;
+    asm volatile("mrs %0, cntfrq_el0" : "=r"(freq));
+    return freq;
+#elif defined(__x86_64__)
+    return tsc_frequency();
+#endif
+  }
+
+#endif
+
+private:
+  static inline uint64_t clock_ns() {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
     return static_cast<uint64_t>(ts.tv_sec) * 1'000'000'000ULL +
            static_cast<uint64_t>(ts.tv_nsec);
   }
+
+#ifdef USE_HW_COUNTER
+  static inline uint64_t ticks_to_ns(uint64_t ticks) {
+    static const uint64_t freq = frequency();
+    return (ticks * 1'000'000'000ULL) / freq;
+  }
+#endif
+
+#if defined(__x86_64__) && defined(USE_HW_COUNTER)
+  // Warning: Simplified TSC calibration (see note below)
+  static uint64_t tsc_frequency() {
+    // Fallback to clock-based calibration
+    // Runs once (static)
+    static uint64_t freq = [] {
+      uint64_t t0 = raw();
+      uint64_t n0 = clock_ns();
+
+      // wait ~50ms
+      struct timespec req = {0, 50'000'000};
+      nanosleep(&req, nullptr);
+
+      uint64_t t1 = raw();
+      uint64_t n1 = clock_ns();
+
+      return (t1 - t0) * 1'000'000'000ULL / (n1 - n0);
+    }();
+    return freq;
+  }
+#endif
 };
 
 /**

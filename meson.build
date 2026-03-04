@@ -15,6 +15,7 @@ if get_option('compileWarningsAsErrors') == true
 endif
 
 InstrumentationBuildCppArgs = [
+ '-DUSE_HW_COUNTER',
  '-Wfatal-errors',
   warningAsErrorFlags,
  ]
