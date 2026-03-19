@@ -19,6 +19,8 @@
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <tracr/marker_management_engine.hpp>
@@ -71,10 +73,20 @@ constexpr const char PARAVER_HEADER[] = "DEFAULT_OPTIONS\n\n"
                                         "VALUES\n";
 
 /**
- * A global boolean flag to dump the traces directly in the terminal
- * for debugging
+ * Type of tracr file processing format
  */
-bool dump = false;
+enum class Format { PARAVER, DUMP, PERFETTO };
+
+/**
+ * string to enum format for switch case
+ */
+Format parseFormat(const std::string &format) {
+  if (format == "paraver")
+    return Format::PARAVER;
+  if (format == "dump")
+    return Format::DUMP;
+  return Format::PERFETTO; // default
+}
 
 /**
  * A function to load a bts file into a std::vector<Payload>
@@ -423,21 +435,11 @@ int create_tracr_prv(const fs::path &base_path, const nlohmann::json &metadata,
   uint64_t start_time = uint64_t(metadata["start_time"]);
   std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
 
-  if (dump) {
-    std::cout << "Thread[x]: [channelId, eventId, extraId, timestamp]\n";
-  }
-
   bool ptrs_end = false;
   while (!ptrs_end) {
 
     TraCR::Payload payload;
     size_t index = find_next_payload(bts_files, bts_files_ptrs, payload);
-
-    if (dump) {
-      std::cout << "Thread[" << index << "]: [" << payload.channelId << ", "
-                << payload.eventId << ", " << payload.extraId << ", "
-                << payload.timestamp << "]\n";
-    }
 
     if (first) {
       first = false;
@@ -656,20 +658,10 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   std::vector<TraCR::Payload> prev_payload(
       num_channels, TraCR::Payload{0, UINT16_MAX, UINT32_MAX, 0});
 
-  if (dump) {
-    std::cout << "Thread[x]: [channelId, eventId, extraId, timestamp]\n";
-  }
-
   bool ptrs_end = false;
   while (!ptrs_end) {
     TraCR::Payload payload;
     size_t index = find_next_payload(bts_files, bts_files_ptrs, payload);
-
-    if (dump) {
-      std::cout << "Thread[" << index << "]: [" << payload.channelId << ", "
-                << payload.eventId << ", " << payload.extraId << ", "
-                << payload.timestamp << "]\n";
-    }
 
     if (first) {
       first = false;
@@ -716,6 +708,83 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
 }
 
 /**
+ * Dump trace info to terminal
+ */
+int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
+              const std::vector<pid_t> &bts_tids, const fs::path base_path) {
+
+  // ---- Dump payloads chronologically ----
+  std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
+
+  // A container to track if push/pop count is right per channelId
+  std::unordered_map<uint16_t, int32_t> channelIds_check;
+
+  // A container to track if push/pop count is right per extraId
+  std::unordered_map<uint16_t, std::unordered_set<uint32_t>> extraIds_check;
+
+  std::cout << "Thread[x]: [channelId, eventId, extraId, timestamp]\n";
+
+  bool ptrs_end = false;
+  while (!ptrs_end) {
+
+    TraCR::Payload payload;
+    size_t index = find_next_payload(bts_files, bts_files_ptrs, payload);
+
+    // Dump payload
+    std::cout << "Thread[" << bts_tids[index] << "]: [" << payload.channelId
+              << ", " << payload.eventId << ", " << payload.extraId << ", "
+              << payload.timestamp << "]\n";
+
+    // Check if the channelId exists and if so, incr/decr if it is a
+    // SET()/RESET()
+    auto it = channelIds_check.find(payload.channelId);
+    if (it == channelIds_check.end()) {
+      channelIds_check.insert({payload.channelId, 0});
+    } else {
+      if (payload.eventId == UINT16_MAX) {
+        --(it->second);
+      } else {
+        ++(it->second);
+      }
+    }
+
+    // Check if the extraId exists
+    auto &inner_set =
+        extraIds_check[payload.channelId]; // operator[] creates if missing
+    auto it_inner = inner_set.find(payload.extraId);
+    if (it_inner == inner_set.end()) {
+      inner_set.insert(payload.extraId);
+    } else {
+      inner_set.erase(it_inner);
+    }
+
+    ptrs_end = advance_ptrs_and_check_end(bts_files_ptrs, bts_files, index);
+  }
+
+  // Final check if all the channelIds got Pushed/Poped
+  std::cout << "\nChannels which do not follow Push/Pop methology: {channelId, "
+               "count}\n";
+  for (const auto &[key, value] : channelIds_check) {
+    if (value != 0) {
+    std::cout << "{" << key << ", " << value << "}\n";
+    }
+  }
+
+  // Final check if all the extraIds got Pushed/Poped
+  std::cout << "\nChannels which do not follow Push/Pop methology for the "
+               "extraIds: channelId: {extraIds...}\n";
+  for (const auto &[channelId, inner_set] : extraIds_check) {
+    std::cout << channelId << ": {";
+    for (const auto &value : inner_set) {
+      std::cout << value << ", ";
+    }
+    std::cout << "}\n\n";
+  }
+
+  return 0;
+}
+
+/**
  *  The main function to transform bts files into readable files
  *
  *  Use:
@@ -726,14 +795,14 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
  *  2. Create a perfetto format file:
  *    - ./tracr_process <path-to-tracr/> paraver
  *
- *  3. Optional: Dump the traces directly in the terminal
- *    - ./tracr_process <path-to-tracr/> perfetto 1
- *    - ./tracr_process <path-to-tracr/> paraver 1
+ *  3. Dump traces and informations directly in the terminal (for debugging):
+ *    - ./tracr_process <path-to-tracr/> dump
  */
 int main(int argc, char *argv[]) {
   // Pass the tracr file and other additional arguments
-  if (argc < 2) {
-    std::cerr << "Usage: " << argv[0] << " <folder_path>\n";
+  if (argc < 2 || argc > 3) {
+    std::cerr << "Usage: " << argv[0] << " <folder_path>\n OR " << argv[0]
+              << " <folder_path>" << "<'perfetto'|'paraver'|'dump'>\n";
     return 1;
   }
 
@@ -745,20 +814,9 @@ int main(int argc, char *argv[]) {
   }
 
   // Optional: Choose "paraver" or "perfetto" format, default "perfetto"
-  bool paraver_format = false;
-  if (argc > 2) {
-    std::string type = argv[2];
-
-    if (type == "paraver") {
-      paraver_format = true;
-    } else if (type == "perfetto") {
-      paraver_format = false;
-    }
-  }
-
-  // Optional: Dumping the traces directly in the terminal for inspection
-  if (argc > 3) {
-    dump = std::stoi(argv[3]);
+  std::string format = "perfetto";
+  if (argc == 3) {
+    format = argv[2];
   }
 
   // A container to keep all the bts files in one for the proc
@@ -774,7 +832,7 @@ int main(int argc, char *argv[]) {
   /**
    * Iterate over all entries in the base folder
    *
-   * NOTE: multiple proc.* are currenttly not yet allowed, the code will
+   * NOTE: multiple proc.* are currently not yet allowed, the code will
    * terminate if this is the case.
    */
   if (extract_bts_metadata(bts_files, bts_tids, metadata, base_path, pid) !=
@@ -784,16 +842,25 @@ int main(int argc, char *argv[]) {
   }
 
   // Choose either paraver or perfetto format
-  if (paraver_format) {
+  switch (parseFormat(format)) {
+  case Format::PARAVER:
     if (paraver(bts_files, bts_tids, metadata, base_path, pid) != 0) {
       std::cerr << "paraver() failed\n";
       return 1;
     }
-  } else {
+    break;
+  case Format::DUMP:
+    if (dump_info(bts_files, bts_tids, base_path) != 0) {
+      std::cerr << "dump_info() failed\n";
+      return 1;
+    }
+    break;
+  case Format::PERFETTO:
     if (perfetto(bts_files, bts_tids, metadata, base_path, pid) != 0) {
       std::cerr << "perfetto() failed\n";
       return 1;
     }
+    break;
   }
 
   std::cout << "TraCR Process finished successfully\n";

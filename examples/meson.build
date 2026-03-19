@@ -32,7 +32,7 @@ foreach args : cpp_args_list
                     is_parallel : false,
                     priority : 2)
 
-            foreach format : ['paraver', 'perfetto']
+            foreach format : ['paraver', 'perfetto', 'dump']
                 test('tracr_process_' + format + '_' + test_name, tracr_process,
                     workdir: meson.current_build_dir() / '../postprocessing',
                     args : [ output_dir / 'tracr', format],
