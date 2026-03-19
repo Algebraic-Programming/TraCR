@@ -778,8 +778,9 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
     for (const auto &value : inner_set) {
       std::cout << value << ", ";
     }
-    std::cout << "}\n\n";
+    std::cout << "}\n";
   }
+  std::cout << "\n";
 
   return 0;
 }
