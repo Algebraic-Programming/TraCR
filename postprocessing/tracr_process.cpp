@@ -737,15 +737,11 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
 
     // Check if the channelId exists and if so, incr/decr if it is a
     // SET()/RESET()
-    auto it = channelIds_check.find(payload.channelId);
-    if (it == channelIds_check.end()) {
-      channelIds_check.insert({payload.channelId, 0});
+    int32_t &counter = channelIds_check[payload.channelId];
+    if (payload.eventId == UINT16_MAX) {
+      --counter; // pop
     } else {
-      if (payload.eventId == UINT16_MAX) {
-        --(it->second);
-      } else {
-        ++(it->second);
-      }
+      ++counter; // push
     }
 
     // Check if the extraId exists
@@ -766,7 +762,7 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
                "count}\n";
   for (const auto &[key, value] : channelIds_check) {
     if (value != 0) {
-    std::cout << "{" << key << ", " << value << "}\n";
+      std::cout << "{" << key << ", " << value << "}\n";
     }
   }
 
@@ -774,11 +770,13 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   std::cout << "\nChannels which do not follow Push/Pop methology for the "
                "extraIds: channelId: {extraIds...}\n";
   for (const auto &[channelId, inner_set] : extraIds_check) {
-    std::cout << channelId << ": {";
-    for (const auto &value : inner_set) {
-      std::cout << value << ", ";
+    if (inner_set.size() > 0) {
+      std::cout << channelId << ": {";
+      for (const auto &value : inner_set) {
+        std::cout << value << ", ";
+      }
+      std::cout << "}\n";
     }
-    std::cout << "}\n";
   }
   std::cout << "\n";
 
