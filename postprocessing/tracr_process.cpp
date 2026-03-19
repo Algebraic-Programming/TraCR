@@ -71,6 +71,12 @@ constexpr const char PARAVER_HEADER[] = "DEFAULT_OPTIONS\n\n"
                                         "VALUES\n";
 
 /**
+ * A global boolean flag to dump the traces directly in the terminal
+ * for debugging
+ */
+bool dump = false;
+
+/**
  * A function to load a bts file into a std::vector<Payload>
  */
 bool load_bts_file(const fs::path &filepath,
@@ -100,33 +106,6 @@ bool load_bts_file(const fs::path &filepath,
 
   out_count = count;
   return true;
-}
-
-/**
- * A function for extracting the optional json information
- */
-int get_extra_info(nlohmann::json &extra_info, char *argv3) {
-  // Load the json metadata file
-  fs::path json_file = argv3;
-  if (fs::exists(json_file)) {
-    std::ifstream ifs(json_file);
-    if (ifs.is_open()) {
-      try {
-        ifs >> extra_info;
-        std::cout << "  Loaded custom JSON:\n" << extra_info.dump(4) << "\n";
-      } catch (const std::exception &e) {
-        std::cerr << "  Failed to parse JSON: " << e.what() << "\n";
-        return 1;
-      }
-    } else {
-      std::cerr << "  Failed to open: " << argv3 << "\n";
-      return 1;
-    }
-  } else {
-    std::cerr << "  No '" << argv3 << "' found\n";
-    return 1;
-  }
-  return 0;
 }
 
 /**
@@ -208,7 +187,7 @@ int load_metadata_json(const fs::path &proc_path, nlohmann::json &metadata) {
 
   try {
     ifs >> metadata;
-    std::cout << "  Loaded metadata.json:\n" << metadata.dump(4) << "\n";
+    std::cout << "  Loaded metadata.json:\n";
   } catch (const std::exception &e) {
     std::cerr << "  Failed to parse JSON: " << e.what() << "\n";
     return 1;
@@ -337,7 +316,6 @@ int copy_state_cfg(const fs::path &base_path) {
  * Create the tracr.pcf file
  */
 int create_tracr_pcf(const fs::path &base_path,
-                     const nlohmann::json &extra_info,
                      const nlohmann::json &metadata) {
   std::ofstream out(base_path / "tracr.pcf");
   if (!out) {
@@ -351,11 +329,7 @@ int create_tracr_pcf(const fs::path &base_path,
   // Write markerTypes as VALUES
   const nlohmann::json *markerTypes_json = nullptr;
 
-  if (extra_info.contains("markerTypes") &&
-      !extra_info["markerTypes"].is_null()) {
-    markerTypes_json = &extra_info["markerTypes"];
-  } else if (metadata.contains("markerTypes") &&
-             !metadata["markerTypes"].is_null()) {
+  if (metadata.contains("markerTypes") && !metadata["markerTypes"].is_null()) {
     markerTypes_json = &metadata["markerTypes"];
   }
 
@@ -375,20 +349,12 @@ int create_tracr_pcf(const fs::path &base_path,
 /**
  *
  */
-void extract_channel_info(const nlohmann::json &extra_info,
-                          const nlohmann::json &metadata, size_t &num_channels,
+void extract_channel_info(const nlohmann::json &metadata, size_t &num_channels,
                           std::stringstream &ss) {
   num_channels = 1; // default
 
-  if (extra_info.contains("channel_names") &&
-      !extra_info["channel_names"].is_null()) {
-
-    num_channels = extra_info["channel_names"].size();
-    for (auto &channel_name : extra_info["channel_names"])
-      ss << channel_name << "\n";
-
-  } else if (metadata.contains("channel_names") &&
-             !metadata["channel_names"].is_null()) {
+  if (metadata.contains("channel_names") &&
+      !metadata["channel_names"].is_null()) {
 
     num_channels = metadata["channel_names"].size();
     for (auto &channel_name : metadata["channel_names"])
@@ -404,17 +370,12 @@ void extract_channel_info(const nlohmann::json &extra_info,
 /**
  *
  */
-std::vector<std::string> extract_marker_keys(const nlohmann::json &extra_info,
-                                             const nlohmann::json &metadata) {
+std::vector<std::string> extract_marker_keys(const nlohmann::json &metadata) {
   std::vector<std::string> markerTypes_keys;
 
   const nlohmann::json *marker_json = nullptr;
 
-  if (extra_info.contains("markerTypes") &&
-      !extra_info["markerTypes"].is_null()) {
-    marker_json = &extra_info["markerTypes"];
-  } else if (metadata.contains("markerTypes") &&
-             !metadata["markerTypes"].is_null()) {
+  if (metadata.contains("markerTypes") && !metadata["markerTypes"].is_null()) {
     marker_json = &metadata["markerTypes"];
   }
 
@@ -430,9 +391,7 @@ std::vector<std::string> extract_marker_keys(const nlohmann::json &extra_info,
 /**
  * Create the tracr.prv file for Paraver format
  */
-int create_tracr_prv(const fs::path &base_path,
-                     const nlohmann::json &extra_info,
-                     const nlohmann::json &metadata,
+int create_tracr_prv(const fs::path &base_path, const nlohmann::json &metadata,
                      const std::vector<std::vector<TraCR::Payload>> &bts_files,
                      size_t &num_channels, std::stringstream &ss) {
   std::ofstream out(base_path / "tracr.prv");
@@ -442,7 +401,7 @@ int create_tracr_prv(const fs::path &base_path,
   }
 
   // Determine channel names / number of channels
-  extract_channel_info(extra_info, metadata, num_channels, ss);
+  extract_channel_info(metadata, num_channels, ss);
 
   // ---- Write Paraver header ----
   auto now = std::chrono::system_clock::now();
@@ -457,20 +416,28 @@ int create_tracr_prv(const fs::path &base_path,
       << "):00000000000000000000_ns:0:1:1(" << num_channels << ":1)\n";
 
   // ---- Extract markerTypes keys ----
-  std::vector<std::string> markerTypes_keys =
-      extract_marker_keys(extra_info, metadata);
+  std::vector<std::string> markerTypes_keys = extract_marker_keys(metadata);
 
   // ---- Merge and write payloads ----
   bool first = true;
   uint64_t start_time = uint64_t(metadata["start_time"]);
   std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
 
-  bool ptrs_end = false;
+  if (dump) {
+    std::cout << "Thread[x]: [channelId, eventId, extraId, timestamp]\n";
+  }
 
+  bool ptrs_end = false;
   while (!ptrs_end) {
 
     TraCR::Payload payload;
     size_t index = find_next_payload(bts_files, bts_files_ptrs, payload);
+
+    if (dump) {
+      std::cout << "Thread[" << index << "]: [" << payload.channelId << ", "
+                << payload.eventId << ", " << payload.extraId << ", "
+                << payload.timestamp << "]\n";
+    }
 
     if (first) {
       first = false;
@@ -536,8 +503,8 @@ int create_tracr_row(const fs::path &base_path, size_t num_channels,
  * Store in Paraver format
  */
 int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
-            const std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
-            nlohmann::json &metadata, const fs::path base_path, int &pid) {
+            const std::vector<pid_t> &bts_tids, nlohmann::json &metadata,
+            const fs::path base_path, int &pid) {
   /**
    * Store the state.cfg in the given tracr folder
    */
@@ -548,7 +515,7 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   /**
    * Create the tracr.pcf file
    */
-  if (create_tracr_pcf(base_path, extra_info, metadata) != 0) {
+  if (create_tracr_pcf(base_path, metadata) != 0) {
     return 1;
   }
 
@@ -557,8 +524,7 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
    */
   size_t num_channels = 1;
   std::stringstream ss;
-  if (create_tracr_prv(base_path, extra_info, metadata, bts_files, num_channels,
-                       ss) != 0) {
+  if (create_tracr_prv(base_path, metadata, bts_files, num_channels, ss) != 0) {
     return 1;
   }
 
@@ -576,19 +542,15 @@ int paraver(const std::vector<std::vector<TraCR::Payload>> &bts_files,
  *
  */
 uint32_t
-populate_perfetto_channels(const nlohmann::json &extra_info,
-                           const nlohmann::json &metadata, uint32_t pid,
+populate_perfetto_channels(const nlohmann::json &metadata, uint32_t pid,
                            nlohmann::json &perfetto,
                            std::vector<std::string> &markerTypes_values) {
   uint32_t num_channels = 1; // default
   const nlohmann::json *channels_json = nullptr;
 
   // Determine which JSON array to use for channel names
-  if (extra_info.contains("channel_names") &&
-      !extra_info["channel_names"].is_null()) {
-    channels_json = &extra_info["channel_names"];
-  } else if (metadata.contains("channel_names") &&
-             !metadata["channel_names"].is_null()) {
+  if (metadata.contains("channel_names") &&
+      !metadata["channel_names"].is_null()) {
     channels_json = &metadata["channel_names"];
   }
 
@@ -606,7 +568,6 @@ populate_perfetto_channels(const nlohmann::json &extra_info,
       channel_name = (*channels_json)[i];
     } else {
       channel_name = "Channel_" + std::to_string(i + 1);
-      std::cout << channel_name << "\n";
     }
 
     perfetto.push_back({{"name", "thread_name"},
@@ -618,13 +579,7 @@ populate_perfetto_channels(const nlohmann::json &extra_info,
 
   // Convert metadata "markerTypes" into a std::vector of keys for easy/fast
   // access
-  if (extra_info.contains("markerTypes") &&
-      !extra_info["markerTypes"].is_null()) {
-    for (auto &[key, value] : extra_info["markerTypes"].items()) {
-      markerTypes_values.push_back(value);
-    }
-  } else if (metadata.contains("markerTypes") &&
-             !metadata["markerTypes"].is_null()) {
+  if (metadata.contains("markerTypes") && !metadata["markerTypes"].is_null()) {
     for (auto &[key, value] : metadata["markerTypes"].items()) {
       markerTypes_values.push_back(value);
     }
@@ -678,8 +633,8 @@ void validate_last_events_for_perfetto(
  * Store in Perfetto format
  */
 int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
-             const std::vector<pid_t> &bts_tids, nlohmann::json &extra_info,
-             nlohmann::json &metadata, const fs::path base_path, int &pid) {
+             const std::vector<pid_t> &bts_tids, nlohmann::json &metadata,
+             const fs::path base_path, int &pid) {
 
   // perfetto json array
   nlohmann::json perfetto = nlohmann::json::array();
@@ -691,8 +646,8 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
 
   // Define channel names in Perfetto
   std::vector<std::string> markerTypes_values;
-  uint32_t num_channels = populate_perfetto_channels(
-      extra_info, metadata, pid, perfetto, markerTypes_values);
+  uint32_t num_channels =
+      populate_perfetto_channels(metadata, pid, perfetto, markerTypes_values);
 
   // Now we have to travers the map of all the std::vector<Payload>
   bool first = true;
@@ -700,10 +655,21 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
   std::vector<TraCR::Payload> prev_payload(
       num_channels, TraCR::Payload{0, UINT16_MAX, UINT32_MAX, 0});
+
+  if (dump) {
+    std::cout << "Thread[x]: [channelId, eventId, extraId, timestamp]\n";
+  }
+
   bool ptrs_end = false;
   while (!ptrs_end) {
     TraCR::Payload payload;
     size_t index = find_next_payload(bts_files, bts_files_ptrs, payload);
+
+    if (dump) {
+      std::cout << "Thread[" << index << "]: [" << payload.channelId << ", "
+                << payload.eventId << ", " << payload.extraId << ", "
+                << payload.timestamp << "]\n";
+    }
 
     if (first) {
       first = false;
@@ -760,9 +726,9 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
  *  2. Create a perfetto format file:
  *    - ./tracr_process <path-to-tracr/> paraver
  *
- *  3. Pass extra informations about "channel_names" and/or "markerTypes"
- *    - ./tracr_process <path-to-tracr/> perfetto extra_info.json
- *    - ./tracr_process <path-to-tracr/> paraver extra_info.json
+ *  3. Optional: Dump the traces directly in the terminal
+ *    - ./tracr_process <path-to-tracr/> perfetto 1
+ *    - ./tracr_process <path-to-tracr/> paraver 1
  */
 int main(int argc, char *argv[]) {
   // Pass the tracr file and other additional arguments
@@ -790,14 +756,9 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  // Optional: Provide "channel_names" and/or "markerTypes" directly by the
-  // user. if they are not provided by the metadata.json
-  nlohmann::json extra_info;
+  // Optional: Dumping the traces directly in the terminal for inspection
   if (argc > 3) {
-    if (get_extra_info(extra_info, argv[3]) != 0) {
-      std::cerr << "get_extra_info() failed\n";
-      return 1;
-    };
+    dump = std::stoi(argv[3]);
   }
 
   // A container to keep all the bts files in one for the proc
@@ -824,18 +785,18 @@ int main(int argc, char *argv[]) {
 
   // Choose either paraver or perfetto format
   if (paraver_format) {
-    if (paraver(bts_files, bts_tids, extra_info, metadata, base_path, pid) !=
-        0) {
+    if (paraver(bts_files, bts_tids, metadata, base_path, pid) != 0) {
       std::cerr << "paraver() failed\n";
       return 1;
     }
   } else {
-    if (perfetto(bts_files, bts_tids, extra_info, metadata, base_path, pid) !=
-        0) {
+    if (perfetto(bts_files, bts_tids, metadata, base_path, pid) != 0) {
       std::cerr << "perfetto() failed\n";
       return 1;
     }
   }
+
+  std::cout << "TraCR Process finished successfully\n";
 
   return 0;
 }
