@@ -711,16 +711,22 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
  * Dump trace info to terminal
  */
 int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
-              const std::vector<pid_t> &bts_tids, const fs::path base_path) {
+              const std::vector<pid_t> &bts_tids, nlohmann::json &metadata, const fs::path base_path) {
 
   // ---- Dump payloads chronologically ----
   std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
 
-  // A container to track if push/pop count is right per channelId
+  // 1. A container to track if push/pop count is right per channelId
   std::unordered_map<uint16_t, int32_t> channelIds_check;
 
-  // A container to track if push/pop count is right per extraId
+  // 2. A container to track if push/pop count is right per extraId
   std::unordered_map<uint16_t, std::unordered_set<uint32_t>> extraIds_check;
+
+  // 3. A container to count how many traces per channel has been pushed
+  std::unordered_map<uint16_t, size_t> ntraces_per_channel;
+
+  // 4. A container for counting the type of markers that has been pushed
+  std::unordered_map<uint16_t, size_t> trace_type_count;
 
   std::cout << "Thread[x]: [channelId, eventId, extraId, timestamp]\n";
 
@@ -735,7 +741,7 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
               << ", " << payload.eventId << ", " << payload.extraId << ", "
               << payload.timestamp << "]\n";
 
-    // Check if the channelId exists and if so, incr/decr if it is a
+    // 1. Check if the channelId exists and if so, incr/decr if it is a
     // SET()/RESET()
     int32_t &counter = channelIds_check[payload.channelId];
     if (payload.eventId == UINT16_MAX) {
@@ -744,7 +750,7 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
       ++counter; // push
     }
 
-    // Check if the extraId exists
+    // 2. Check if the extraId exists
     auto &inner_set =
         extraIds_check[payload.channelId]; // operator[] creates if missing
     auto it_inner = inner_set.find(payload.extraId);
@@ -754,10 +760,16 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
       inner_set.erase(it_inner);
     }
 
+    // 3. Count trace of channel
+    ntraces_per_channel[payload.channelId]++; // operator[] creates if missing
+
+    // 4. Count the marker types
+    trace_type_count[payload.eventId]++; // operator[] creates if missing
+
     ptrs_end = advance_ptrs_and_check_end(bts_files_ptrs, bts_files, index);
   }
 
-  // Final check if all the channelIds got Pushed/Poped
+  // 1. Final check if all the channelIds got Pushed/Poped
   std::cout << "\nChannels which do not follow Push/Pop methology: {channelId, "
                "count}\n";
   for (const auto &[key, value] : channelIds_check) {
@@ -766,7 +778,7 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
     }
   }
 
-  // Final check if all the extraIds got Pushed/Poped
+  // 2. Final check if all the extraIds got Pushed/Poped
   std::cout << "\nChannels which do not follow Push/Pop methology for the "
                "extraIds: channelId: {extraIds...}\n";
   for (const auto &[channelId, inner_set] : extraIds_check) {
@@ -777,6 +789,20 @@ int dump_info(const std::vector<std::vector<TraCR::Payload>> &bts_files,
       }
       std::cout << "}\n";
     }
+  }
+  std::cout << "\n";
+
+  // 3. Dump the number of traces per channel in the terminal
+  std::cout << "Number of traces per channel: [channelId, count]\n";
+  for(const auto& [key, value] : ntraces_per_channel) {
+    std::cout << "[" << key << ", " << value << "]\n";
+  }
+  std::cout << "\n";
+
+  // 4. Dump the different markertypes (event types)
+  std::cout << "The different event (marker) types counted: [eventId, count]\n";
+  for(const auto& [key, value] : trace_type_count) {
+    std::cout << "[" << key << ", " << value << "]\n";
   }
   std::cout << "\n";
 
@@ -849,7 +875,7 @@ int main(int argc, char *argv[]) {
     }
     break;
   case Format::DUMP:
-    if (dump_info(bts_files, bts_tids, base_path) != 0) {
+    if (dump_info(bts_files, bts_tids, metadata, base_path) != 0) {
       std::cerr << "dump_info() failed\n";
       return 1;
     }
