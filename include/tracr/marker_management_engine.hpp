@@ -40,6 +40,12 @@
 namespace TraCR {
 
 /**
+ * Compiler hint macors for skewed branch prediction
+ */
+#define likely(x) __builtin_expect(!!(x), 1)
+#define unlikely(x) __builtin_expect(!!(x), 0)
+
+/**
  * The maximum capacity of one tracr thread for capturing the traces.
  * Currently, we fix it here. Might be definable by the user.
  *
@@ -190,7 +196,7 @@ public:
    */
   inline void store_trace(const Payload &payload) {
 #ifdef TRACR_POLICY_PERIODIC
-    if (_traceIdx == CAPACITY) {
+    if (unlikely(_traceIdx == CAPACITY)) {
       debug_print("WARNING: TID[%d] is full, this thread will now overwrite "
                   "from the beginning.",
                   _tid);
@@ -200,7 +206,7 @@ public:
     ++_traceIdx;
 
 #elif defined(TRACR_POLICY_IGNORE_IF_FULL)
-    if (_traceIdx >= CAPACITY) {
+    if (unlikely(_traceIdx >= CAPACITY)) {
       debug_print("WARNING: TID[%d] is full, this thread will now ignore "
                   "incoming traces.",
                   _tid);
@@ -209,7 +215,7 @@ public:
       ++_traceIdx;
     }
 #else /* Abort if full */
-    if (_traceIdx >= CAPACITY) {
+    if (unlikely(_traceIdx >= CAPACITY)) {
       std::cerr << "Warning: TID[]" << _tid
                 << " is full, terminating with a Runtime Error.\n";
       std::exit(EXIT_FAILURE);

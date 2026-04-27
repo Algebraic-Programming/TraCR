@@ -660,7 +660,7 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
   bool first = true;
   uint64_t start_time = uint64_t(metadata["start_time"]);
   std::vector<size_t> bts_files_ptrs(bts_files.size(), 0);
-  std::vector<TraCR::Payload> prev_payload(
+  std::vector<TraCR::Payload> prev_payloads(
       num_channels, TraCR::Payload{0, UINT16_MAX, UINT32_MAX, 0});
 
   bool ptrs_end = false;
@@ -674,26 +674,33 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
     }
 
     uint16_t channelId = payload.channelId;
-    if (prev_payload[channelId].eventId != UINT16_MAX) {
+
+    if (channelId >= num_channels) {
+      std::cerr << "This payload channelId is out of bounds (illegal for "
+                   "perfetto)!\n";
+      return 1;
+    }
+
+    if (prev_payloads[channelId].eventId != UINT16_MAX) {
       std::string mType;
 
       if (markerTypes_values.size() > 0) {
-        mType = markerTypes_values[prev_payload[channelId].eventId];
+        mType = markerTypes_values[prev_payloads[channelId].eventId];
       } else {
-        mType = std::to_string(prev_payload[channelId].eventId);
+        mType = std::to_string(prev_payloads[channelId].eventId);
       }
 
       perfetto.push_back(
           {{"name", mType},
            {"cat", mType},
            {"ph", "X"},
-           {"ts", (prev_payload[channelId].timestamp - start_time) / 1000.0},
+           {"ts", (prev_payloads[channelId].timestamp - start_time) / 1000.0},
            {"dur",
-            (payload.timestamp - prev_payload[channelId].timestamp) / 1000.0},
+            (payload.timestamp - prev_payloads[channelId].timestamp) / 1000.0},
            {"pid", pid},
-           {"tid", prev_payload[channelId].channelId + 1}});
+           {"tid", prev_payloads[channelId].channelId + 1}});
     }
-    prev_payload[payload.channelId] = payload;
+    prev_payloads[payload.channelId] = payload;
 
     // check if all ptrs are at the ending
     ptrs_end = advance_ptrs_and_check_end(bts_files_ptrs, bts_files, index);

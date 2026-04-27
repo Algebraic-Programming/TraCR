@@ -45,8 +45,9 @@ inline thread_local std::unique_ptr<TraCRThread> tracrThread;
 
 /**
  * Global variable to check if TraCR tracing is enabled (at runtime)
+ * Doesn't have to be atomic as slipping some traces is not dramatic.
  */
-inline std::atomic<bool> enable_tracr{true};
+inline bool enable_tracr{true};
 
 /**
  * A way to check how many TraCR proc exists.
@@ -242,10 +243,6 @@ static inline std::string instrumentation_get_thread_trace_str() {
 static inline uint16_t
 instrumentation_mark_w_color_add(const std::string &label,
                                  const uint16_t &colorId) {
-  if (!enable_tracr) {
-    return 0;
-  }
-
   if (tracrProc->_markerTypes.count(colorId)) {
     std::cerr << "This color has already been used. Choose another one.\n";
     std::exit(EXIT_FAILURE);
@@ -266,10 +263,6 @@ instrumentation_mark_w_color_add(const std::string &label,
  * @return the eventId of this marker
  */
 static inline uint16_t instrumentation_mark_add(const std::string &label) {
-  if (!enable_tracr) {
-    return 0;
-  }
-
   uint16_t colorId = lazy_colorId.fetch_add(1);
   if (tracrProc->_markerTypes.count(colorId)) {
     std::cerr << "This color has already been used. Choose another one.\n";
@@ -287,9 +280,8 @@ static inline uint16_t instrumentation_mark_add(const std::string &label) {
 static inline void
 instrumentation_mark_set(const uint16_t &channelId, const uint16_t &eventId,
                          const uint32_t &extraId = UINT32_MAX) {
-  if (!enable_tracr) {
+  if (unlikely(!enable_tracr))
     return;
-  }
 
   Payload payload{channelId, eventId, extraId, NanoTimer::now()};
 
@@ -300,9 +292,8 @@ instrumentation_mark_set(const uint16_t &channelId, const uint16_t &eventId,
  *
  */
 static inline void instrumentation_mark_reset(const uint16_t &channelId) {
-  if (!enable_tracr) {
+  if (unlikely(!enable_tracr))
     return;
-  }
 
   Payload payload{channelId, UINT16_MAX, UINT32_MAX, NanoTimer::now()};
 
