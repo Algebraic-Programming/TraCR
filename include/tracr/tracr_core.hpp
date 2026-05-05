@@ -82,8 +82,7 @@ static inline void instrumentation_thread_init() {
   }
 
   // Add tracr Thread
-  pid_t this_tid = syscall(SYS_gettid);
-  tracrThread = std::make_unique<TraCRThread>(this_tid);
+  tracrThread = std::make_unique<TraCRThread>(syscall(SYS_gettid));
 
   // Increase global thread counter
   ++num_tracr_threads;
@@ -122,11 +121,8 @@ static inline void instrumentation_start() {
     std::exit(EXIT_FAILURE);
   }
 
-  // Get current thread ID
-  pid_t tid = syscall(SYS_gettid);
-
   // Initialize the TraCRProc
-  tracrProc = std::make_unique<TraCRProc>(tid);
+  tracrProc = std::make_unique<TraCRProc>(syscall(SYS_gettid));
 
   // Create the folders to store the traces (if enabled)
 #ifndef TRACR_DISABLE_FLUSH

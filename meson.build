@@ -17,6 +17,7 @@ endif
 InstrumentationBuildCppArgs = [
  '-DUSE_HW_COUNTER',
  '-Wfatal-errors',
+ #'-Wall', '-Wextra', '-Wconversion', '-Wsign-conversion',
   warningAsErrorFlags,
  ]
 

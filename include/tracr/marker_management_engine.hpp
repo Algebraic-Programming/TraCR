@@ -179,7 +179,7 @@ public:
   /**
    * Constructor
    */
-  TraCRThread(const pid_t &tid) : _tid(tid){};
+  TraCRThread(long tid) : _tid(tid){};
 
   /**
    * No default constructor allowed.
@@ -197,7 +197,7 @@ public:
   inline void store_trace(const Payload &payload) {
 #ifdef TRACR_POLICY_PERIODIC
     if (unlikely(_traceIdx == CAPACITY)) {
-      debug_print("WARNING: TID[%d] is full, this thread will now overwrite "
+      debug_print("WARNING: TID[%lu] is full, this thread will now overwrite "
                   "from the beginning.",
                   _tid);
     }
@@ -207,7 +207,7 @@ public:
 
 #elif defined(TRACR_POLICY_IGNORE_IF_FULL)
     if (unlikely(_traceIdx >= CAPACITY)) {
-      debug_print("WARNING: TID[%d] is full, this thread will now ignore "
+      debug_print("WARNING: TID[%lu] is full, this thread will now ignore "
                   "incoming traces.",
                   _tid);
     } else {
@@ -216,8 +216,8 @@ public:
     }
 #else /* Abort if full */
     if (unlikely(_traceIdx >= CAPACITY)) {
-      std::cerr << "Warning: TID[]" << _tid
-                << " is full, terminating with a Runtime Error.\n";
+      std::cerr << "Warning: TID[" << _tid
+                << "] is full, terminating with a Runtime Error.\n";
       std::exit(EXIT_FAILURE);
     }
 
@@ -250,7 +250,7 @@ public:
 
     std::string filepath = _thread_folder_name + "traces.bts";
 
-    debug_print("The filepath of this TraCR thread[%d] is: %s", _tid,
+    debug_print("The filepath of this TraCR thread[%lu] is: %s", _tid,
                 filepath.c_str());
 
     std::ofstream ofs(filepath, std::ios::binary);
@@ -281,7 +281,7 @@ public:
   /**
    *
    */
-  inline pid_t getTID() { return _tid; }
+  inline long getTID() { return _tid; }
 
   // The array to keep track of the traces
   std::array<Payload, CAPACITY> _traces;
@@ -291,7 +291,7 @@ public:
 
 private:
   // kernel thread ID
-  pid_t _tid;
+  long _tid;
 
   // The path of the thread folder
   std::string _thread_folder_name;
@@ -305,7 +305,7 @@ public:
   /**
    * Constructor
    */
-  TraCRProc(const pid_t &tid)
+  TraCRProc(long tid)
       : _tracr_init_time(NanoTimer::now()), _tid(tid), _lCPUid(sched_getcpu()) {
 
     _proc_folder_name = "proc." + std::to_string(_lCPUid) + "/";
@@ -420,7 +420,7 @@ public:
   /**
    *
    */
-  inline pid_t getTID() { return _tid; }
+  inline long getTID() { return _tid; }
 
   // The dynamic list to store all the marker types created
   std::unordered_map<uint16_t, std::string> _markerTypes;
@@ -436,10 +436,10 @@ private:
   bool json_is_ready = false;
 
   // TraCR start time
-  int64_t _tracr_init_time;
+  uint64_t _tracr_init_time;
 
   // kernel thread ID
-  pid_t _tid;
+  long _tid;
 
   // logical CPU ID
   int _lCPUid;

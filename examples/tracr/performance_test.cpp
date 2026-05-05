@@ -27,9 +27,9 @@ int main(void) {
 
   // performance test
   auto perf_test_start = std::chrono::system_clock::now();
-  const int n_sets = 1e3;
-  for (int i = 0; i < n_sets; ++i) {
-    INSTRUMENTATION_MARK_SET(0, i % 128, 0);
+  const uint16_t n_sets = 1e3;
+  for (uint16_t i = 0; i < n_sets; ++i) {
+    INSTRUMENTATION_MARK_SET(0, i % 128u, 0);
     INSTRUMENTATION_MARK_RESET(0);
   }
   auto perf_test_stop = std::chrono::system_clock::now();

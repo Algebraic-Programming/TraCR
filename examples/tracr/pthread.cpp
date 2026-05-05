@@ -53,7 +53,7 @@ void *threadFunction(void *arg) {
   pthread_mutex_unlock(&printMutex);
 
   // running tasks
-  for (int i = 0; i < NTASKS; ++i) {
+  for (uint32_t i = 0; i < NTASKS; ++i) {
     uint32_t taskid = id * NTASKS + i;
 
     INSTRUMENTATION_MARK_SET(id, task_running_id, taskid);
@@ -89,13 +89,13 @@ int main() {
   pthread_mutex_init(&printMutex, nullptr);
 
   // Create NRANKS number of threads
-  for (int i = 0; i < NRANKS; ++i) {
+  for (size_t i = 0; i < NRANKS; ++i) {
     threadIds[i] = i; // Assign thread ID
     pthread_create(&threads[i], nullptr, threadFunction, &threadIds[i]);
   }
 
   // Wait for all threads to finish
-  for (int i = 0; i < NRANKS; ++i) {
+  for (size_t i = 0; i < NRANKS; ++i) {
     pthread_join(threads[i], nullptr);
   }
 
@@ -106,7 +106,7 @@ int main() {
 
   // User-defined channels names to visualize
   nlohmann::json j = nlohmann::json::array();
-  for (int i = 0; i < NRANKS; ++i) {
+  for (size_t i = 0; i < NRANKS; ++i) {
     j.push_back(std::string("Thread_") + std::to_string(i));
   }
   INSTRUMENTATION_ADD_CHANNEL_NAMES(j);
