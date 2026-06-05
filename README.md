@@ -191,7 +191,7 @@ After running your instrumented binary, convert the `.bts` files with `tracr_pro
 
 ### Perfetto
 
-Produces `perfetto.json`. Load it at [ui.perfetto.dev](https://ui.perfetto.dev). Each channel becomes a named track; event durations are reconstructed from SET/RESET pairs.
+Produces `perfetto.json`. Load it at [ui.perfetto.dev](https://ui.perfetto.dev). Each channel becomes a named track; event durations are reconstructed from SET/RESET pairs. Timestamps are written as floating-point microseconds (e.g. a 1500 ns event → `1.5 µs`) to preserve sub-microsecond precision within Perfetto's native time unit.
 
 ### Paraver
 

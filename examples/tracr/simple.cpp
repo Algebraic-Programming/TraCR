@@ -64,7 +64,7 @@ int main(void) {
   after_label_set = std::chrono::system_clock::now();
 
   // allocate memory
-  INSTRUMENTATION_MARK_SET(0, alloc_mem_label_id, 0);
+  INSTRUMENTATION_MARK_SET(0, alloc_mem_label_id, uint32_t(N));
   mytype *A = (mytype *)calloc(1, N * N * sizeof(mytype));
   mytype *B = (mytype *)malloc(N * N * sizeof(mytype));
   mytype *C = (mytype *)malloc(N * N * sizeof(mytype));
