@@ -92,6 +92,19 @@ static std::string json_str(const std::string &s) {
 }
 
 /**
+ * Formats a nanosecond duration as a fixed-point microsecond string with
+ * exactly 3 decimal places (e.g. 1017990020 ns -> "1017990.020").
+ * Pure integer arithmetic avoids scientific notation and float precision loss.
+ */
+static std::string fmt_us(uint64_t ns) {
+  char buf[32];
+  std::snprintf(buf, sizeof(buf), "%llu.%03llu",
+                (unsigned long long)(ns / 1000),
+                (unsigned long long)(ns % 1000));
+  return buf;
+}
+
+/**
  * Min-heap based k-way merge over a collection of pre-sorted Payload vectors.
  * Replaces the O(N*K) linear-scan approach with O(N*log K).
  */
@@ -613,8 +626,8 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
 
       out << ",\n{\"name\":" << json_str(mType)
           << ",\"cat\":\"tracr\",\"ph\":\"X\""
-          << ",\"ts\":" << (prev.timestamp - start_time) / 1000.0
-          << ",\"dur\":" << (payload.timestamp - prev.timestamp) / 1000.0
+          << ",\"ts\":" << fmt_us(prev.timestamp - start_time)
+          << ",\"dur\":" << fmt_us(payload.timestamp - prev.timestamp)
           << ",\"pid\":" << pid << ",\"tid\":" << (prev.channelId + 1);
       if (prev.extraId != UINT32_MAX)
         out << ",\"args\":{\"extra_id\":" << prev.extraId << "}";
