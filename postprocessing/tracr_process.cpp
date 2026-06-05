@@ -98,17 +98,16 @@ static std::string json_str(const std::string &s) {
 class PayloadMerger {
   struct Entry {
     uint64_t timestamp;
-    size_t   file_idx;
+    size_t file_idx;
     bool operator>(const Entry &o) const { return timestamp > o.timestamp; }
   };
 
   const std::vector<std::vector<TraCR::Payload>> &_files;
-  std::vector<size_t>                             _ptrs;
+  std::vector<size_t> _ptrs;
   std::priority_queue<Entry, std::vector<Entry>, std::greater<Entry>> _heap;
 
 public:
-  explicit PayloadMerger(
-      const std::vector<std::vector<TraCR::Payload>> &files)
+  explicit PayloadMerger(const std::vector<std::vector<TraCR::Payload>> &files)
       : _files(files), _ptrs(files.size(), 0) {
     for (size_t i = 0; i < files.size(); ++i)
       if (!files[i].empty())
@@ -117,14 +116,15 @@ public:
 
   bool empty() const { return _heap.empty(); }
 
-  // Returns the next payload in timestamp order and the index of its source file.
+  // Returns the next payload in timestamp order and the index of its source
+  // file.
   std::pair<TraCR::Payload, size_t> next() {
     auto top = _heap.top();
     _heap.pop();
     TraCR::Payload p = _files[top.file_idx][_ptrs[top.file_idx]];
     if (++_ptrs[top.file_idx] < _files[top.file_idx].size())
-      _heap.push({_files[top.file_idx][_ptrs[top.file_idx]].timestamp,
-                  top.file_idx});
+      _heap.push(
+          {_files[top.file_idx][_ptrs[top.file_idx]].timestamp, top.file_idx});
     return {p, top.file_idx};
   }
 };
@@ -534,8 +534,8 @@ void validate_last_events_for_perfetto(
 /**
  * Store in Perfetto format.
  *
- * Writes a JSON object with a "traceEvents" array in nanoseconds. Events are streamed directly
- * to disk — no in-memory JSON array is built.
+ * Writes a JSON object with a "traceEvents" array in nanoseconds. Events are
+ * streamed directly to disk — no in-memory JSON array is built.
  */
 int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
              const std::vector<pid_t> &bts_tids, nlohmann::json &metadata,
@@ -580,8 +580,8 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
     std::string name = channels_json ? std::string((*channels_json)[i])
                                      : ("Channel_" + std::to_string(i + 1));
     out << ",\n{\"name\":\"thread_name\",\"ph\":\"M\",\"pid\":" << pid
-        << ",\"tid\":" << (i + 1)
-        << ",\"args\":{\"name\":" << json_str(name) << "}}";
+        << ",\"tid\":" << (i + 1) << ",\"args\":{\"name\":" << json_str(name)
+        << "}}";
   }
 
   // Merge all thread buffers in timestamp order and emit complete events (ph=X)
@@ -601,8 +601,7 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
 
     uint16_t channelId = payload.channelId;
     if (channelId >= num_channels) {
-      std::cerr << "Payload channelId " << channelId
-                << " is out of bounds!\n";
+      std::cerr << "Payload channelId " << channelId << " is out of bounds!\n";
       return 1;
     }
 
@@ -616,8 +615,7 @@ int perfetto(const std::vector<std::vector<TraCR::Payload>> &bts_files,
           << ",\"cat\":\"tracr\",\"ph\":\"X\""
           << ",\"ts\":" << (prev.timestamp - start_time) / 1000.0
           << ",\"dur\":" << (payload.timestamp - prev.timestamp) / 1000.0
-          << ",\"pid\":" << pid
-          << ",\"tid\":" << (prev.channelId + 1);
+          << ",\"pid\":" << pid << ",\"tid\":" << (prev.channelId + 1);
       if (prev.extraId != UINT32_MAX)
         out << ",\"args\":{\"extra_id\":" << prev.extraId << "}";
       out << "}";

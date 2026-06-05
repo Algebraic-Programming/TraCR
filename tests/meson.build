@@ -6,7 +6,6 @@ cpp_args_list = [
     []                                    # No instrumentation
 ]
 
-# TEST 0: Basic ovni test
 foreach args : cpp_args_list
 
   instrumentation_enabled = args.length() > 0 ? true : false
@@ -14,14 +13,12 @@ foreach args : cpp_args_list
     if instrumentation_enabled
         flag_name = 'both_instrumentation'
 
-        # TEST 0: Basic ovni test (instrumentation enabled)
         basic_check_exe = executable('basic_check_' + flag_name, 'basic_check.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
         test('basic_check_' + flag_name, basic_check_exe, args : [], suite : testSuite)
     else
         flag_name = 'no_instrumentation'
 
-        # TEST 0: Basic ovni test (instrumentation disabled)
         basic_check_exe = executable('basic_check_' + flag_name, 'basic_check.cpp', dependencies: InstrumentationBuildDep, cpp_args : args)
 
         test('basic_check_' + flag_name, basic_check_exe, args : [], suite : testSuite)

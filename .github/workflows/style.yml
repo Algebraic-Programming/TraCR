@@ -16,14 +16,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Updating Apt
-      run: sudo apt update
-    - name: Installing clang-tormat
-      run: |
-            python3 -m pip install 'clang-format==18.1.0'
-    - name: Checking style
+    - name: Install clang-format
+      run: python3 -m pip install 'clang-format==18.1.0'
+    - name: Check style
       run: |
         echo "Checking source and test formatting..."
         .build-tools/style/check-style.sh check include
         .build-tools/style/check-style.sh check tests
         .build-tools/style/check-style.sh check examples
+        .build-tools/style/check-style.sh check postprocessing
